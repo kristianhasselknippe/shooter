@@ -25,20 +25,6 @@ fn main() {
 
     gl::load_with(|s| window.get_proc_address(s) as *const GLvoid);
 
-    let vertices: [GLfloat;9] = [
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        0.0,  0.5, 0.0
-    ];
-
-    let mut vbo = 0;
-    unsafe {
-        gl::GenBuffers(1, &mut vbo);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize, mem::transmute(&vertices), gl::STATIC_DRAW);
-    };
-
     let vs = include_str!("default.vs");
     let fs = include_str!("default.fs");
 
@@ -110,15 +96,61 @@ fn main() {
         program
     };
 
+    let mut vbo = 0;
+    let mut vao = 0;
     unsafe {
+
+        let vertices: [GLfloat;9] = [
+            -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0,
+            0.0,  0.5, 0.0
+        ];
+
+
+        gl::GenBuffers(1, &mut vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+
+
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize, mem::transmute(&vertices), gl::STATIC_DRAW);
         gl::UseProgram(program);
 
         gl::DeleteShader(vertex_shader);
         gl::DeleteShader(fragment_shader);
-    }
+
+
+
+
+
+        gl::GenVertexArrays(1, &mut vao);
+
+
+        gl::BindVertexArray(vao);
+        {
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+            gl::BufferData(gl::ARRAY_BUFFER, (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                           mem::transmute(&vertices[0]), gl::STATIC_DRAW);
+
+            gl::VertexAttribPointer(0 ,3, gl::FLOAT, gl::FALSE, (3 * mem::size_of::<GLfloat>()) as i32, ptr::null());
+            gl::EnableVertexAttribArray(0);
+        }
+        gl::BindVertexArray(0); //unbind vao
+
+
+    };
 
 
     while !window.should_close() {
+
+        unsafe {
+            gl::UseProgram(program);
+            gl::BindVertexArray(vao);
+            {
+                gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            }
+            gl::BindVertexArray(0);
+        };
+
         window.swap_buffers();
 
         glfw.poll_events();
