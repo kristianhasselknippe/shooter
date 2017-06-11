@@ -146,7 +146,7 @@ fn main() {
             gl::UseProgram(program);
             gl::BindVertexArray(vao);
             {
-                gl::DrawArrays(gl::TRIANGLES, 0, 3);
+                gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
             }
             gl::BindVertexArray(0);
         };
