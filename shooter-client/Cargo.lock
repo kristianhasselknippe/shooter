@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "gl 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "glfw 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "shooter_common 0.1.0",
 ]
 
 [[package]]
@@ -183,6 +184,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "nom 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "shooter_common"
+version = "0.1.0"
 
 [[package]]
 name = "xml-rs"

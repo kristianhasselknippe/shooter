@@ -1,3 +1,5 @@
+extern crate shooter_common;
+
 extern crate glfw;
 use glfw::{Action, Context, Key};
 
@@ -7,15 +9,7 @@ use std::mem;
 use std::ffi::CString;
 use std::ptr;
 
-use std::net::UdpSocket;
-
 fn main() {
-    /*let socket = UdpSocket::bind("127.0.0.1:12346").unwrap();
-
-    socket.connect("127.0.0.1:12345");
-
-    let to_send = b"foobar yo";
-    socket.send(to_send);*/
 
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     let (mut window, events) = glfw.create_window(600,800, "Shooter", glfw::WindowMode::Windowed).expect("failed to create window");
@@ -96,20 +90,27 @@ fn main() {
         program
     };
 
+    let mut ebo = 0;
     let mut vbo = 0;
     let mut vao = 0;
     unsafe {
 
-        let vertices: [GLfloat;9] = [
-            -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0,
-            0.0,  0.5, 0.0
+        let vertices: [GLfloat;12] = [
+            0.5,  0.5, 0.0,  // Top Right
+            0.5, -0.5, 0.0,  // Bottom Right
+            -0.5, -0.5, 0.0,  // Bottom Left
+            -0.5,  0.5, 0.0   // Top Left
         ];
 
+        let indices: [GLuint;6] = [  // Note that we start from 0!
+            0, 1, 3,   // First Triangle
+            1, 2, 3    // Second Triangle
+        ];
 
         gl::GenBuffers(1, &mut vbo);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
 
+        gl::GenBuffers(1, &mut ebo);
 
         //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
         gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize, mem::transmute(&vertices), gl::STATIC_DRAW);
@@ -118,12 +119,7 @@ fn main() {
         gl::DeleteShader(vertex_shader);
         gl::DeleteShader(fragment_shader);
 
-
-
-
-
         gl::GenVertexArrays(1, &mut vao);
-
 
         gl::BindVertexArray(vao);
         {
@@ -133,6 +129,10 @@ fn main() {
 
             gl::VertexAttribPointer(0 ,3, gl::FLOAT, gl::FALSE, (3 * mem::size_of::<GLfloat>()) as i32, ptr::null());
             gl::EnableVertexAttribArray(0);
+
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * indices.len()) as GLsizeiptr,
+                           mem::transmute(&indices[0]), gl::STATIC_DRAW);
         }
         gl::BindVertexArray(0); //unbind vao
 
