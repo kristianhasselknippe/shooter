@@ -3,6 +3,8 @@ extern crate glfw;
 extern crate gl;
 
 mod shader;
+mod mesh;
+mod drawing;
 
 use shader::{create_vertex_shader,create_fragment_shader,create_program};
 
@@ -30,19 +32,22 @@ fn main() {
     let mut ebo = 0;
     let mut vbo = 0;
     let mut vao = 0;
+
+    let vertices: [GLfloat;12] = [
+        0.5,  0.5, 0.0,  // Top Right
+        0.5, -0.5, 0.0,  // Bottom Right
+        -0.5, -0.5, 0.0,  // Bottom Left
+        -0.5,  0.5, 0.0   // Top Left
+    ];
+
+    let indices: [GLuint;6] = [  // Note that we start from 0!
+        0, 1, 3,   // First Triangle
+        1, 2, 3    // Second Triangle
+    ];
+
     unsafe {
 
-        let vertices: [GLfloat;12] = [
-            0.5,  0.5, 0.0,  // Top Right
-            0.5, -0.5, 0.0,  // Bottom Right
-            -0.5, -0.5, 0.0,  // Bottom Left
-            -0.5,  0.5, 0.0   // Top Left
-        ];
 
-        let indices: [GLuint;6] = [  // Note that we start from 0!
-            0, 1, 3,   // First Triangle
-            1, 2, 3    // Second Triangle
-        ];
 
         gl::GenBuffers(1, &mut vbo);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
