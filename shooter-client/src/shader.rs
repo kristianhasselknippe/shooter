@@ -31,6 +31,14 @@ impl Drop for ShaderProgram {
     }
 }
 
+impl ShaderProgram {
+    pub fn use_program(&self) {
+        unsafe {
+            gl::UseProgram(self.handle);
+        }
+    }
+}
+
 fn read_file(path: &Path) -> String {
     let mut f = File::open(path).unwrap();
     let mut s = String::new();
