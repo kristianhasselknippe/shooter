@@ -1,6 +1,7 @@
 extern crate shooter_common;
 extern crate glfw;
 extern crate gl;
+extern crate nalgebra as na;
 
 mod shader;
 mod mesh;
