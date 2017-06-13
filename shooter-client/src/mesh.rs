@@ -15,14 +15,13 @@ impl Mesh {
     pub fn new(vertices: Vec<GLfloat>, indices: Vec<GLuint>) -> Mesh {
         let mut vbo = 0;
         let mut ebo = 0;
+
         unsafe {
             gl::GenBuffers(1, &mut vbo);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-
             gl::GenBuffers(1, &mut ebo);
-
-            //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-            gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize, mem::transmute(vertices.first().unwrap()), gl::STATIC_DRAW);
+            gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize,
+                           mem::transmute(vertices.first().unwrap()), gl::STATIC_DRAW);
         }
 
         Mesh {
@@ -32,6 +31,22 @@ impl Mesh {
             vertices: vertices,
             indices: indices,
         }
+    }
+
+    pub fn create_quad() -> Mesh {
+        let vertices: Vec<GLfloat> = vec![
+            -1.0, -1.0, 0.0,
+             1.0, -1.0, 0.0,
+             1.0,  1.0, 0.0,
+            -1.0,  1.0, 0.0
+        ];
+
+        let indices: Vec<GLuint> = vec![  // Note that we start from 0!
+            0, 1, 3,   // First Triangle
+            1, 2, 3    // Second Triangle
+        ];
+
+        Mesh::new(vertices, indices)
     }
 
     pub fn bind(&self) {

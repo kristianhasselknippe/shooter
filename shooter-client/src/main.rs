@@ -6,14 +6,13 @@ mod shader;
 mod mesh;
 mod drawing;
 
-use shader::{create_vertex_shader,create_fragment_shader,create_program};
+use shader::*;
 use mesh::*;
 use drawing::*;
 
 use glfw::{Action, Context, Key};
 
 use gl::types::*;
-use std::path::Path;
 
 fn main() {
 
@@ -25,24 +24,13 @@ fn main() {
 
     gl::load_with(|s| window.get_proc_address(s) as *const GLvoid);
 
-    let vertex_shader = create_vertex_shader(Path::new("src/default.vs"));
-    let fragment_shader = create_fragment_shader(Path::new("src/default.fs"));
-    let program = create_program(&vertex_shader, &fragment_shader);
+
+    let program = ShaderProgram::create_program("default");
 
 
-    let vertices: Vec<GLfloat> = vec![
-        0.5,  0.5, 0.0,  // Top Right
-        0.5, -0.5, 0.0,  // Bottom Right
-        -0.5, -0.5, 0.0,  // Bottom Left
-        -0.5,  0.5, 0.0   // Top Left
-    ];
 
-    let indices: Vec<GLuint> = vec![  // Note that we start from 0!
-        0, 1, 3,   // First Triangle
-        1, 2, 3    // Second Triangle
-    ];
 
-    let mesh = Mesh::new(vertices, indices);
+    let mesh = Mesh::create_quad();
 
     program.use_program();
 
