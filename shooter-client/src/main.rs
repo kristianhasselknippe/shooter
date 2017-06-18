@@ -52,6 +52,7 @@ fn main() {
     while !window.should_close() {
 
         program.use_program();
+        program.set_float3("spriteColor", (1.0, 1.0, 0.0));
         texture.bind();
         draw_context.bind();
         {

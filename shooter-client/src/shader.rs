@@ -139,4 +139,32 @@ impl ShaderProgram {
         let fragment_shader = Shader::create_fragment_shader(Path::new(&format!("src/{}.fs",name)));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
+
+    pub fn set_bool(&self, name: &str, val: bool) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform1i(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val as i32);
+        }
+    }
+
+    pub fn set_int(&self, name: &str, val: i32) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform1i(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val);
+        }
+    }
+
+    pub fn set_float(&self, name: &str, val: f32) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform1f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val);
+        }
+    }
+
+    pub fn set_float3(&self, name: &str, val: (f32,f32,f32)) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform3f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val.0, val.1, val.2);
+        }
+    }
 }
