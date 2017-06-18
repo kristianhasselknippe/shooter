@@ -34,13 +34,15 @@ impl Mesh {
         }
     }
 
-    pub fn create_quad() -> Mesh {
+    pub fn create_rect(w: f32, h: f32) -> Mesh {
+        let w = w;
+        let h = h;
         let vertices: Vec<GLfloat> = vec![
             //positions            //tex coords
-            -1.0, -1.0, 0.0,        0.0,  0.0,
-             1.0, -1.0, 0.0,        1.0,  0.0,
-             1.0,  1.0, 0.0,        1.0,  1.0,
-            -1.0,  1.0, 0.0,        0.0,  1.0,
+            -w, -h, 0.0,        0.0,  0.0,
+             w, -h, 0.0,        1.0,  0.0,
+             w,  h, 0.0,        1.0,  1.0,
+            -w,  h, 0.0,        0.0,  1.0,
         ];
 
         let indices: Vec<GLuint> = vec![  // Note that we start from 0!
@@ -49,6 +51,10 @@ impl Mesh {
         ];
 
         Mesh::new(vertices, indices)
+    }
+
+    pub fn create_quad() -> Mesh {
+        Self::create_rect(1.0,1.0)
     }
 
     pub fn bind(&self) {

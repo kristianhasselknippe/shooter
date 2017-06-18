@@ -64,7 +64,9 @@ impl Shader {
                 gl::GetShaderiv(fragment_shader, gl::INFO_LOG_LENGTH, &mut len);
                 let mut buf = Vec::with_capacity((len as usize) - 1);
                 gl::GetShaderInfoLog(fragment_shader, len, ptr::null_mut(), buf.as_mut_ptr() as *mut GLchar);
-                panic!("{}", str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8"));
+                let error = str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8");
+                println!("Error: {}", error);
+                panic!("{}", error);
             }
             fragment_shader
         };
@@ -135,8 +137,8 @@ impl ShaderProgram {
     }
 
     pub fn create_program(name: &str) -> ShaderProgram {
-        let vertex_shader = Shader::create_vertex_shader(Path::new(&format!("src/{}.vs",name)));
-        let fragment_shader = Shader::create_fragment_shader(Path::new(&format!("src/{}.fs",name)));
+        let vertex_shader = Shader::create_vertex_shader(Path::new(&format!("src/shaders/{}.vs",name)));
+        let fragment_shader = Shader::create_fragment_shader(Path::new(&format!("src/shaders/{}.fs",name)));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 

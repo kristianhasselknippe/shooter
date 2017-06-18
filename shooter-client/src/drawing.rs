@@ -3,17 +3,21 @@ use super::gl::types::*;
 use std::ptr;
 
 pub struct DrawContext {
-    vao: GLuint
+    vao: GLuint,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl DrawContext {
-    pub fn new() -> DrawContext {
+    pub fn new(width: u32, height: u32) -> DrawContext {
         let mut vao = 0;
         unsafe {
             gl::GenVertexArrays(1, &mut vao);
         };
         DrawContext {
-            vao: vao
+            vao: vao,
+            width: width,
+            height: height,
         }
     }
 
