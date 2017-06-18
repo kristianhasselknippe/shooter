@@ -2,6 +2,7 @@ use super::gl;
 use super::gl::types::*;
 use std::mem;
 use std::ptr;
+use std::os::raw::c_void;
 
 pub struct Mesh {
     vbo: GLuint,
@@ -35,10 +36,11 @@ impl Mesh {
 
     pub fn create_quad() -> Mesh {
         let vertices: Vec<GLfloat> = vec![
-            -1.0, -1.0, 0.0,
-             1.0, -1.0, 0.0,
-             1.0,  1.0, 0.0,
-            -1.0,  1.0, 0.0
+            //positions            //tex coords
+            -1.0, -1.0, 0.0,        0.0,  0.0,
+             1.0, -1.0, 0.0,        1.0,  0.0,
+             1.0,  1.0, 0.0,        1.0,  1.0,
+            -1.0,  1.0, 0.0,        0.0,  1.0,
         ];
 
         let indices: Vec<GLuint> = vec![  // Note that we start from 0!
@@ -55,8 +57,15 @@ impl Mesh {
             gl::BufferData(gl::ARRAY_BUFFER, (self.vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                            mem::transmute(&self.vertices[0]), gl::STATIC_DRAW);
 
-            gl::VertexAttribPointer(0 ,3, gl::FLOAT, gl::FALSE, (3 * mem::size_of::<GLfloat>()) as i32, ptr::null());
+            gl::VertexAttribPointer(0 ,3, gl::FLOAT, gl::FALSE,
+                                    (5 * mem::size_of::<GLfloat>()) as i32,
+                                    0 as *const c_void);
             gl::EnableVertexAttribArray(0);
+
+            gl::VertexAttribPointer(1 ,2, gl::FLOAT, gl::FALSE,
+                                    (5 * mem::size_of::<GLfloat>()) as i32,
+                                    (3 * mem::size_of::<GLfloat>()) as *const c_void);
+            gl::EnableVertexAttribArray(1);
 
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
             gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * self.indices.len()) as GLsizeiptr,

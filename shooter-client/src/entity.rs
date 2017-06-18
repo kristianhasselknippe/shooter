@@ -10,7 +10,7 @@ impl Entity {
     pub fn new_sprite() -> Entity {
         Entity {
             transform: Transform::new(),
-            mesh: Mesh::create_quad,
+            mesh: Mesh::create_quad(),
         }
     }
 }
