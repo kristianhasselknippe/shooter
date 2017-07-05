@@ -38,31 +38,21 @@ fn main() {
 
     gl::load_with(|s| window.get_proc_address(s) as *const GLvoid);
 
-
-    let program = ShaderProgram::create_program("default");
-    let texture = Texture::from_png(Path::new("assets/overworld.png"));
-    let mesh = Mesh::create_quad();
-
-    program.use_program();
-
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
     let text = Text::new("this is some text", &draw_context);
 
     draw_context.bind();
-    mesh.bind();
+    //mesh.bind();
     draw_context.unbind();
 
 
 
     while !window.should_close() {
 
-        //program.use_program();
-        //program.set_float3("spriteColor", (1.0, 1.0, 0.0));
-        //texture.bind();
-
         draw_context.bind();
-        //draw_context.draw();
+
+        draw_context.clear((1.0,0.0,1.0,1.0));
 
         text.bind();
         draw_context.draw();

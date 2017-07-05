@@ -7,6 +7,6 @@ out vec4 color;
 
 void main()
 {
-    float x = texture(tex0,TexCoord).x;
-    color = vec4(1.0-x,1.0-x,1.0-x, 1.0);
+    float x = texture(tex0,TexCoord).r;
+    color = vec4(1.0,1.0,x, 1.0);
 }

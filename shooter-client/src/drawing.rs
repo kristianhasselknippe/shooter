@@ -33,6 +33,13 @@ impl DrawContext {
         }
     }
 
+    pub fn clear(&self, color: (f32,f32,f32,f32)) {
+        unsafe {
+            gl::ClearColor(color.0,color.1,color.2,color.3);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        }
+    }
+
     pub fn draw(&self) {
         unsafe {
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());

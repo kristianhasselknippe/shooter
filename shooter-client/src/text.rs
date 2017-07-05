@@ -9,9 +9,9 @@ use super::texture::*;
 use super::shader::*;
 
 pub struct Glyph {
-    data: Vec<u8>,
-    width: u32,
-    height: u32,
+    pub data: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Glyph {
@@ -36,7 +36,7 @@ impl Font {
         let font = collection.into_font().unwrap(); // only succeeds if collection consists of one font
 
         // Desired font pixel height
-        let height: f32 = 12.4; // to get 80 chars across (fits most terminals); adjust as desired
+        let height: f32 = 28.0; // to get 80 chars across (fits most terminals); adjust as desired
         let pixel_height = height.ceil() as usize;
 
         // 2x scale in x direction to counter the aspect ratio of monospace characters.
@@ -65,10 +65,25 @@ impl Font {
             }
 
             positioned_glyph.draw(|x,y,v| {
+                //println!("{} - {} - V: {}", x,y,v);
                 glyph_data[(x + (w as u32*y)) as usize] = (v * 255.0) as u8;
             });
 
             glyphs.push(Glyph::new(glyph_data, w as u32, h as u32));
+        }
+
+        for g in &glyphs {
+            for y in 0..g.height {
+                for x in 0..g.width {
+                    if (g.data[(y * g.width + x) as usize] > 0) {
+                        print!("X");
+                    } else {
+                        print!(" ");
+                    }
+                }
+                print!("\n");
+            }
+            println!("=============; W:{}, H:{}", g.width, g.height);
         }
 
         Font {
@@ -90,25 +105,27 @@ impl Font {
 
     pub fn data(&self) -> Vec<u8> {
         let tot_size = self.total_size();
+        println!("total size: {:?}", tot_size);
+        let width = tot_size.0;
+        let height = tot_size.1;
+
+
         let n_pixels = tot_size.0 * tot_size.1;
         let mut ret = Vec::with_capacity(n_pixels as usize);
         for i in 0..n_pixels {
             ret.push(0);
         }
+
         let mut x_offset = 0;
         for g in &self.glyphs {
-            let w = g.width;
-            let h = g.height;
-            let mut x = 0;
-            let mut y = 0;
-            for p in &g.data {
-                if x == g.width {
-                    x = 0;
-                    y += 1;
+            for y in 0..g.height {
+                for x in 0..g.width {
+                    let index = (x + (y * g.width)) as usize;
+                    let d = g.data[index];
+                    ret[(x_offset + index) as usize] = d;
                 }
-                todo -- need to fill in the texture correctly in the x direction
-                ret[(x + x_offset + (y * tot_size.0)) as usize] = *p;
             }
+            x_offset += g.width as usize;
         }
         ret
     }
