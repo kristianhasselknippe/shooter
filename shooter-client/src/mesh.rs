@@ -39,10 +39,10 @@ impl Mesh {
         let h = h;
         let vertices: Vec<GLfloat> = vec![
             //positions            //tex coords
-            -w, -h, 0.0,        0.0,  0.0,
-             w, -h, 0.0,        1.0,  0.0,
-             w,  h, 0.0,        1.0,  1.0,
-            -w,  h, 0.0,        0.0,  1.0,
+            -w, -h, 0.0,        0.0,  1.0,
+             w, -h, 0.0,        1.0,  1.0,
+             w,  h, 0.0,        1.0,  0.0,
+            -w,  h, 0.0,        0.0,  0.0,
         ];
 
         let indices: Vec<GLuint> = vec![  // Note that we start from 0!

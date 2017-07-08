@@ -26,17 +26,18 @@ impl Glyph {
 
 pub struct Font {
     glyphs: Vec<Glyph>,
+    cell_size: u32,
 }
 
 
 impl Font {
     pub fn new() -> Font {
-        let font_data = include_bytes!("../assets/fonts/emulogic.ttf");
+        let font_data = include_bytes!("../assets/fonts/Lato-Regular.ttf");
         let collection = FontCollection::from_bytes(font_data as &[u8]);
         let font = collection.into_font().unwrap(); // only succeeds if collection consists of one font
 
         // Desired font pixel height
-        let height: f32 = 28.0; // to get 80 chars across (fits most terminals); adjust as desired
+        let height: f32 = 14.0; // to get 80 chars across (fits most terminals); adjust as desired
         let pixel_height = height.ceil() as usize;
 
         // 2x scale in x direction to counter the aspect ratio of monospace characters.
@@ -50,7 +51,7 @@ impl Font {
         let offset = point(0.0, v_metrics.ascent);
 
         // Glyphs to draw for "RustType". Feel free to try other strings.
-        let positioned_glyphs: Vec<PositionedGlyph> = font.layout("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", scale, offset).collect();
+        let positioned_glyphs: Vec<PositionedGlyph> = font.layout("ABCDEFGHIJKLMNOPQRSTUVWXYZ", scale, offset).collect();
 
         let mut glyphs = Vec::new();
 
@@ -72,45 +73,58 @@ impl Font {
             glyphs.push(Glyph::new(glyph_data, w as u32, h as u32));
         }
 
+        let mut cell_size = 0;
         for g in &glyphs {
-            for y in 0..g.height {
+            println!("W: {}, H:{}", g.width, g.height);
+            if g.width > cell_size {
+                cell_size = g.width;
+            }
+            if g.height > cell_size {
+                cell_size = g.height;
+            }
+
+            /*for y in 0..g.height {
                 for x in 0..g.width {
-                    if (g.data[(y * g.width + x) as usize] > 0) {
+                    /*if (g.data[(y * g.width + x) as usize] > 0) {
                         print!("X");
                     } else {
                         print!(" ");
-                    }
+                    }*/
                 }
-                print!("\n");
-            }
-            println!("=============; W:{}, H:{}", g.width, g.height);
+                //print!("\n");
+            }*/
+            //println!("=============; W:{}, H:{}", g.width, g.height);
         }
 
+        println!("CellSize: {}", cell_size);
+
         Font {
-            glyphs: glyphs
+            glyphs: glyphs,
+            cell_size: cell_size, //TODO: let the user control this? Or just get rid of it at some point
         }
     }
 
     pub fn total_size(&self) -> (u32, u32) {
-        let mut tot_width = 0;
+        /*let mut tot_width = 0;
         let mut height = 0;
         for g in &self.glyphs {
             tot_width += g.width;
             if g.height > height {
                 height = g.height;
             }
-        }
-        (tot_width, height)
+        }*/
+        (self.cell_size * self.glyphs.len() as u32, self.cell_size)
     }
 
     pub fn data(&self) -> Vec<u8> {
         let tot_size = self.total_size();
         println!("total size: {:?}", tot_size);
-        let width = tot_size.0;
-        let height = tot_size.1;
 
+        let n_glyphs = self.glyphs.len();
+        let cell_size = self.cell_size;
+        let width = n_glyphs * cell_size as usize;
+        let n_pixels = self.glyphs.len() * (cell_size * cell_size) as usize;
 
-        let n_pixels = tot_size.0 * tot_size.1;
         let mut ret = Vec::with_capacity(n_pixels as usize);
         for i in 0..n_pixels {
             ret.push(0);
@@ -122,11 +136,24 @@ impl Font {
                 for x in 0..g.width {
                     let index = (x + (y * g.width)) as usize;
                     let d = g.data[index];
-                    ret[(x_offset + index) as usize] = d;
+                    ret[(x_offset + (x + (y*width as u32))) as usize] = d;
                 }
             }
-            x_offset += g.width as usize;
+            x_offset += cell_size as u32;
         }
+
+
+        /*for x in 0..width {
+            for y in (0..cell_size).rev() {
+                let foo = ret[(x + (y*width)) as usize];
+                if (foo > 0) {
+                    print!("XX");
+                } else {
+                    print!("  ");
+                }
+            }
+            print!("\n");
+        }*/
         ret
     }
 }
@@ -150,8 +177,8 @@ impl Text {
 
         let font_width = (font_size.0 as f32/dc.width as f32);
         let font_height = (font_size.1 as f32/dc.height as f32);
-
         println!("W: {}, H: {}", font_width, font_height);
+
         let mesh = Mesh::create_rect(font_width, font_height);
 
         let font_data = font.data();

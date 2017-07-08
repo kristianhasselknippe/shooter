@@ -1,12 +1,12 @@
 #version 330 core
 
-uniform sampler2D tex0;
+uniform sampler2D font;
 
 in vec2 TexCoord;
 out vec4 color;
 
 void main()
 {
-    float x = texture(tex0,TexCoord).r;
-    color = vec4(1.0,1.0,x, 1.0);
+    float x = texture(font,TexCoord).r;
+    color = vec4(x,x,x, 1.0);
 }
