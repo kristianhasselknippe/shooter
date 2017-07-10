@@ -1,6 +1,5 @@
 extern crate shooter_common;
-extern crate glutin;
-extern crate libc;
+extern crate sdl2;
 extern crate gl;
 extern crate nalgebra as na;
 extern crate image;
@@ -23,77 +22,56 @@ use entity::*;
 use text::*;
 use input::*;
 
-use glutin::{ Event, WindowEvent, EventsLoop, WindowBuilder, DeviceEvent, ContextBuilder, GlWindow, GlContext };
-
 
 use std::path::Path;
 
 use gl::types::*;
 
+fn find_sdl_gl_driver() -> Option<u32> {
+    for (index, item) in sdl2::render::drivers().enumerate() {
+        if item.name == "opengl" {
+            return Some(index as u32);
+        }
+    }
+    None
+}
+
 fn main() {
 
     let window_size = (600,800);
 
-    let mut events_loop = EventsLoop::new();
 
-    let window = WindowBuilder::new()
-        .with_title("Shooter")
-        .with_dimensions(window_size.0, window_size.1);
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let window = video_subsystem.window("Shooter", window_size.0, window_size.1)
+        .opengl()
+        .build()
+        .unwrap();
 
-    let context = ContextBuilder::new()
-        .with_vsync(true);
+    let mut canvas = window.into_canvas()
+        .index(find_sdl_gl_driver().unwrap())
+        .build()
+        .unwrap();
 
-    let gl_window = GlWindow::new(window, context, &events_loop).unwrap();
+    gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
+    canvas.window().gl_set_context_to_current();
 
-    println!("Foobar");
+    let mut events = sdl_context.event_pump().unwrap();
 
-
-    unsafe {
-        gl_window.make_current().unwrap();
-    };
-
-    unsafe {
-        gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
-        gl::ClearColor(0.0,1.0,0.0,1.0);
-    }
 
 
     let draw_context = DrawContext::new(window_size.0, window_size.1);
     let text = Text::new("This is a string", &draw_context);
 
 
-    let mut running = true;
-    while running {
-        events_loop.poll_events(|event| {
+    'running: loop {
+        for event in events.poll_iter() {
             match event {
-                Event::WindowEvent { event: WindowEvent::Closed, .. } => {
-                    running = false;
-                },
-                Event::DeviceEvent { device_id, event } => {
-                    match event {
-                        DeviceEvent::Added => {
-                        },
-                        DeviceEvent::Removed => {
-                        },
-                        DeviceEvent::Motion { axis, value } => {
-                            println!("Motion : {:?}", value);
-                        },
-                        DeviceEvent::Button { button, state } => {
-
-                        },
-                        DeviceEvent::Key(keyboard_input) => {
-
-                        },
-                        DeviceEvent::Text { codepoint } => {
-
-                        },
-                    }
-
-                }
-                _ => ()
+                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
+                sdl2::event::Event::Quit { .. } => break 'running,
+                _ => {}
             }
-        });
-
+        }
 
         draw_context.bind();
 
@@ -104,39 +82,10 @@ fn main() {
 
         draw_context.unbind();
 
-        gl_window.swap_buffers().unwrap();
 
+        canvas.present();
+
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
     }
-
-
-
-
-
-
-
-    let mut draw_context = DrawContext::new(window_size.0, window_size.1);
-
-    let text = Text::new("this is some text", &draw_context);
-
-    draw_context.bind();
-    //mesh.bind();
-    draw_context.unbind();
-
-
-
-    /*while !window.should_close() {
-
-        draw_context.bind();
-
-        draw_context.clear((1.0,0.0,1.0,1.0));
-
-        text.bind();
-        draw_context.draw();
-
-        draw_context.unbind();
-
-        window.swap_buffers();
-
-
-    }*/
 }
