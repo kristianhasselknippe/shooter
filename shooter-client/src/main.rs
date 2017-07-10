@@ -1,5 +1,6 @@
 extern crate shooter_common;
-extern crate glfw;
+extern crate glutin;
+extern crate libc;
 extern crate gl;
 extern crate nalgebra as na;
 extern crate image;
@@ -12,6 +13,7 @@ mod transform;
 mod entity;
 mod texture;
 mod text;
+mod input;
 
 use shader::*;
 use mesh::*;
@@ -19,24 +21,70 @@ use drawing::*;
 use texture::*;
 use entity::*;
 use text::*;
+use input::*;
 
 
 use std::path::Path;
 
-use glfw::{Action, Context, Key};
 use gl::types::*;
 
 fn main() {
 
     let window_size = (600,800);
 
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    let (mut window, events) = glfw.create_window(window_size.0,window_size.1, "Shooter", glfw::WindowMode::Windowed).expect("failed to create window");
+    let events_loop = glutin::EventsLoop::new();
+    let window = glutin::WindowBuilder::new()
+        .with_title("Shooter".to_string())
+        .with_dimensions(window_size.0, window_size.1)
+        .with_vsync()
+        .build(&events_loop)
+        .unwrap();
 
-    window.make_current();
-    window.set_key_polling(true);
 
-    gl::load_with(|s| window.get_proc_address(s) as *const GLvoid);
+    unsafe {
+        window.make_current()
+    }.unwrap();
+
+    unsafe {
+        gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+        gl::ClearColor(0.0,1.0,0.0,1.0);
+    }
+
+
+    let draw_context = DrawContext::new(window_size.0, window_size.1);
+    let text = Text::new("This is a string", &draw_context);
+
+
+    let mut running = true;
+    while running {
+        events_loop.poll_events(|event| {
+            match event {
+                glutin::Event::WindowEvent { event: glutin::WindowEvent::Closed, .. } => {
+                    running = false;
+                },
+                _ => ()
+            }
+        });
+
+
+        draw_context.bind();
+
+        draw_context.clear((1.0,0.0,1.0,1.0));
+
+        text.bind();
+        draw_context.draw();
+
+        draw_context.unbind();
+
+        window.swap_buffers().unwrap();
+
+    }
+
+
+
+
+
+
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
@@ -48,7 +96,7 @@ fn main() {
 
 
 
-    while !window.should_close() {
+    /*while !window.should_close() {
 
         draw_context.bind();
 
@@ -61,20 +109,6 @@ fn main() {
 
         window.swap_buffers();
 
-        glfw.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            println!("{:?}", event);
-            match event {
-                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                    window.set_should_close(true);
-                },
-                glfw::WindowEvent::Size(w,h) => {
-                    println!("Resized: {},{}", w,h);
-                    draw_context.width = w as u32;
-                    draw_context.height = h as u32;
-                }
-                _ => (),
-            }
-        }
-    }
+
+    }*/
 }
