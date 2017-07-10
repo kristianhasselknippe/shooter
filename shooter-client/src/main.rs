@@ -23,6 +23,8 @@ use entity::*;
 use text::*;
 use input::*;
 
+use glutin::{ Event, WindowEvent, EventsLoop, WindowBuilder, DeviceEvent, ContextBuilder, GlWindow, GlContext };
+
 
 use std::path::Path;
 
@@ -32,21 +34,26 @@ fn main() {
 
     let window_size = (600,800);
 
-    let events_loop = glutin::EventsLoop::new();
-    let window = glutin::WindowBuilder::new()
-        .with_title("Shooter".to_string())
-        .with_dimensions(window_size.0, window_size.1)
-        .with_vsync()
-        .build(&events_loop)
-        .unwrap();
+    let mut events_loop = EventsLoop::new();
+
+    let window = WindowBuilder::new()
+        .with_title("Shooter")
+        .with_dimensions(window_size.0, window_size.1);
+
+    let context = ContextBuilder::new()
+        .with_vsync(true);
+
+    let gl_window = GlWindow::new(window, context, &events_loop).unwrap();
+
+    println!("Foobar");
 
 
     unsafe {
-        window.make_current()
-    }.unwrap();
+        gl_window.make_current().unwrap();
+    };
 
     unsafe {
-        gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+        gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
         gl::ClearColor(0.0,1.0,0.0,1.0);
     }
 
@@ -59,9 +66,30 @@ fn main() {
     while running {
         events_loop.poll_events(|event| {
             match event {
-                glutin::Event::WindowEvent { event: glutin::WindowEvent::Closed, .. } => {
+                Event::WindowEvent { event: WindowEvent::Closed, .. } => {
                     running = false;
                 },
+                Event::DeviceEvent { device_id, event } => {
+                    match event {
+                        DeviceEvent::Added => {
+                        },
+                        DeviceEvent::Removed => {
+                        },
+                        DeviceEvent::Motion { axis, value } => {
+                            println!("Motion : {:?}", value);
+                        },
+                        DeviceEvent::Button { button, state } => {
+
+                        },
+                        DeviceEvent::Key(keyboard_input) => {
+
+                        },
+                        DeviceEvent::Text { codepoint } => {
+
+                        },
+                    }
+
+                }
                 _ => ()
             }
         });
@@ -76,7 +104,7 @@ fn main() {
 
         draw_context.unbind();
 
-        window.swap_buffers().unwrap();
+        gl_window.swap_buffers().unwrap();
 
     }
 

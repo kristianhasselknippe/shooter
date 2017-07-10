@@ -5,7 +5,7 @@ authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
 gl = "0.6.0"
-glutin = "*"
+glutin = "0.9.0"
 libc = "*"
 shooter_common = { path = "../shooter-common" }
 nalgebra = "0.11"
