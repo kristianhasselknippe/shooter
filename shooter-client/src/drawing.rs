@@ -2,6 +2,8 @@ use super::gl;
 use super::gl::types::*;
 use std::ptr;
 
+use super::scene::Scene;
+
 pub struct DrawContext {
     vao: GLuint,
     pub width: u32,

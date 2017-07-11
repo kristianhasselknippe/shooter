@@ -13,6 +13,7 @@ mod entity;
 mod texture;
 mod text;
 mod input;
+mod scene;
 
 use shader::*;
 use mesh::*;
@@ -21,7 +22,7 @@ use texture::*;
 use entity::*;
 use text::*;
 use input::*;
-
+use scene::*;
 
 use std::path::Path;
 
@@ -58,11 +59,14 @@ fn main() {
 
     let mut events = sdl_context.event_pump().unwrap();
 
-
-
     let draw_context = DrawContext::new(window_size.0, window_size.1);
-    let text = Text::new("This is a string", &draw_context);
 
+    let text = Text::new("This is somet text", &draw_context);
+
+    let mut scene = Scene::new();
+    let p = Path::new("assets/overworld.png");
+    println!("{:?}", p);
+    let s = Sprite::from_png(p);
 
     'running: loop {
         for event in events.poll_iter() {
@@ -77,11 +81,12 @@ fn main() {
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
-        text.bind();
+        //text.bind();
+
+        scene.bind();
+
         draw_context.draw();
-
         draw_context.unbind();
-
 
         canvas.present();
 

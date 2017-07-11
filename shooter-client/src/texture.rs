@@ -6,9 +6,13 @@ use super::gl;
 use super::gl::types::*;
 use std::os::raw::c_void;
 
+use super::na::{Point2,Vector2};
+
+#[derive(Clone)]
+pub struct TextureHandle(GLuint);
 
 pub struct Texture {
-    handle: GLuint,
+    handle: TextureHandle,
 }
 
 fn create_texture(dim: (u32,u32), data: Vec<u8>, format: GLenum) -> Texture {
@@ -24,7 +28,7 @@ fn create_texture(dim: (u32,u32), data: Vec<u8>, format: GLenum) -> Texture {
     };
 
     Texture {
-        handle: handle,
+        handle: TextureHandle(handle),
     }
 }
 
@@ -59,26 +63,53 @@ impl Texture {
                            dim.0, dim.1,
                            0, gl::RED as u32, gl::UNSIGNED_BYTE,
                            data.as_ptr() as *const GLvoid);
-
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         }
 
         Texture {
-            handle: texture
+            handle: TextureHandle(texture)
         }
     }
 
     pub fn bind(&self) {
         unsafe {
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, self.handle);
+            gl::BindTexture(gl::TEXTURE_2D, self.handle.0);
+
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         }
+    }
+}
+
+pub struct MemoryTexture {
+    data: Vec<u8>,
+}
+
+impl MemoryTexture {
+    pub fn new(data: &[u8]) -> MemoryTexture {
+        MemoryTexture {
+            data: data.to_vec()
+        }
+    }
+}
+
+pub struct TextureAtlas {
+    memory_textures: Vec<MemoryTexture>,
+}
+
+pub struct TextureAtlasRef(u32);
+
+impl TextureAtlas {
+    pub fn new() -> TextureAtlas {
+        TextureAtlas {
+            memory_textures: Vec::new()
+        }
+    }
+
+    pub fn add_texture(&mut self, mem_tex: MemoryTexture) -> TextureAtlasRef {
+        self.memory_textures.push(mem_tex);
+        TextureAtlasRef(self.memory_textures.len() as u32)
     }
 }
