@@ -4,7 +4,9 @@ use super::image::png::PNGDecoder;
 use super::image::{DecodingResult,ColorType,ImageDecoder};
 use super::gl;
 use super::gl::types::*;
+use super::drawing::DrawContext;
 use std::os::raw::c_void;
+use std::ptr;
 
 use super::na::{Point2,Vector2};
 
@@ -111,5 +113,68 @@ impl TextureAtlas {
     pub fn add_texture(&mut self, mem_tex: MemoryTexture) -> TextureAtlasRef {
         self.memory_textures.push(mem_tex);
         TextureAtlasRef(self.memory_textures.len() as u32)
+    }
+
+    pub fn draw(&mut self) -> Texture {
+        next up we need to pack and draw the texture atlas
+    }
+}
+
+
+struct Framebuffer {
+    handle: GLuint,
+    width: u32,
+    height: u32,
+}
+
+impl Framebuffer {
+    pub fn new(width: u32, height: u32) -> Framebuffer {
+        let mut handle = 0;
+        unsafe {
+            gl::GenFramebuffers(1, &mut handle);
+        }
+        Framebuffer {
+            handle: handle,
+            width: width,
+            height: height,
+        }
+    }
+
+    pub fn bind(&self, dc: &DrawContext) {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, self.handle);
+
+            let mut color_buffer = 0;
+            gl::GenTextures(1, &mut color_buffer);
+            gl::BindTexture(gl::TEXTURE_2D, color_buffer);
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, dc.width as i32, dc.height as i32, 0, gl::RGB, gl::UNSIGNED_BYTE, ptr::null());
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+
+            gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, color_buffer, 0);
+
+            gl::Viewport(0, 0, self.width as i32, self.height as i32);
+
+
+            if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) == gl::FRAMEBUFFER_COMPLETE {
+                println!("Framebuffer is complete");
+            }
+        }
+    }
+
+    pub fn unbind(&self) {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+        }
+    }
+}
+
+
+impl Drop for Framebuffer {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteFramebuffers(1, self.handle as *const u32);
+        }
     }
 }
