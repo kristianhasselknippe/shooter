@@ -1,5 +1,5 @@
 use super::na::{Point2};
-use super::texture::{Texture};
+use super::texture::{Texture,TextureUnit};
 use super::mesh::{Mesh};
 use std::path::{Path};
 
@@ -23,7 +23,7 @@ impl Sprite {
     }
 
     pub fn bind(&self) {
-        self.texture.bind();
+        self.texture.bind(TextureUnit::Unit0);
         self.mesh.bind();
     }
 

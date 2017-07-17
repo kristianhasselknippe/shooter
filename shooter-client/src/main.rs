@@ -61,12 +61,21 @@ fn main() {
 
     let draw_context = DrawContext::new(window_size.0, window_size.1);
 
-    let text = Text::new("This is somet text", &draw_context);
+    //let text = Text::new("This is somet text", &draw_context);
 
-    let mut scene = Scene::new();
+    /*let mut scene = Scene::new();
     let p = Path::new("assets/overworld.png");
     println!("{:?}", p);
-    let s = Sprite::from_png(p);
+    let s = Sprite::from_png(p);*/
+
+
+    let mut texture_atlas = TextureAtlas::new();
+
+
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4")));
 
     'running: loop {
         for event in events.poll_iter() {
@@ -80,10 +89,6 @@ fn main() {
         draw_context.bind();
 
         draw_context.clear((1.0,0.0,1.0,1.0));
-
-        //text.bind();
-
-        scene.bind();
 
         draw_context.draw();
         draw_context.unbind();
