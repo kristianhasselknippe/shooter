@@ -68,14 +68,17 @@ fn main() {
     println!("{:?}", p);
     let s = Sprite::from_png(p);*/
 
+    println!("Current dir: {:?}", std::env::current_dir());
 
     let mut texture_atlas = TextureAtlas::new();
 
 
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1")));
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2")));
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3")));
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1.png")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
+//    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3.png")));
+    //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
+
+    texture_atlas.pack_and_draw(&draw_context);
 
     'running: loop {
         for event in events.poll_iter() {
