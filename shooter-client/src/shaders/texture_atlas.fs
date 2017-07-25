@@ -11,5 +11,6 @@ out vec4 color;
 void main()
 {
     color = texture(tex0, TexCoord);
+    //color = vec4(TexCoord,1.0,1.0);
     //color = vec4(spriteColor, 1.0);
 }

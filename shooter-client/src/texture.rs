@@ -35,7 +35,7 @@ impl Image {
 
         match (color_type,image_data) {
             (ColorType::RGB(bit_depth),DecodingResult::U8(data)) => {
-                println!("Loading RGB image");
+                println!("Loading RGB image with pixel depth: {}", bit_depth);
                 Image {
                     image_format: ImageFormat::RGB,
                     data: data,
@@ -43,7 +43,7 @@ impl Image {
                 }
             },
             (ColorType::RGBA(bit_depth),DecodingResult::U8(data)) => {
-                println!("Loading RGBA image");
+                println!("Loading RGBA image with pixel depth: {}", bit_depth);
                 Image {
                     image_format: ImageFormat::RGBA,
                     data: data,
@@ -60,7 +60,7 @@ impl Image {
         let encoder = PNGEncoder::new(image_file);
         //using a bit depth of 8 here TODO(should make that tweakable?)
         println!("PNG Width: {}, Height: {}", width, height);
-        encoder.encode(bytes, width, height, ColorType::RGB(8)).unwrap();
+        encoder.encode(bytes, width, height, ColorType::RGBA(8)).unwrap();
     }
 
     pub fn save_bmp(path: &Path, bytes: &[u8], width: u32, height: u32) {
@@ -68,7 +68,7 @@ impl Image {
         let mut encoder = BMPEncoder::new(&mut image_file);
         //using a bit depth of 8 here TODO(should make that tweakable?)
         println!("BMP Width: {}, Height: {}", width, height);
-        encoder.encode(bytes, width, height, ColorType::RGB(8)).unwrap();
+        encoder.encode(bytes, width, height, ColorType::RGBA(8)).unwrap();
     }
 }
 
@@ -135,8 +135,8 @@ impl Texture {
             gl::ActiveTexture(unit.as_gl_type());
             gl::BindTexture(gl::TEXTURE_2D, self.handle.0);
 
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+            /*gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);*/
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         }
@@ -237,7 +237,7 @@ impl MemoryTexture {
         MemoryTexture::new(&img.data, img.dim.0, img.dim.1, img.image_format)
     }
 
-    pub fn draw(&self, dc: &DrawContext, pos: (f32, f32), size: (f32,f32)) {
+    pub fn draw(&self, dc: &DrawContext, size: (f32,f32)) {
         println!("Drawing {:?}", self.format);
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
@@ -265,7 +265,7 @@ impl TextureAtlas {
         TextureAtlasRef(self.memory_textures.len() as u32)
     }
 
-    pub fn pack_and_draw(&mut self, dc: &DrawContext) -> Result<Texture,()> {
+    pub fn pack_and_draw(&mut self, dc: &DrawContext) {// -> Result<Texture,()> {
         //Framebuffer::new(
 
         let mut fb_width: u32 = 0;
@@ -276,6 +276,7 @@ impl TextureAtlas {
                 fb_height = tex.size.1;
             }
         }
+        println!("FB: {:?}", (fb_width, fb_height));
 
         let mut fb = Framebuffer::new(fb_width, fb_height);
         fb.bind(dc);
@@ -285,41 +286,36 @@ impl TextureAtlas {
 
         dc.clear((1.0, 0.0, 1.0, 1.0));
 
-        let mut x_offset = -1.0;
         for tex in &self.memory_textures {
-            let height = (tex.size.1 as f32 / fb_height as f32);
             let width = (tex.size.0 as f32 / fb_width as f32);
-            let x = x_offset;
-            let pos = (x,0.0);
+            let height = (tex.size.1 as f32 / fb_height as f32);
             let size = (width, height);
-            println!("Drawing tex: pos - {:?}, size - {:?}", pos, size);
-            tex.draw(dc, pos, size);
-            x_offset += width;
+            println!("Drawing tex: size - {:?}", size);
+            tex.draw(dc, size);
         }
 
+
+
+
         let pixel_data = unsafe {
-            let size = 4*dc.width*dc.height;
-            println!("size: {}", size);
+            let size = 4*fb_width*fb_height;
             let mut pixel_data: Vec<u8> = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                pixel_data.push(0);
-            }
-            println!("reading pixels");
-            gl::ReadPixels(0, 0, dc.width as i32, dc.height as i32, gl::RGB,
-                           gl::UNSIGNED_BYTE, pixel_data.as_mut_ptr() as *mut c_void);
-            pixel_data
+            for i in 0..size { pixel_data.push(150); }
+                gl::ReadPixels(0, 0, (fb_width) as i32, (fb_height) as i32, gl::RGBA,
+                               gl::UNSIGNED_BYTE, pixel_data.as_mut_ptr() as *mut c_void);
+                pixel_data
         };
 
-        println!("Last data : {},{},{}", pixel_data.get(pixel_data.len() - 3).unwrap(),
-                 pixel_data.get(pixel_data.len() - 2).unwrap(),
-                 pixel_data.get(pixel_data.len() - 1).unwrap());
-
-
-        Image::save_bmp(Path::new("testing.bmp"), &pixel_data, dc.width, dc.height);
-
+        Image::save_bmp(Path::new("testing.bmp"), &pixel_data, fb_width, fb_height);
         println!("TextureAtlas Dim: W: {}, H: {}", fb_width, fb_height);
 
-        Err(())
+
+
+
+
+
+
+        //Ok(Texture::from_data_u8((fb_width as i32,fb_height as i32), &pixel_data, &ImageFormat::RGB))
     }
 }
 
@@ -352,7 +348,7 @@ impl Framebuffer {
 
             gl::GenTextures(1, &mut self.tex_handle);
             gl::BindTexture(gl::TEXTURE_2D, self.tex_handle);
-            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, self.width as i32, self.height as i32, 0, gl::RGB, gl::UNSIGNED_BYTE, ptr::null());
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, self.width as i32, self.height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, ptr::null());
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
             gl::BindTexture(gl::TEXTURE_2D, 0);
@@ -377,10 +373,10 @@ impl Framebuffer {
 }
 
 
-impl Drop for Framebuffer {
+/*impl Drop for Framebuffer {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteFramebuffers(1, self.handle as *const u32);
         }
     }
-}
+}*/

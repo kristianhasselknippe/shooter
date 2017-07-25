@@ -73,13 +73,15 @@ fn main() {
     let mut texture_atlas = TextureAtlas::new();
 
 
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1.png")));
+    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
     //texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
 //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3.png")));
     //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
 
     texture_atlas.pack_and_draw(&draw_context);
-
+    println!("Ready to present");
+    canvas.present();
+    println!("We've presented");
     'running: loop {
         for event in events.poll_iter() {
             match event {
@@ -89,14 +91,14 @@ fn main() {
             }
         }
 
-        draw_context.bind();
+        /*draw_context.bind();
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
         draw_context.draw();
-        draw_context.unbind();
+        draw_context.unbind();*/
 
-        canvas.present();
+
 
 
         std::thread::sleep(std::time::Duration::from_millis(100));
