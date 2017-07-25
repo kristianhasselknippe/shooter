@@ -74,7 +74,7 @@ fn main() {
 
 
     texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1.png")));
-    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
+    //texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
 //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3.png")));
     //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
 

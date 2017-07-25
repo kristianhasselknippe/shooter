@@ -185,7 +185,7 @@ impl Text {
 
         let shader = ShaderProgram::create_program("text");
 
-        let texture = Texture::from_data_u8((font_size.0 as i32, font_size.1 as i32), &font_data);
+        let texture = Texture::from_data_u8((font_size.0 as i32, font_size.1 as i32), &font_data, &ImageFormat::RGB);
 
         Text {
             val: val.to_string(),

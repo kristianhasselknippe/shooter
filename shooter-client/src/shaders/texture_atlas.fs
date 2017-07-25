@@ -10,6 +10,6 @@ out vec4 color;
 
 void main()
 {
-    //color = texture(tex0, TexCoord);
-    color = vec4(spriteColor, 1.0);
+    color = texture(tex0, TexCoord);
+    //color = vec4(spriteColor, 1.0);
 }

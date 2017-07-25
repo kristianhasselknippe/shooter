@@ -13,6 +13,7 @@ use std::ptr;
 
 use super::na::{Point2,Vector2};
 
+#[derive(Debug)]
 pub enum ImageFormat {
     RGB,
     RGBA
@@ -34,7 +35,7 @@ impl Image {
 
         match (color_type,image_data) {
             (ColorType::RGB(bit_depth),DecodingResult::U8(data)) => {
-                println!("Bit depth RGB: {}", bit_depth);
+                println!("Loading RGB image");
                 Image {
                     image_format: ImageFormat::RGB,
                     data: data,
@@ -42,7 +43,7 @@ impl Image {
                 }
             },
             (ColorType::RGBA(bit_depth),DecodingResult::U8(data)) => {
-                println!("Image depth RGBA: {}", bit_depth);
+                println!("Loading RGBA image");
                 Image {
                     image_format: ImageFormat::RGBA,
                     data: data,
@@ -101,17 +102,26 @@ impl Texture {
         create_texture(img.dim, img.data, gl::RGBA)
     }
 
-    pub fn from_data_u8(dim: (i32,i32), data: &Vec<u8>) -> Texture {
+    pub fn from_data_u8(dim: (i32,i32), data: &Vec<u8>, format: &ImageFormat) -> Texture {
         let mut texture: GLuint = 0;
+
+        let tex_format = match format {
+            &ImageFormat::RGB => {
+                gl::RGB
+            },
+            &ImageFormat::RGBA => {
+                gl::RGBA
+            },
+        };
 
         unsafe {
             gl::ActiveTexture(gl::TEXTURE0);
 
             gl::GenTextures(1, &mut texture);
             gl::BindTexture(gl::TEXTURE_2D, texture);
-            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32,
+            gl::TexImage2D(gl::TEXTURE_2D, 0, tex_format as i32,
                            dim.0, dim.1,
-                           0, gl::RGB as u32, gl::UNSIGNED_BYTE,
+                           0, tex_format as u32, gl::UNSIGNED_BYTE,
                            data.as_ptr() as *const GLvoid);
         }
 
@@ -209,24 +219,27 @@ impl TextureUnit {
 
 pub struct MemoryTexture {
     data: Vec<u8>,
+    format: ImageFormat,
     size: (u32,u32),
 }
 
 impl MemoryTexture {
-    pub fn new(data: &[u8], width: u32, height: u32) -> MemoryTexture {
+    pub fn new(data: &[u8], width: u32, height: u32, format: ImageFormat) -> MemoryTexture {
         MemoryTexture {
             data: data.to_vec(),
             size: (width, height),
+            format: format,
         }
     }
 
     pub fn from_png(path: &Path) -> MemoryTexture {
         let img = Image::from_png(path);
-        MemoryTexture::new(&img.data, img.dim.0, img.dim.1)
+        MemoryTexture::new(&img.data, img.dim.0, img.dim.1, img.image_format)
     }
 
     pub fn draw(&self, dc: &DrawContext, pos: (f32, f32), size: (f32,f32)) {
-        let texture = Texture::from_data_u8((pos.0 as i32, pos.1 as i32), &self.data);
+        println!("Drawing {:?}", self.format);
+        let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_rect(size.0, size.1);
         quad.bind();
@@ -270,33 +283,39 @@ impl TextureAtlas {
         let program = ShaderProgram::create_program("texture_atlas");
         program.use_program();
 
-        dc.clear((1.0, 0.0, 0.0, 1.0));
+        dc.clear((1.0, 0.0, 1.0, 1.0));
 
-        /*let mut x_offset = 0.0;
+        let mut x_offset = -1.0;
         for tex in &self.memory_textures {
-            let height = (tex.size.1 as f32 / fb_height as f32) * 2.0 - 1.0;
-            let width = (tex.size.0 as f32 / fb_width as f32) * 2.0 - 1.0;
+            let height = (tex.size.1 as f32 / fb_height as f32);
+            let width = (tex.size.0 as f32 / fb_width as f32);
             let x = x_offset;
             let pos = (x,0.0);
             let size = (width, height);
+            println!("Drawing tex: pos - {:?}, size - {:?}", pos, size);
             tex.draw(dc, pos, size);
             x_offset += width;
-    }*/
+        }
 
         let pixel_data = unsafe {
-            let size = 4*fb_width*fb_height;
+            let size = 4*dc.width*dc.height;
             println!("size: {}", size);
             let mut pixel_data: Vec<u8> = Vec::with_capacity(size as usize);
             for i in 0..size {
                 pixel_data.push(0);
             }
-            gl::ReadPixels(0, 0, fb_width as i32, fb_height as i32, gl::RGB,
+            println!("reading pixels");
+            gl::ReadPixels(0, 0, dc.width as i32, dc.height as i32, gl::RGB,
                            gl::UNSIGNED_BYTE, pixel_data.as_mut_ptr() as *mut c_void);
             pixel_data
         };
 
+        println!("Last data : {},{},{}", pixel_data.get(pixel_data.len() - 3).unwrap(),
+                 pixel_data.get(pixel_data.len() - 2).unwrap(),
+                 pixel_data.get(pixel_data.len() - 1).unwrap());
 
-        Image::save_bmp(Path::new("testing.bmp"), &pixel_data, fb_width, fb_height);
+
+        Image::save_bmp(Path::new("testing.bmp"), &pixel_data, dc.width, dc.height);
 
         println!("TextureAtlas Dim: W: {}, H: {}", fb_width, fb_height);
 
@@ -341,7 +360,6 @@ impl Framebuffer {
             gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, self.tex_handle, 0);
 
             gl::Viewport(0, 0, self.width as i32, self.height as i32);
-
 
             let status = gl::CheckFramebufferStatus(gl::FRAMEBUFFER);
             println!("{:?}", status);
