@@ -79,19 +79,75 @@ impl Mesh {
             gl::BufferData(gl::ARRAY_BUFFER, (self.vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                            mem::transmute(&self.vertices[0]), gl::STATIC_DRAW);
 
-            gl::VertexAttribPointer(0 ,3, gl::FLOAT, gl::FALSE,
-                                    (5 * mem::size_of::<GLfloat>()) as i32,
-                                    0 as *const c_void);
-            gl::EnableVertexAttribArray(0);
 
-            gl::VertexAttribPointer(1 ,2, gl::FLOAT, gl::FALSE,
-                                    (5 * mem::size_of::<GLfloat>()) as i32,
-                                    (3 * mem::size_of::<GLfloat>()) as *const c_void);
-            gl::EnableVertexAttribArray(1);
+            let mut positions = VertexAttribute::new(0, GLDataType::Float, 3);
+            positions.enable(0,5);
+
+            let mut ux_coords = VertexAttribute::new(1, GLDataType::Float, 2);
+            ux_coords.enable(3,5);
 
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
             gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * self.indices.len()) as GLsizeiptr,
                            mem::transmute(self.indices.first().unwrap()), gl::STATIC_DRAW);
         }
+    }
+
+    pub fn draw(&self) {
+        unsafe {
+            gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
+        }
+    }
+}
+
+enum GLDataType {
+    Float,
+}
+
+struct VertexAttribute {
+    n_components: u32,
+    data_type: GLDataType,
+    location: u32,
+}
+
+impl VertexAttribute {
+    pub fn new(location: u32, data_type: GLDataType, n_components: u32) -> VertexAttribute {
+        VertexAttribute {
+            n_components: n_components,
+            data_type: data_type,
+            location: location,
+        }
+    }
+
+    pub fn enable(&mut self, offset: u32, stride: u32) {
+        unsafe {
+            let (t, size) = match &self.data_type {
+                &GLDataType::Float => { (gl::FLOAT, mem::size_of::<GLfloat>() as i32) }
+            };
+            gl::VertexAttribPointer(self.location, self.n_components as i32, t, gl::FALSE,
+                                    (stride as i32 * size) as i32,
+                                    (offset as i32 * size) as *const c_void);
+            gl::EnableVertexAttribArray(self.location);
+        }
+    }
+}
+
+pub struct Batch {
+    vertices: Vec<GLfloat>,
+    indices: Vec<GLuint>,
+}
+
+impl Batch {
+    pub fn new() -> Batch {
+        Batch {
+            vertices: Vec::new(),
+            indices: Vec::new(),
+        }
+    }
+
+    pub fn write_mesh(&mut self, mesh: &Mesh) {
+
+    }
+
+    pub fn draw(&self) {
     }
 }

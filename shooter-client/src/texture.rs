@@ -245,7 +245,7 @@ impl MemoryTexture {
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
         quad.bind();
-        dc.draw();
+        quad.draw();
     }
 }
 

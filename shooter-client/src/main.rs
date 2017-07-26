@@ -88,7 +88,10 @@ fn main() {
     mesh.bind();
 
     program.use_program();
-    draw_context.draw();
+    mesh.draw();
+
+    let mesh2 = Mesh::create_rect(0.3,0.3);
+    mesh2.draw();
 
     canvas.present();
     println!("We've presented");

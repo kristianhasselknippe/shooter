@@ -42,9 +42,4 @@ impl DrawContext {
         }
     }
 
-    pub fn draw(&self) {
-        unsafe {
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-        }
-    }
 }
