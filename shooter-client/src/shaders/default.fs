@@ -2,14 +2,13 @@
 
 uniform sampler2D tex0;
 
-uniform vec3 spriteColor;
-
 in vec2 TexCoord;
 
 out vec4 color;
 
 void main()
 {
-    //color = texture(tex0, TexCoord);
-    color = vec4(spriteColor, 1.0);
+    color = texture(tex0, TexCoord);
+    color.x = 0.0f;
+    color.y = 0.0f;
 }

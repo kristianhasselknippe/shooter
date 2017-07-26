@@ -79,7 +79,17 @@ fn main() {
     //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
 
     texture_atlas.pack_and_draw(&draw_context);
-    println!("Ready to present");
+
+    let program = ShaderProgram::create_program("default");
+
+    texture_atlas.bind(&draw_context);
+
+    let mesh = Mesh::create_quad();
+    mesh.bind();
+
+    program.use_program();
+    draw_context.draw();
+
     canvas.present();
     println!("We've presented");
     'running: loop {

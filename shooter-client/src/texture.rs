@@ -11,6 +11,8 @@ use super::shader::*;
 use std::os::raw::c_void;
 use std::ptr;
 
+use std::collections::HashMap;
+
 use super::na::{Point2,Vector2};
 
 #[derive(Debug)]
@@ -248,29 +250,52 @@ impl MemoryTexture {
 }
 
 pub struct TextureAtlas {
-    memory_textures: Vec<MemoryTexture>,
+    memory_textures: Vec<(MemoryTexture,TextureAtlasRef)>,
+    ref_count: u32,
+
+    texture: Option<Texture>,
 }
 
+pub struct AtlasPosition {
+    pos: (f32,f32),
+    size: (f32,f32),
+}
+
+#[derive(PartialEq,Eq,Clone,Copy,Hash)]
 pub struct TextureAtlasRef(u32);
 
 impl TextureAtlas {
     pub fn new() -> TextureAtlas {
         TextureAtlas {
             memory_textures: Vec::new(),
+            ref_count: 0,
+            texture: None,
         }
     }
 
     pub fn add_texture(&mut self, mem_tex: MemoryTexture) -> TextureAtlasRef {
-        self.memory_textures.push(mem_tex);
-        TextureAtlasRef(self.memory_textures.len() as u32)
+        let atlas_ref = TextureAtlasRef(self.ref_count);
+        self.memory_textures.push((mem_tex,atlas_ref));
+        self.ref_count += 1;
+        atlas_ref
     }
 
-    pub fn pack_and_draw(&mut self, dc: &DrawContext) {// -> Result<Texture,()> {
-        //Framebuffer::new(
+    pub fn bind(&mut self, dc: &DrawContext) {
+        match &self.texture {
+            &None => {
+                panic!("TextureAtlas was bound before packed");
+            },
+            &Some(ref tex) => {
+                tex.bind(TextureUnit::Unit0);
+            },
+        }
+    }
+
+    pub fn pack_and_draw(&mut self, dc: &DrawContext) -> HashMap<TextureAtlasRef, AtlasPosition> {
 
         let mut fb_width: u32 = 0;
         let mut fb_height: u32 = 0;
-        for tex in &self.memory_textures {
+        for &(ref tex, atlas_ref) in &self.memory_textures {
             fb_width += tex.size.0;
             if tex.size.1 > fb_height {
                 fb_height = tex.size.1;
@@ -286,21 +311,27 @@ impl TextureAtlas {
 
         dc.clear((1.0, 0.0, 1.0, 1.0));
 
+        let mut atlas_positions = HashMap::new();
+
         let mut x = 0.0;
-        for tex in &self.memory_textures {
+        for &(ref tex, atlas_ref) in &self.memory_textures {
             let width = (tex.size.0 as f32 / fb_width as f32);
             let height = (tex.size.1 as f32 / fb_height as f32);
 
             let pos = ((x * 2.0) - 1.0, -1.0);
             x += width;
+
             let size = (width * 2.0, height * 2.0);
+
+            atlas_positions.insert(atlas_ref, AtlasPosition {
+                pos: pos,
+                size: size,
+            });
+
             println!("Drawing tex: size - {:?}", size);
 
             tex.draw(dc, pos, size);
         }
-
-
-
 
         let pixel_data = unsafe {
             let size = 4*fb_width*fb_height;
@@ -311,16 +342,14 @@ impl TextureAtlas {
                 pixel_data
         };
 
-        Image::save_bmp(Path::new("testing.bmp"), &pixel_data, fb_width, fb_height);
-        println!("TextureAtlas Dim: W: {}, H: {}", fb_width, fb_height);
+        self.texture = Some(Texture::from_data_u8((fb_width as i32, fb_height as i32), &pixel_data, &ImageFormat::RGBA));
 
+        fb.unbind();
 
+        //Image::save_bmp(Path::new("testing.bmp"), &pixel_data, fb_width, fb_height);
+        //println!("TextureAtlas Dim: W: {}, H: {}", fb_width, fb_height);
 
-
-
-
-
-        //Ok(Texture::from_data_u8((fb_width as i32,fb_height as i32), &pixel_data, &ImageFormat::RGB))
+        atlas_positions
     }
 }
 
