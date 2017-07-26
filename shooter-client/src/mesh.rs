@@ -53,6 +53,22 @@ impl Mesh {
         Mesh::new(vertices, indices)
     }
 
+    pub fn create_from_topleft_bottomright(topleft: (f32,f32), bottomright: (f32,f32)) -> Mesh {
+        let vertices: Vec<GLfloat> = vec![
+            //positions            //tex coords
+                topleft.0,      topleft.1, 0.0,        0.0,  1.0,
+            bottomright.0,      topleft.1, 0.0,        1.0,  1.0,
+            bottomright.0,  bottomright.1, 0.0,        1.0,  0.0,
+                topleft.0,  bottomright.1, 0.0,        0.0,  0.0,
+        ];
+        let indices: Vec<GLuint> = vec![  // Note that we start from 0!
+            0, 1, 3,   // First Triangle
+            1, 2, 3    // Second Triangle
+        ];
+
+        Mesh::new(vertices, indices)
+    }
+
     pub fn create_quad() -> Mesh {
         Self::create_rect(1.0,1.0)
     }

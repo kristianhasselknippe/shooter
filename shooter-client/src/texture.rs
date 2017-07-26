@@ -237,11 +237,11 @@ impl MemoryTexture {
         MemoryTexture::new(&img.data, img.dim.0, img.dim.1, img.image_format)
     }
 
-    pub fn draw(&self, dc: &DrawContext, size: (f32,f32)) {
+    pub fn draw(&self, dc: &DrawContext, pos: (f32,f32), size: (f32,f32)) {
         println!("Drawing {:?}", self.format);
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
-        let quad = Mesh::create_rect(size.0, size.1);
+        let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
         quad.bind();
         dc.draw();
     }
@@ -286,12 +286,17 @@ impl TextureAtlas {
 
         dc.clear((1.0, 0.0, 1.0, 1.0));
 
+        let mut x = 0.0;
         for tex in &self.memory_textures {
             let width = (tex.size.0 as f32 / fb_width as f32);
             let height = (tex.size.1 as f32 / fb_height as f32);
-            let size = (width, height);
+
+            let pos = ((x * 2.0) - 1.0, -1.0);
+            x += width;
+            let size = (width * 2.0, height * 2.0);
             println!("Drawing tex: size - {:?}", size);
-            tex.draw(dc, size);
+
+            tex.draw(dc, pos, size);
         }
 
 
