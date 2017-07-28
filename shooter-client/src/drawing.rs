@@ -24,6 +24,7 @@ impl DrawContext {
     }
 
     pub fn bind(&self) {
+        println!("Binding vertex array object");
         unsafe {
             gl::BindVertexArray(self.vao);
         }

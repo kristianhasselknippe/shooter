@@ -8,8 +8,7 @@ pub struct Mesh {
     vbo: GLuint,
     ebo: GLuint,
 
-    vertices: Vec<GLfloat>,
-    indices: Vec<GLuint>,
+    n_elements: i32,
 }
 
 impl Mesh {
@@ -19,18 +18,29 @@ impl Mesh {
 
         unsafe {
             gl::GenBuffers(1, &mut vbo);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             gl::GenBuffers(1, &mut ebo);
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * vertices.len()) as isize,
                            mem::transmute(vertices.first().unwrap()), gl::STATIC_DRAW);
+
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * indices.len()) as GLsizeiptr,
+                           mem::transmute(indices.first().unwrap()), gl::STATIC_DRAW);
+
+
+
+            /*gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);*/
+
+
         }
 
         Mesh {
             vbo: vbo,
             ebo: ebo,
 
-            vertices: vertices,
-            indices: indices,
+            n_elements: indices.len() as i32,
         }
     }
 
@@ -75,10 +85,9 @@ impl Mesh {
 
     pub fn bind(&self) {
         unsafe {
+            println!("Binding quad");
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BufferData(gl::ARRAY_BUFFER, (self.vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                           mem::transmute(&self.vertices[0]), gl::STATIC_DRAW);
-
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
 
             let mut positions = VertexAttribute::new(0, GLDataType::Float, 3);
             positions.enable(0,5);
@@ -86,15 +95,13 @@ impl Mesh {
             let mut ux_coords = VertexAttribute::new(1, GLDataType::Float, 2);
             ux_coords.enable(3,5);
 
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
-            gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * self.indices.len()) as GLsizeiptr,
-                           mem::transmute(self.indices.first().unwrap()), gl::STATIC_DRAW);
         }
     }
 
     pub fn draw(&self) {
         unsafe {
-            gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
+            println!("Drawing quad");
+            gl::DrawElements(gl::TRIANGLES, self.n_elements as i32, gl::UNSIGNED_INT, ptr::null());
         }
     }
 }
