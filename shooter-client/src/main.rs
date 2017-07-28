@@ -80,11 +80,11 @@ fn main() {
     /*let mut m = Mesh::create_quad();
     m.draw_now();*/
 
-/*    let mut batch = Batch::new();
+    let mut batch = Batch::new();
     batch.write_mesh(&Mesh::create_quad());
     batch.write_mesh(&Mesh::create_rect(0.3,0.3));
-
-    batch.draw();*/
+    batch.update_data();
+    batch.draw();
 
     canvas.present();
     println!("We've presented");
