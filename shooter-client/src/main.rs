@@ -73,7 +73,12 @@ fn main() {
 
     texture_atlas.pack_and_draw(&mut draw_context);
 
-    let program = ShaderProgram::create_program("default");
+    //let program = ShaderProgram::create_program("default");
+    let program = ShaderProgram::from_fragments("TexCoord = tex_coord;\n
+                                                 gl_Position = vec4(position.x, position.y, position.z, 1.0);",
+"float distance = 1.0 - distance(vec2(0.0,0.0), TexCoord * 2.0 - 1.0);
+color = vec4(distance,distance,distance,1.0);");
+    program.use_program();
 
     texture_atlas.bind(&draw_context);
 
@@ -81,8 +86,16 @@ fn main() {
     m.draw_now();*/
 
     let mut batch = Batch::new();
-    batch.write_mesh(&Mesh::create_quad());
-    batch.write_mesh(&Mesh::create_rect(0.3,0.3));
+    for y in 0..10 {
+        for x in 0..10 {
+            let x_pos = 0.1*x as f32;
+            let y_pos = 0.1*y as f32;
+            let w = 0.05;
+            let h = 0.05;
+            println!("Adding mesh: {}{}, {}{}", x_pos, y_pos, w, h);
+            batch.write_mesh(&Mesh::create_from_topleft_bottomright((x_pos,y_pos), (x_pos + w, y_pos + h)));
+        }
+    }
     batch.update_data();
     batch.draw();
 

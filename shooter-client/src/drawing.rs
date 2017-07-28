@@ -143,11 +143,15 @@ impl Batch {
     }
 
     pub fn write_mesh(&mut self, mesh: &Mesh) {
+        let element_offset = self.vertices.len() as u32 / 5; //TODO: This is not correct!
+        println!("Elemoffset: {}", element_offset);
+        for i in &mesh.indices {
+            let e = i + element_offset;
+            self.indices.push(e);
+            println!("Element: {} -> {}",i, e);
+        }
         for v in &mesh.vertices {
             self.vertices.push(v.clone());
-        }
-        for i in &mesh.indices {
-            self.indices.push(i.clone());
         }
     }
 
@@ -168,6 +172,7 @@ impl Batch {
     }
 
     pub fn draw(&self) {
+        println!("Drawing {} elements", self.indices.len() as i32);
         draw_elements(self.indices.len() as i32);
     }
 }

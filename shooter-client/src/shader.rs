@@ -20,8 +20,7 @@ impl Drop for Shader {
 }
 
 impl Shader {
-    pub fn create_vertex_shader(path: &Path) -> Shader {
-        let vs = read_file(path);
+    pub fn create_vertex_shader(vs: &str) -> Shader {
         let vertex_shader = unsafe {
             let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
 
@@ -47,8 +46,7 @@ impl Shader {
     }
 
 
-    pub fn create_fragment_shader(path: &Path) -> Shader {
-        let fs = read_file(path);
+    pub fn create_fragment_shader(fs: &str) -> Shader {
         let fragment_shader = unsafe {
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
 
@@ -73,6 +71,16 @@ impl Shader {
         Shader {
             handle: fragment_shader
         }
+    }
+
+    pub fn create_fragment_shader_from_path(path: &Path) -> Shader {
+        let fs = read_file(path);
+        Shader::create_fragment_shader(&fs)
+    }
+
+    pub fn create_vertex_shader_from_path(path: &Path) -> Shader {
+        let vs = read_file(path);
+        Shader::create_vertex_shader(&vs)
     }
 }
 
@@ -134,9 +142,36 @@ impl ShaderProgram {
         }
     }
 
+    pub fn from_fragments(vs: &str, fs: &str) -> ShaderProgram {
+        let vs = format!("#version 330 core\n
+                          layout (location = 0) in vec3 position;\n
+                          layout (location = 1) in vec2 tex_coord;\n
+                          out vec2 TexCoord;\n
+                          void main()\n
+                          {{\n
+                          {}\n
+                          }}", vs);
+
+        let fs = format!("#version 330 core\n
+                          uniform sampler2D tex0;\n
+                          in vec2 TexCoord;\n
+                          out vec4 color;\n
+                          void main()\n
+                          {{\n
+                          {}\n
+                          }}", fs);
+
+        println!("vs: {}", vs);
+        println!("fs: {}", fs);
+
+        let vertex_shader = Shader::create_vertex_shader(&vs);
+        let fragment_shader = Shader::create_fragment_shader(&fs);
+        ShaderProgram::new(&vertex_shader, &fragment_shader)
+    }
+
     pub fn create_program(name: &str) -> ShaderProgram {
-        let vertex_shader = Shader::create_vertex_shader(Path::new(&format!("src/shaders/{}.vs",name)));
-        let fragment_shader = Shader::create_fragment_shader(Path::new(&format!("src/shaders/{}.fs",name)));
+        let vertex_shader = Shader::create_vertex_shader_from_path(Path::new(&format!("src/shaders/{}.vs",name)));
+        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!("src/shaders/{}.fs",name)));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 
