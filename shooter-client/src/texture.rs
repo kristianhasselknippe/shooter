@@ -244,8 +244,7 @@ impl MemoryTexture {
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
-        quad.bind();
-        quad.draw();
+        quad.draw_now();
     }
 }
 
@@ -291,7 +290,7 @@ impl TextureAtlas {
         }
     }
 
-    pub fn pack_and_draw(&mut self, dc: &DrawContext) -> HashMap<TextureAtlasRef, AtlasPosition> {
+    pub fn pack_and_draw(&mut self, dc: &mut DrawContext) -> HashMap<TextureAtlasRef, AtlasPosition> {
 
         let mut fb_width: u32 = 0;
         let mut fb_height: u32 = 0;

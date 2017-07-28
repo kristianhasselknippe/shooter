@@ -197,8 +197,7 @@ impl Text {
         }
     }
 
-    pub fn bind(&self) {
-        self.mesh.bind();
+    pub fn bind(&mut self) {
         self.texture.bind(TextureUnit::Unit0);
         self.shader.use_program();
     }

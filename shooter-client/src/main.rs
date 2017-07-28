@@ -59,16 +59,9 @@ fn main() {
 
     let mut events = sdl_context.event_pump().unwrap();
 
-    let draw_context = DrawContext::new(window_size.0, window_size.1);
+    let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
-    //let text = Text::new("This is somet text", &draw_context);
-
-    /*let mut scene = Scene::new();
-    let p = Path::new("assets/overworld.png");
-    println!("{:?}", p);
-    let s = Sprite::from_png(p);*/
-
-    println!("Current dir: {:?}", std::env::current_dir());
+    draw_context.bind();
 
     let mut texture_atlas = TextureAtlas::new();
 
@@ -78,20 +71,20 @@ fn main() {
 //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3.png")));
     //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
 
-    texture_atlas.pack_and_draw(&draw_context);
+    texture_atlas.pack_and_draw(&mut draw_context);
 
     let program = ShaderProgram::create_program("default");
 
     texture_atlas.bind(&draw_context);
 
-    let mesh = Mesh::create_quad();
-    mesh.bind();
+    /*let mut m = Mesh::create_quad();
+    m.draw_now();*/
 
-    program.use_program();
-    mesh.draw();
+/*    let mut batch = Batch::new();
+    batch.write_mesh(&Mesh::create_quad());
+    batch.write_mesh(&Mesh::create_rect(0.3,0.3));
 
-    let mesh2 = Mesh::create_rect(0.3,0.3);
-    mesh2.draw();
+    batch.draw();*/
 
     canvas.present();
     println!("We've presented");

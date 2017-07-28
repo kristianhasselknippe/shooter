@@ -24,7 +24,6 @@ impl Sprite {
 
     pub fn bind(&self) {
         self.texture.bind(TextureUnit::Unit0);
-        self.mesh.bind();
     }
 
 }
