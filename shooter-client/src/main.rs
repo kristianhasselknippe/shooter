@@ -3,9 +3,9 @@ extern crate sdl2;
 extern crate gl;
 extern crate nalgebra as na;
 extern crate alga;
-
 extern crate image;
 extern crate rusttype;
+extern crate time as t;
 
 mod shader;
 mod mesh;
@@ -17,6 +17,7 @@ mod text;
 mod input;
 mod camera;
 mod scene;
+mod time;
 
 use shader::*;
 use mesh::*;
@@ -27,6 +28,7 @@ use text::*;
 use input::*;
 use scene::*;
 use camera::*;
+use time::*;
 
 use std::path::Path;
 use na::*;
@@ -104,7 +106,11 @@ color = vec4(distance,distance,distance,1.0);");
     let mut s_down = false;
     let mut d_down = false;
 
+    let mut time = Time::new(60);
+
     'running: loop {
+        let dt = time.delta_time() as f32;
+
         for event in events.poll_iter() {
             match event {
                 sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
@@ -122,10 +128,12 @@ color = vec4(distance,distance,distance,1.0);");
             }
         }
 
-        if w_down { camera.translate(Vector3::new(0.0,-0.02,0.0)); }
-        if a_down { camera.translate(Vector3::new(0.02,0.0,0.0)); }
-        if s_down { camera.translate(Vector3::new(0.0,0.02,0.0)); }
-        if d_down { camera.translate(Vector3::new(-0.02,0.0,0.0)); }
+        let speed = 0.5;
+
+        if w_down { camera.translate(Vector3::new( 0.0, -speed * dt,0.0)); }
+        if a_down { camera.translate(Vector3::new( speed*dt, 0.0,0.0)); }
+        if s_down { camera.translate(Vector3::new( 0.0, speed*dt ,0.0)); }
+        if d_down { camera.translate(Vector3::new(-speed * dt,0.0,0.0)); }
 
         //        draw_context.clear((1.0,0.0,1.0,1.0));
         let camera_matrix = camera.camera_matrix();
@@ -149,8 +157,6 @@ color = vec4(distance,distance,distance,1.0);");
 
         canvas.present();
 
-
-
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        time.wait_until_frame_target();
     }
 }
