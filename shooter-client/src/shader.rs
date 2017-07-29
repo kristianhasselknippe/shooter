@@ -7,6 +7,8 @@ use std::ptr;
 use std::str;
 use std::io::Read;
 
+use na::Matrix4;
+
 pub struct Shader {
     handle: GLuint,
 }
@@ -200,6 +202,13 @@ impl ShaderProgram {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
             gl::Uniform3f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val.0, val.1, val.2);
+        }
+    }
+
+    pub fn set_mat4(&self, name: &str, val: Matrix4<f32>) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::UniformMatrix4fv(gl::GetUniformLocation(self.handle, c_name.as_ptr()), 1, gl::FALSE, val.as_slice().as_ptr());
         }
     }
 }

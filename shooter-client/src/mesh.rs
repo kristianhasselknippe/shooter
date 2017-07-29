@@ -85,8 +85,6 @@ impl Mesh {
 
     pub fn draw_now(&self) {
         unsafe {
-            println!("Drawing quad");
-
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
 

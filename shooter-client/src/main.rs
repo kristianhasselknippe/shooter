@@ -95,9 +95,9 @@ color = vec4(distance,distance,distance,1.0);");
     /*let mut m = Mesh::create_quad();
     m.draw_now();*/
 
-
-
     let mut batch = Batch::new();
+
+    let player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0 );
 
     println!("We've presented");
 
@@ -120,9 +120,8 @@ color = vec4(distance,distance,distance,1.0);");
                 sdl2::event::Event::Quit { .. } => break 'running,
 */
 
-        let speed = 0.5;
-
-        let cam_trans = input.normalized_input_vector() * dt * speed;
+        let camera_speed = 0.5;
+        let cam_trans = input.normalized_input_vector() * dt * camera_speed;
         camera.translate(cam_trans);
 
         //        draw_context.clear((1.0,0.0,1.0,1.0));
@@ -142,8 +141,11 @@ color = vec4(distance,distance,distance,1.0);");
                 batch.write_mesh(&Mesh::create_from_topleft_bottomright((pos.x,pos.y), (pos.x + size.x, pos.y + size.y)));
             }
         }
+
         batch.update_data();
         batch.draw();
+
+        player_sprite.draw();
 
         canvas.present();
 
