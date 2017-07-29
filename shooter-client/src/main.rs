@@ -14,10 +14,10 @@ mod transform;
 mod entity;
 mod texture;
 mod text;
-mod input;
 mod camera;
 mod scene;
 mod time;
+mod input;
 
 use shader::*;
 use mesh::*;
@@ -29,6 +29,7 @@ use input::*;
 use scene::*;
 use camera::*;
 use time::*;
+use input::*;
 
 use std::path::Path;
 use na::*;
@@ -64,7 +65,7 @@ fn main() {
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
     canvas.window().gl_set_context_to_current();
 
-    let mut events = sdl_context.event_pump().unwrap();
+
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
@@ -100,7 +101,6 @@ color = vec4(distance,distance,distance,1.0);");
 
     println!("We've presented");
 
-
     let mut w_down = false;
     let mut a_down = false;
     let mut s_down = false;
@@ -108,32 +108,22 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut time = Time::new(60);
 
+    let mut events = sdl_context.event_pump().unwrap();
+
+    let mut input = Input::new(events);
+
     'running: loop {
         let dt = time.delta_time() as f32;
+        input.update_sdl_input();
 
-        for event in events.poll_iter() {
-            match event {
-                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
+/*                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
                 sdl2::event::Event::Quit { .. } => break 'running,
-
-                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::W), .. } => { w_down = true; },
-                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::A), .. } => { a_down = true; },
-                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::S), .. } => { s_down = true; },
-                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::D), .. } => { d_down = true; },
-                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::W), .. } => { w_down = false; },
-                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::A), .. } => { a_down = false; },
-                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::S), .. } => { s_down = false; },
-                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::D), .. } => { d_down = false; },
-                _ => {}
-            }
-        }
+*/
 
         let speed = 0.5;
 
-        if w_down { camera.translate(Vector3::new( 0.0, -speed * dt,0.0)); }
-        if a_down { camera.translate(Vector3::new( speed*dt, 0.0,0.0)); }
-        if s_down { camera.translate(Vector3::new( 0.0, speed*dt ,0.0)); }
-        if d_down { camera.translate(Vector3::new(-speed * dt,0.0,0.0)); }
+        let cam_trans = input.normalized_input_vector() * dt * speed;
+        camera.translate(cam_trans);
 
         //        draw_context.clear((1.0,0.0,1.0,1.0));
         let camera_matrix = camera.camera_matrix();
