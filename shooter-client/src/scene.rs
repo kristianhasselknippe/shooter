@@ -44,9 +44,10 @@ impl Sprite {
         let translation = Matrix4::new_translation(&self.pos);
         let scaling = Matrix4::new_nonuniform_scaling(&self.size);
 
-        let model = translation * scaling * camera_matrix;
+        let model = translation * scaling;
+        let mvp = model * camera_matrix;
 
-        self.program.set_mat4("mvp", model);
+        self.program.set_mat4("mvp", mvp);
 
         self.mesh.draw_now();
     }
