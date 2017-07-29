@@ -36,16 +36,17 @@ impl Sprite {
             mesh: Mesh::create_quad(),
         }
     }
-}
 
-
-impl Drawable for Sprite {
-    fn draw(&self) {
+    pub fn draw(&self, camera_matrix: &Matrix4<f32>) {
         self.program.use_program();
         self.texture.bind(TextureUnit::Unit0);
 
         let translation = Matrix4::new_translation(&self.pos);
         let scaling = Matrix4::new_nonuniform_scaling(&self.size);
+
+        let model = translation * scaling * camera_matrix;
+
+        self.program.set_mat4("mvp", model);
 
         self.mesh.draw_now();
     }

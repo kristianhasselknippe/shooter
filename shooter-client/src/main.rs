@@ -97,7 +97,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut batch = Batch::new();
 
-    let player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0 );
+    let player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
 
     println!("We've presented");
 
@@ -145,7 +145,7 @@ color = vec4(distance,distance,distance,1.0);");
         batch.update_data();
         batch.draw();
 
-        player_sprite.draw();
+        player_sprite.draw(&camera_matrix);
 
         canvas.present();
 
