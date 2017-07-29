@@ -2,6 +2,8 @@ extern crate shooter_common;
 extern crate sdl2;
 extern crate gl;
 extern crate nalgebra as na;
+extern crate alga;
+
 extern crate image;
 extern crate rusttype;
 
@@ -13,6 +15,7 @@ mod entity;
 mod texture;
 mod text;
 mod input;
+mod camera;
 mod scene;
 
 use shader::*;
@@ -23,9 +26,11 @@ use entity::*;
 use text::*;
 use input::*;
 use scene::*;
+use camera::*;
 
 use std::path::Path;
-
+use na::*;
+use alga::linear::Transformation;
 use gl::types::*;
 
 fn find_sdl_gl_driver() -> Option<u32> {
@@ -63,6 +68,8 @@ fn main() {
 
     draw_context.bind();
 
+    let mut camera = Camera::new_orthographic(50.0,50.0, Vector3::new(0.0,0.0,0.0));
+
     let mut texture_atlas = TextureAtlas::new();
 
 
@@ -85,41 +92,65 @@ color = vec4(distance,distance,distance,1.0);");
     /*let mut m = Mesh::create_quad();
     m.draw_now();*/
 
-    let mut batch = Batch::new();
-    for y in 0..10 {
-        for x in 0..10 {
-            let x_pos = 0.1*x as f32;
-            let y_pos = 0.1*y as f32;
-            let w = 0.05;
-            let h = 0.05;
-            println!("Adding mesh: {}{}, {}{}", x_pos, y_pos, w, h);
-            batch.write_mesh(&Mesh::create_from_topleft_bottomright((x_pos,y_pos), (x_pos + w, y_pos + h)));
-        }
-    }
-    batch.update_data();
-    batch.draw();
 
-    canvas.present();
+
+    let mut batch = Batch::new();
+
     println!("We've presented");
+
+
+    let mut w_down = false;
+    let mut a_down = false;
+    let mut s_down = false;
+    let mut d_down = false;
+
     'running: loop {
         for event in events.poll_iter() {
             match event {
                 sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
                 sdl2::event::Event::Quit { .. } => break 'running,
+
+                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::W), .. } => { w_down = true; },
+                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::A), .. } => { a_down = true; },
+                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::S), .. } => { s_down = true; },
+                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::D), .. } => { d_down = true; },
+                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::W), .. } => { w_down = false; },
+                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::A), .. } => { a_down = false; },
+                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::S), .. } => { s_down = false; },
+                sdl2::event::Event::KeyUp { keycode: Some(sdl2::keyboard::Keycode::D), .. } => { d_down = false; },
                 _ => {}
             }
         }
 
-        /*draw_context.bind();
+        if w_down { camera.translate(Vector3::new(0.0,-0.02,0.0)); }
+        if a_down { camera.translate(Vector3::new(0.02,0.0,0.0)); }
+        if s_down { camera.translate(Vector3::new(0.0,0.02,0.0)); }
+        if d_down { camera.translate(Vector3::new(-0.02,0.0,0.0)); }
 
-        draw_context.clear((1.0,0.0,1.0,1.0));
+        //        draw_context.clear((1.0,0.0,1.0,1.0));
+        let camera_matrix = camera.camera_matrix();
 
-        draw_context.draw();
-        draw_context.unbind();*/
+        for y in 0..10 {
+            for x in 0..10 {
+                let w = 1.0;
+                let h = 1.0;
+
+                let pos = Point3::new(x as f32,y as f32,0.0);
+                let size = Vector3::new(w,h,1.0);
+
+                let pos = camera_matrix.transform_point(&pos);
+                let size = camera_matrix.transform_vector(&size);
+
+                batch.write_mesh(&Mesh::create_from_topleft_bottomright((pos.x,pos.y), (pos.x + size.x, pos.y + size.y)));
+            }
+        }
+        batch.update_data();
+        batch.draw();
+
+        canvas.present();
 
 
 
-
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
 }

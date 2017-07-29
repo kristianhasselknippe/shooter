@@ -7,6 +7,7 @@ authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 gl = "0.6.0"
 sdl2 = "0.30"
 shooter_common = { path = "../shooter-common" }
-nalgebra = "0.11"
+nalgebra = "0.11.0"
 image = "0.14.0"
 rusttype = "0.2.1"
+alga = "0.5.1"
