@@ -5,8 +5,6 @@ use mesh::{Mesh};
 use std::path::{Path};
 use drawing::*;
 
-
-
 use shader::ShaderProgram;
 
 use std::rc::Rc;
@@ -53,19 +51,6 @@ impl Sprite {
     }
 }
 
-pub struct Scene {
-    sprites: Vec<Rc<Sprite>>,
-}
-
-
-impl Scene {
-    pub fn new() -> Scene {
-        Scene {
-            sprites: Vec::new()
-        }
-    }
-
-    pub fn add_sprite(&mut self, sprite: &Rc<Sprite>) {
-        self.sprites.push(sprite.clone());
-    }
+pub struct Entity {
+    pos: Vector2<f32>,
 }

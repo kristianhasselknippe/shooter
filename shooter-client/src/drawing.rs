@@ -5,8 +5,6 @@ use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
 
-use super::scene::Scene;
-
 pub trait Drawable {
     fn draw(&self);
 }

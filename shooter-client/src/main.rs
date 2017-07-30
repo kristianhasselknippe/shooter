@@ -11,11 +11,10 @@ mod shader;
 mod mesh;
 mod drawing;
 mod transform;
-mod entity;
 mod texture;
 mod text;
 mod camera;
-mod scene;
+mod entities;
 mod time;
 mod input;
 
@@ -23,10 +22,9 @@ use shader::*;
 use mesh::*;
 use drawing::*;
 use texture::*;
-use entity::*;
+use entities::*;
 use text::*;
 use input::*;
-use scene::*;
 use camera::*;
 use time::*;
 use input::*;
@@ -99,18 +97,17 @@ color = vec4(distance,distance,distance,1.0);");
 
     let player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
 
-    println!("We've presented");
-
-    let mut w_down = false;
-    let mut a_down = false;
-    let mut s_down = false;
-    let mut d_down = false;
-
     let mut time = Time::new(60);
 
     let mut events = sdl_context.event_pump().unwrap();
 
     let mut input = Input::new(events);
+
+    let mut game_state = GameState::new();
+
+    let player_entity = game_state.add_entity(Entity::new(Vector2::new(0.0,0.0)));
+    let player_controller: Box<Component> = Box::new(PlayerController::new());
+    game_state.add_component(player_controller, &player_entity);
 
     'running: loop {
         let dt = time.delta_time() as f32;
@@ -124,7 +121,9 @@ color = vec4(distance,distance,distance,1.0);");
         let cam_trans = input.normalized_input_vector() * dt * camera_speed;
         camera.translate(cam_trans);
 
-        //        draw_context.clear((1.0,0.0,1.0,1.0));
+        game_state.update(dt);
+
+        //draw_context.clear((1.0,0.0,1.0,1.0));
         let camera_matrix = camera.camera_matrix();
 
         for y in 0..10 {
