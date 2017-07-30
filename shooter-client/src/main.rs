@@ -95,7 +95,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut batch = Batch::new();
 
-    let player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
+    let mut player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
 
     let mut time = Time::new(60);
 
@@ -122,6 +122,10 @@ color = vec4(distance,distance,distance,1.0);");
         camera.translate(cam_trans);
 
         game_state.update(dt);
+
+        let p_entity = game_state.get_entity(&player_entity);
+        player_sprite.pos.x = p_entity.pos.x;
+        player_sprite.pos.y = p_entity.pos.y;
 
         //draw_context.clear((1.0,0.0,1.0,1.0));
         let camera_matrix = camera.camera_matrix();

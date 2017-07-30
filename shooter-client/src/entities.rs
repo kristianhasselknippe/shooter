@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Sprite {
-    pos: Vector3<f32>,
+    pub pos: Vector3<f32>,
     size: Vector3<f32>,
 
     texture: Texture,
@@ -53,7 +53,7 @@ impl Sprite {
 }
 
 pub struct Entity {
-    pos: Vector2<f32>,
+    pub pos: Vector2<f32>,
 }
 
 #[derive(Hash,Clone,Copy,Eq,PartialEq)]
@@ -68,7 +68,7 @@ impl Entity {
 }
 
 pub trait Component {
-    fn update(&self, e: &mut Entity);
+    fn update(&self, e: &mut Entity, dt: f32);
 }
 
 pub struct GameState {
@@ -91,6 +91,10 @@ impl GameState {
         ret
     }
 
+    pub fn get_entity(&self, entity_ref: &EntityRef) -> &Entity {
+        self.entities.get(entity_ref).unwrap()
+    }
+
     pub fn add_component(&mut self, comp: Box<Component>, entity_ref: &EntityRef) {
         if !self.components.contains_key(entity_ref) {
             self.components.insert(*entity_ref, Vec::new());
@@ -103,13 +107,13 @@ impl GameState {
         for (er, mut e) in &mut self.entities {
             let components = self.components.get_mut(&er).unwrap();
             for c in components {
-                c.update(&mut e);
+                c.update(&mut e, dt);
             }
         }
     }
 }
 
-pub struct PlayerController {}
+pub struct PlayerController { }
 
 impl PlayerController {
     pub fn new() -> PlayerController {
@@ -118,7 +122,7 @@ impl PlayerController {
 }
 
 impl Component for PlayerController {
-    fn update(&self, entity: &mut Entity) {
-        entity.pos.y += 1.0;
+    fn update(&self, entity: &mut Entity, dt: f32) {
+        entity.pos.y += 0.1 * dt;
     }
 }
