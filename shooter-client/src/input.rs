@@ -10,6 +10,8 @@ pub struct Input {
     pub down_down: bool,
 
     event_pump: EventPump,
+
+    pub escape: bool,
 }
 
 impl Input {
@@ -21,6 +23,8 @@ impl Input {
             down_down: false,
 
             event_pump: event_pump,
+
+            escape: false,
         }
     }
 
@@ -50,6 +54,9 @@ impl Input {
                 Event::KeyUp { keycode: Some(Keycode::A), .. } => { self.left_down = false; },
                 Event::KeyUp { keycode: Some(Keycode::S), .. } => { self.down_down = false; },
                 Event::KeyUp { keycode: Some(Keycode::D), .. } => { self.right_down = false; },
+
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } |
+                Event::Quit { .. } => self.escape = true,
                 _ => {}
             }
         }

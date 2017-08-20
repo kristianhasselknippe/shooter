@@ -118,15 +118,9 @@ color = vec4(distance,distance,distance,1.0);");
             input.borrow_mut().update_sdl_input();
         }
 
-/*                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
-                sdl2::event::Event::Quit { .. } => break 'running,
-         */
-
-
-
-        //let camera_speed = 0.5;
-        //let cam_trans = input.borrow().normalized_input_vector() * dt * camera_speed;
-        //camera.translate(cam_trans);
+        if input.borrow().escape {
+            break 'running;
+        }
 
         game_state.update(dt);
 
