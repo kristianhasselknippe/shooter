@@ -4,11 +4,13 @@ use texture::{Texture,TextureUnit};
 use mesh::{Mesh};
 use std::path::{Path};
 use drawing::*;
-use std::cell::RefCell;
+use std::cell::{RefCell,Ref,RefMut};
 use std::rc::Rc;
+
 use shader::ShaderProgram;
 use std::collections::HashMap;
 use super::input::Input;
+use super::camera::Camera;
 
 pub struct Sprite {
     pub pos: Vector3<f32>,
@@ -40,7 +42,7 @@ impl Sprite {
         self.program.use_program();
         self.texture.bind(TextureUnit::Unit0);
 
-        let translation = Matrix4::new_translation(&self.pos);
+        let translation = Matrix4::new_translation(&Vector3::new(-&self.pos.x, -self.pos.y, self.pos.z));
         let scaling = Matrix4::new_nonuniform_scaling(&self.size);
 
         let model = translation * scaling;
@@ -52,28 +54,40 @@ impl Sprite {
     }
 }
 
+#[derive(Debug)]
 pub struct Entity {
-    pub pos: Vector2<f32>,
+    pub pos: Vector3<f32>,
 }
 
-#[derive(Hash,Clone,Copy,Eq,PartialEq)]
+#[derive(Hash,Clone,Copy,Eq,PartialEq, Debug)]
 pub struct EntityRef(u32);
 
 impl Entity {
     pub fn new(pos: Vector2<f32>) -> Entity {
         Entity {
-            pos: pos,
+            pos: Vector3::new(pos.x, pos.y, 0.0),
         }
     }
 }
 
+
+#[derive(Hash,Clone,Copy,Eq,PartialEq, Debug)]
+pub struct ComponentRef(u32);
+
 pub trait Component {
-    fn update(&self, e: &mut Entity, dt: f32);
+    fn update(&self, e: &mut Entity, dt: f32, game_state: &GameState);
+}
+
+struct Ownership {
+    owning_entity: EntityRef,
+    component: ComponentRef,
 }
 
 pub struct GameState {
-    entities: HashMap<EntityRef,Entity>,
-    components: HashMap<EntityRef, Vec<Box<Component>>>,
+    entities: HashMap<EntityRef,Rc<RefCell<Entity>>>,
+    components: HashMap<ComponentRef, Rc<RefCell<Component>>>,
+
+    relationships: Vec<Ownership>,
 }
 
 impl GameState {
@@ -81,34 +95,49 @@ impl GameState {
         GameState {
             entities: HashMap::new(),
             components: HashMap::new(),
+
+            relationships: Vec::new(),
         }
     }
 
-    pub fn add_entity(&mut self, entity: Entity) -> EntityRef {
+    pub fn add_entity(&mut self, entity: &Rc<RefCell<Entity>>) -> EntityRef {
         let id = self.entities.len() as u32;
         let ret = EntityRef(id);
-        self.entities.insert(ret, entity);
+        self.entities.insert(ret, entity.clone());
         ret
     }
 
-    pub fn get_entity(&self, entity_ref: &EntityRef) -> &Entity {
-        self.entities.get(entity_ref).unwrap()
+    pub fn get_entity(&self, entity_ref: &EntityRef) -> Ref<Entity> {
+        self.entities.get(entity_ref).unwrap().borrow()
     }
 
-    pub fn add_component(&mut self, comp: Box<Component>, entity_ref: &EntityRef) {
-        if !self.components.contains_key(entity_ref) {
-            self.components.insert(*entity_ref, Vec::new());
-        }
-        let comps = self.components.get_mut(entity_ref).unwrap();
-        comps.push(comp);
+    pub fn get_entity_mut(&self, entity_ref: &EntityRef) -> RefMut<Entity> {
+        self.entities.get(entity_ref).unwrap().borrow_mut()
     }
 
-    pub fn update(&mut self, dt: f32) {
-        for (er, mut e) in &mut self.entities {
-            let components = self.components.get_mut(&er).unwrap();
-            for c in components {
-                c.update(&mut e, dt);
-            }
+    pub fn add_component<T: Component + 'static>(&mut self, comp: &Rc<RefCell<T>>, entity_ref: &EntityRef) -> ComponentRef {
+        let id = self.components.len() as u32;
+        let ret = ComponentRef(id);
+        self.components.insert(ret, comp.clone());
+
+        self.relationships.push(Ownership {
+            owning_entity: entity_ref.clone(),
+            component: ret.clone(),
+        });
+
+        ret
+    }
+
+    pub fn get_component(&self, comp_ref: &ComponentRef) -> Ref<Component> {
+        self.components.get(comp_ref).unwrap().borrow()
+    }
+
+    pub fn update(&self, dt: f32) {
+        for rel in &self.relationships {
+            let c = self.get_component(&rel.component);
+            let mut e = self.get_entity_mut(&rel.owning_entity);
+
+            c.update(&mut e, dt, self);
         }
     }
 }
@@ -126,20 +155,40 @@ impl PlayerController {
 }
 
 impl Component for PlayerController {
-    fn update(&self, entity: &mut Entity, dt: f32) {
-        let input = self.input.borrow();
-        if input.left_down {
-            entity.pos.x -= 0.1 * dt;
-        }
-        if input.up_down {
-            entity.pos.y += 0.1 * dt;
-        }
-        if input.right_down {
-            entity.pos.x += 0.1 * dt;
-        }
-        if input.down_down {
-            entity.pos.y -= 0.1 * dt;
-        }
+    fn update(&self, entity: &mut Entity, dt: f32, game_state: &GameState) {
+        let input_vector = self.input.borrow().normalized_input_vector();
 
+        entity.pos.x += input_vector.x * dt;
+        entity.pos.y += input_vector.y * dt;
+    }
+}
+
+pub struct PlayerCamera {
+    player: EntityRef,
+    camera: Camera,
+}
+
+impl PlayerCamera {
+    pub fn new(player: &EntityRef, camera: Camera) -> PlayerCamera {
+        PlayerCamera {
+            player: player.clone(),
+            camera: camera,
+        }
+    }
+
+    pub fn camera_matrix(&self, game_state: &GameState) -> Matrix4<f32> {
+        self.camera.camera_matrix()
+    }
+}
+
+impl Component for PlayerCamera {
+    fn update(&self, entity: &mut Entity, dt: f32, game_state: &GameState) {
+        let player_entity = game_state.get_entity(&self.player);
+        let player_vec = player_entity.pos - entity.pos;
+
+        entity.pos += dt * player_vec;
+
+
+        println!("PlayerPos: {:?}, CamPos: {:?}", player_entity.pos, entity.pos);
     }
 }

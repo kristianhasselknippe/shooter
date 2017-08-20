@@ -67,20 +67,14 @@ fn main() {
     canvas.window().gl_set_context_to_current();
 
 
-
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
     draw_context.bind();
 
-    let mut camera = Camera::new_orthographic(50.0,50.0, Vector3::new(0.0,0.0,0.0));
-
     let mut texture_atlas = TextureAtlas::new();
-
 
     texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img1.png")));
     texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img2.png")));
-//    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img3.png")));
-    //    texture_atlas.add_texture(MemoryTexture::from_png(Path::new("assets/img4.png")));
 
     texture_atlas.pack_and_draw(&mut draw_context);
 
@@ -99,6 +93,7 @@ color = vec4(distance,distance,distance,1.0);");
     let mut batch = Batch::new();
 
     let mut player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
+    let mut background_sprite = Sprite::from_png(Path::new("assets/overworld.png"), 15.0, 15.0);
 
     let mut time = Time::new(60);
 
@@ -108,9 +103,14 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut game_state = GameState::new();
 
-    let player_entity = game_state.add_entity(Entity::new(Vector2::new(0.0,0.0)));
-    let player_controller: Box<Component> = Box::new(PlayerController::new(&input));
-    game_state.add_component(player_controller, &player_entity);
+    let player_entity = game_state.add_entity(&Rc::new(RefCell::new((Entity::new(Vector2::new(0.0,0.0))))));
+    let player_controller = Rc::new(RefCell::new(PlayerController::new(&input)));
+    game_state.add_component(&player_controller, &player_entity);
+
+    let mut camera = Camera::new_orthographic(50.0,50.0, Vector3::new(0.0,0.0,0.0));
+    let mut camera_controller = Rc::new(RefCell::new(PlayerCamera::new(&player_entity, camera)));
+    let mut camera_entity = game_state.add_entity(&Rc::new(RefCell::new(Entity::new(Vector2::new(0.0,0.0)))));
+    game_state.add_component(&camera_controller, &camera_entity);
 
     'running: loop {
         let dt = time.delta_time() as f32;
@@ -128,8 +128,10 @@ color = vec4(distance,distance,distance,1.0);");
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
 
-        //draw_context.clear((1.0,0.0,1.0,1.0));
-        let camera_matrix = camera.camera_matrix();
+        draw_context.clear((1.0,0.0,1.0,1.0));
+
+        let cam_entity = game_state.get_entity(&camera_entity);
+        let camera_matrix = camera_controller.borrow().camera_matrix(&game_state).append_translation(&cam_entity.pos);
 
         for y in 0..10 {
             for x in 0..10 {
@@ -149,7 +151,9 @@ color = vec4(distance,distance,distance,1.0);");
         batch.update_data();
         batch.draw();
 
+        background_sprite.draw(&camera_matrix);
         player_sprite.draw(&camera_matrix);
+
 
         canvas.present();
 

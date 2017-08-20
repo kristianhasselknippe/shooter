@@ -32,10 +32,10 @@ impl Input {
         let mut x = 0.0;
         let mut y = 0.0;
 
-        if self.left_down { x += 1.0 }
-        if self.right_down { x += -1.0 }
-        if self.up_down { y += -1.0 }
-        if self.down_down { y += 1.0 }
+        if self.left_down { x -= 1.0 }
+        if self.right_down { x += 1.0 }
+        if self.up_down { y += 1.0 }
+        if self.down_down { y -= 1.0 }
 
         let v = Vector3::new(x,y,1.0);
         let mut ret = v.normalize();
