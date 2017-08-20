@@ -4,11 +4,11 @@ use texture::{Texture,TextureUnit};
 use mesh::{Mesh};
 use std::path::{Path};
 use drawing::*;
-
+use std::cell::RefCell;
+use std::rc::Rc;
 use shader::ShaderProgram;
 use std::collections::HashMap;
-
-use std::rc::Rc;
+use super::input::Input;
 
 pub struct Sprite {
     pub pos: Vector3<f32>,
@@ -113,16 +113,33 @@ impl GameState {
     }
 }
 
-pub struct PlayerController { }
+pub struct PlayerController {
+    input: Rc<RefCell<Input>>,
+}
 
 impl PlayerController {
-    pub fn new() -> PlayerController {
-        PlayerController {}
+    pub fn new(input: &Rc<RefCell<Input>>) -> PlayerController {
+        PlayerController {
+            input: input.clone(),
+        }
     }
 }
 
 impl Component for PlayerController {
     fn update(&self, entity: &mut Entity, dt: f32) {
-        entity.pos.y += 0.1 * dt;
+        let input = self.input.borrow();
+        if input.left_down {
+            entity.pos.x -= 0.1 * dt;
+        }
+        if input.up_down {
+            entity.pos.y += 0.1 * dt;
+        }
+        if input.right_down {
+            entity.pos.x += 0.1 * dt;
+        }
+        if input.down_down {
+            entity.pos.y -= 0.1 * dt;
+        }
+
     }
 }

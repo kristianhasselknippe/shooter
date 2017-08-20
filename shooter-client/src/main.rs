@@ -34,6 +34,9 @@ use na::*;
 use alga::linear::Transformation;
 use gl::types::*;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 fn find_sdl_gl_driver() -> Option<u32> {
     for (index, item) in sdl2::render::drivers().enumerate() {
         if item.name == "opengl" {
@@ -101,25 +104,29 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut events = sdl_context.event_pump().unwrap();
 
-    let mut input = Input::new(events);
+    let input = Rc::new(RefCell::new(Input::new(events)));
 
     let mut game_state = GameState::new();
 
     let player_entity = game_state.add_entity(Entity::new(Vector2::new(0.0,0.0)));
-    let player_controller: Box<Component> = Box::new(PlayerController::new());
+    let player_controller: Box<Component> = Box::new(PlayerController::new(&input));
     game_state.add_component(player_controller, &player_entity);
 
     'running: loop {
         let dt = time.delta_time() as f32;
-        input.update_sdl_input();
+        {
+            input.borrow_mut().update_sdl_input();
+        }
 
 /*                sdl2::event::Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), .. } |
                 sdl2::event::Event::Quit { .. } => break 'running,
-*/
+         */
 
-        let camera_speed = 0.5;
-        let cam_trans = input.normalized_input_vector() * dt * camera_speed;
-        camera.translate(cam_trans);
+
+
+        //let camera_speed = 0.5;
+        //let cam_trans = input.borrow().normalized_input_vector() * dt * camera_speed;
+        //camera.translate(cam_trans);
 
         game_state.update(dt);
 
