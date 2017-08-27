@@ -42,11 +42,11 @@ impl Sprite {
         self.program.use_program();
         self.texture.bind(TextureUnit::Unit0);
 
-        let translation = Matrix4::new_translation(&Vector3::new(-&self.pos.x, -self.pos.y, self.pos.z));
+        let translation = Matrix4::new_translation(&Vector3::new(self.pos.x, self.pos.y, self.pos.z));
         let scaling = Matrix4::new_nonuniform_scaling(&self.size);
 
         let model = translation * scaling;
-        let mvp = model * camera_matrix;
+        let mvp = camera_matrix * model;
 
         self.program.set_mat4("mvp", mvp);
 
@@ -166,13 +166,15 @@ impl Component for PlayerController {
 pub struct PlayerCamera {
     player: EntityRef,
     camera: Camera,
+    input: Rc<RefCell<Input>>,
 }
 
 impl PlayerCamera {
-    pub fn new(player: &EntityRef, camera: Camera) -> PlayerCamera {
+    pub fn new(player: &EntityRef, camera: Camera, input: &Rc<RefCell<Input>>) -> PlayerCamera {
         PlayerCamera {
             player: player.clone(),
             camera: camera,
+            input: input.clone(),
         }
     }
 
@@ -183,12 +185,22 @@ impl PlayerCamera {
 
 impl Component for PlayerCamera {
     fn update(&self, entity: &mut Entity, dt: f32, game_state: &GameState) {
-        let player_entity = game_state.get_entity(&self.player);
-        let player_vec = player_entity.pos - entity.pos;
+        //let player_entity = game_state.get_entity(&self.player);
+        //let player_vec = player_entity.pos - entity.pos;
 
-        entity.pos += dt * player_vec;
+        //entity.pos += dt * player_vec;
 
 
-        println!("PlayerPos: {:?}, CamPos: {:?}", player_entity.pos, entity.pos);
+        let input_vector = self.input.borrow().normalized_input_vector();
+
+        entity.pos.x += dt * input_vector.x;
+        entity.pos.y += dt * input_vector.y;
+
+
+        println!("CamPos: {},{}", entity.pos.x, entity.pos.y);
+
+        /*println!("PlayerPos: ({},{}), CamPos: ({},{})",
+                 player_entity.pos.x, player_entity.pos.y,
+                 entity.pos.x, entity.pos.y);*/
     }
 }

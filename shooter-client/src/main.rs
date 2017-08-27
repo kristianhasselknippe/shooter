@@ -107,8 +107,8 @@ color = vec4(distance,distance,distance,1.0);");
     let player_controller = Rc::new(RefCell::new(PlayerController::new(&input)));
     game_state.add_component(&player_controller, &player_entity);
 
-    let mut camera = Camera::new_orthographic(50.0,50.0, Vector3::new(0.0,0.0,0.0));
-    let mut camera_controller = Rc::new(RefCell::new(PlayerCamera::new(&player_entity, camera)));
+    let mut camera = Camera::new_orthographic(50.0,50.0);
+    let mut camera_controller = Rc::new(RefCell::new(PlayerCamera::new(&player_entity, camera, &input)));
     let mut camera_entity = game_state.add_entity(&Rc::new(RefCell::new(Entity::new(Vector2::new(0.0,0.0)))));
     game_state.add_component(&camera_controller, &camera_entity);
 
@@ -124,6 +124,7 @@ color = vec4(distance,distance,distance,1.0);");
 
         game_state.update(dt);
 
+        //update player sprite position since they are not yet connected
         let p_entity = game_state.get_entity(&player_entity);
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
@@ -131,9 +132,12 @@ color = vec4(distance,distance,distance,1.0);");
         draw_context.clear((1.0,0.0,1.0,1.0));
 
         let cam_entity = game_state.get_entity(&camera_entity);
-        let camera_matrix = camera_controller.borrow().camera_matrix(&game_state).append_translation(&cam_entity.pos);
 
-        for y in 0..10 {
+        let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
+        let projection = camera_controller.borrow().camera_matrix(&game_state);
+        let camera_matrix = projection * view;
+
+        /*for y in 0..10 {
             for x in 0..10 {
                 let w = 1.0;
                 let h = 1.0;
@@ -146,10 +150,10 @@ color = vec4(distance,distance,distance,1.0);");
 
                 batch.write_mesh(&Mesh::create_from_topleft_bottomright((pos.x,pos.y), (pos.x + size.x, pos.y + size.y)));
             }
-        }
+        }*/
 
-        batch.update_data();
-        batch.draw();
+        //batch.update_data();
+        //batch.draw();
 
         background_sprite.draw(&camera_matrix);
         player_sprite.draw(&camera_matrix);

@@ -40,6 +40,7 @@ impl Input {
         let v = Vector3::new(x,y,1.0);
         let mut ret = v.normalize();
         ret.z = 0.0;
+        println!("Input vec : {}", ret);
         ret
     }
 
