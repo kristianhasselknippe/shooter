@@ -75,7 +75,7 @@ impl Entity {
 pub struct ComponentRef(u32);
 
 pub trait Component {
-    fn update(&self, e: &mut Entity, dt: f32, game_state: &GameState);
+    fn update(&mut self, e: &mut Entity, dt: f32, game_state: &GameState);
 }
 
 struct Ownership {
@@ -128,13 +128,13 @@ impl GameState {
         ret
     }
 
-    pub fn get_component(&self, comp_ref: &ComponentRef) -> Ref<Component> {
-        self.components.get(comp_ref).unwrap().borrow()
+    pub fn get_component_mut(&self, comp_ref: &ComponentRef) -> RefMut<Component> {
+        self.components.get(comp_ref).unwrap().borrow_mut()
     }
 
     pub fn update(&self, dt: f32) {
         for rel in &self.relationships {
-            let c = self.get_component(&rel.component);
+            let mut c = self.get_component_mut(&rel.component);
             let mut e = self.get_entity_mut(&rel.owning_entity);
 
             c.update(&mut e, dt, self);
@@ -143,23 +143,58 @@ impl GameState {
 }
 
 pub struct PlayerController {
+    acceleration: Vector3<f32>,
+    speed: Vector3<f32>,
     input: Rc<RefCell<Input>>,
+    max_speed: f32,
 }
 
 impl PlayerController {
-    pub fn new(input: &Rc<RefCell<Input>>) -> PlayerController {
+    pub fn new(input: &Rc<RefCell<Input>>, acceleration: f32, max_speed: f32) -> PlayerController {
         PlayerController {
             input: input.clone(),
+            acceleration: Vector3::new(acceleration,acceleration,acceleration),
+            speed: Vector3::new(0.0,0.0,0.0),
+            max_speed: max_speed,
         }
     }
 }
 
-impl Component for PlayerController {
-    fn update(&self, entity: &mut Entity, dt: f32, game_state: &GameState) {
-        let input_vector = self.input.borrow().normalized_input_vector();
+const EPS: f32 = 0.001;
 
-        entity.pos.x += input_vector.x * dt;
-        entity.pos.y += input_vector.y * dt;
+impl Component for PlayerController {
+    fn update(&mut self, entity: &mut Entity, dt: f32, game_state: &GameState) {
+        let mut input_vector = self.input.borrow().normalized_input_vector();
+
+        let mut at_max_speed_x = false;
+        let mut at_max_speed_y = false;
+
+        if input_vector.x < EPS && input_vector.x > -EPS {
+            input_vector.x = -self.speed.x.signum();
+        } else {
+            if self.speed.x > self.max_speed {
+                at_max_speed_x = true;
+                self.speed.x = self.max_speed;
+            }
+        }
+        if input_vector.y < EPS && input_vector.y > -EPS {
+            input_vector.y = -self.speed.y.signum();
+        } else {
+            if self.speed.y > self.max_speed {
+                at_max_speed_y = true;
+                self.speed.y = self.max_speed;
+            }
+        }
+
+        let speed_change = input_vector.component_mul(&self.acceleration) * dt;
+        if !at_max_speed_x {
+            self.speed.x += speed_change.x;
+        }
+        if !at_max_speed_y {
+            self.speed.y += speed_change.y;
+        }
+
+        entity.pos += self.speed * dt;
     }
 }
 
@@ -184,20 +219,17 @@ impl PlayerCamera {
 }
 
 impl Component for PlayerCamera {
-    fn update(&self, entity: &mut Entity, dt: f32, game_state: &GameState) {
-        //let player_entity = game_state.get_entity(&self.player);
-        //let player_vec = player_entity.pos - entity.pos;
+    fn update(&mut self, entity: &mut Entity, dt: f32, game_state: &GameState) {
+        let player_entity = game_state.get_entity(&self.player);
+        let player_vec = player_entity.pos - entity.pos;
 
-        //entity.pos += dt * player_vec;
+        entity.pos += dt * player_vec;
 
 
-        let input_vector = self.input.borrow().normalized_input_vector();
+        /*let input_vector = self.input.borrow().normalized_input_vector();
 
         entity.pos.x += dt * input_vector.x;
-        entity.pos.y += dt * input_vector.y;
-
-
-        println!("CamPos: {},{}", entity.pos.x, entity.pos.y);
+        entity.pos.y += dt * input_vector.y;*/
 
         /*println!("PlayerPos: ({},{}), CamPos: ({},{})",
                  player_entity.pos.x, player_entity.pos.y,

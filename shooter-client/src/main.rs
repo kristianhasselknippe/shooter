@@ -104,7 +104,7 @@ color = vec4(distance,distance,distance,1.0);");
     let mut game_state = GameState::new();
 
     let player_entity = game_state.add_entity(&Rc::new(RefCell::new((Entity::new(Vector2::new(0.0,0.0))))));
-    let player_controller = Rc::new(RefCell::new(PlayerController::new(&input)));
+    let player_controller = Rc::new(RefCell::new(PlayerController::new(&input, 30.0, 20.0)));
     game_state.add_component(&player_controller, &player_entity);
 
     let mut camera = Camera::new_orthographic(50.0,50.0);
