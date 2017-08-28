@@ -1,5 +1,6 @@
 use rusttype::{FontCollection, Scale, point, PositionedGlyph};
 use std::io::Write;
+use std::path::Path;
 
 use super::gl;
 use super::gl::types::*;
@@ -7,6 +8,8 @@ use super::drawing::*;
 use super::mesh::*;
 use super::texture::*;
 use super::shader::*;
+
+use super::image::ColorType;
 
 pub struct Glyph {
     pub data: Vec<u8>,
@@ -41,7 +44,7 @@ impl Font {
         let pixel_height = height.ceil() as usize;
 
         // 2x scale in x direction to counter the aspect ratio of monospace characters.
-        let scale = Scale { x: height*2.0, y: height };
+        let scale = Scale { x: height, y: height };
 
         // The origin of a line of text is at the baseline (roughly where non-descending letters sit).
         // We don't want to clip the text, so we shift it down with an offset when laying it out.
@@ -156,6 +159,18 @@ impl Font {
         }*/
         ret
     }
+
+    pub fn rgba_data(&self) -> Vec<u8> {
+        let data = self.data();
+
+        let mut ret = Vec::with_capacity(data.len() * 4);
+        for d in data {
+            for i in 0..4 {
+                ret.push(d);
+            }
+        }
+        ret
+    }
 }
 
 pub struct Text {
@@ -173,19 +188,21 @@ impl Text {
 
         let font_size = font.total_size();
 
-        println!("FontSize: {:?}", font_size);
+        //println!("FontSize: {:?}", font_size);
 
         let font_width = (font_size.0 as f32/dc.width as f32);
         let font_height = (font_size.1 as f32/dc.height as f32);
-        println!("W: {}, H: {}", font_width, font_height);
+        //println!("W: {}, H: {}", font_width, font_height);
 
         let mesh = Mesh::create_rect(font_width, font_height);
 
-        let font_data = font.data();
+        let font_data = font.rgba_data();
+
+        Image::save_png(Path::new("bitmap_font_text.png"), font_data.as_slice(), font_size.0 as u32, font_size.1 as u32, ColorType::Gray(8));
 
         let shader = ShaderProgram::create_program("text");
 
-        let texture = Texture::from_data_u8((font_size.0 as i32, font_size.1 as i32), &font_data, &ImageFormat::RGB);
+        let texture = Texture::from_data_u8((font_size.0 as i32, font_size.1 as i32), &font_data, &ImageFormat::RGBA);
 
         Text {
             val: val.to_string(),
@@ -196,9 +213,14 @@ impl Text {
             shader: shader,
         }
     }
+}
 
-    pub fn bind(&mut self) {
+
+impl Drawable for Text {
+    fn draw(&self) {
         self.texture.bind(TextureUnit::Unit0);
         self.shader.use_program();
+
+        self.mesh.draw_now();
     }
 }

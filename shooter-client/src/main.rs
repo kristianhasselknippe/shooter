@@ -112,6 +112,10 @@ color = vec4(distance,distance,distance,1.0);");
     let mut camera_entity = game_state.add_entity(&Rc::new(RefCell::new(Entity::new(Vector2::new(0.0,0.0)))));
     game_state.add_component(&camera_controller, &camera_entity);
 
+
+
+    let text = Text::new("this is some text", &draw_context);
+
     'running: loop {
         let dt = time.delta_time() as f32;
         {
@@ -157,6 +161,8 @@ color = vec4(distance,distance,distance,1.0);");
 
         background_sprite.draw(&camera_matrix);
         player_sprite.draw(&camera_matrix);
+
+        text.draw();
 
 
         canvas.present();

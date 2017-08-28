@@ -57,12 +57,12 @@ impl Image {
 
     }
 
-    pub fn save_png(path: &Path, bytes: &[u8], width: u32, height: u32) {
+    pub fn save_png(path: &Path, bytes: &[u8], width: u32, height: u32, color_type: ColorType) {
         let image_file = File::create(path).unwrap();
         let encoder = PNGEncoder::new(image_file);
         //using a bit depth of 8 here TODO(should make that tweakable?)
         println!("PNG Width: {}, Height: {}", width, height);
-        encoder.encode(bytes, width, height, ColorType::RGBA(8)).unwrap();
+        encoder.encode(bytes, width, height, color_type).unwrap();
     }
 
     pub fn save_bmp(path: &Path, bytes: &[u8], width: u32, height: u32) {
