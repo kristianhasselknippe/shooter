@@ -6,6 +6,7 @@ extern crate alga;
 extern crate image;
 extern crate rusttype;
 extern crate time as t;
+extern crate libc;
 
 mod shader;
 mod mesh;
@@ -17,7 +18,9 @@ mod camera;
 mod entities;
 mod time;
 mod input;
+mod scripting;
 
+use scripting::*;
 use shader::*;
 use mesh::*;
 use drawing::*;
@@ -47,6 +50,8 @@ fn find_sdl_gl_driver() -> Option<u32> {
 }
 
 fn main() {
+
+    init_neko();
 
     let window_size = (600,800);
 
@@ -162,7 +167,7 @@ color = vec4(distance,distance,distance,1.0);");
         background_sprite.draw(&camera_matrix);
         player_sprite.draw(&camera_matrix);
 
-        text.draw();
+
 
 
         canvas.present();
