@@ -67,6 +67,7 @@ impl Shader {
                 let error = str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8");
                 println!("Error: {}", error);
                 panic!("{}", error);
+
             }
             fragment_shader
         };
@@ -163,8 +164,8 @@ impl ShaderProgram {
                           {}\n
                           }}", fs);
 
-        println!("vs: {}", vs);
-        println!("fs: {}", fs);
+        //println!("vs: {}", vs);
+        //println!("fs: {}", fs);
 
         let vertex_shader = Shader::create_vertex_shader(&vs);
         let fragment_shader = Shader::create_fragment_shader(&fs);

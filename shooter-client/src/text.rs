@@ -78,7 +78,7 @@ impl Font {
 
         let mut cell_size = 0;
         for g in &glyphs {
-            println!("W: {}, H:{}", g.width, g.height);
+            //println!("W: {}, H:{}", g.width, g.height);
             if g.width > cell_size {
                 cell_size = g.width;
             }

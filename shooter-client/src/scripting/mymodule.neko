@@ -1,0 +1,2 @@
+$exports.x = 33;
+$exports.f = function(x) { return x * 2 + 1; }
