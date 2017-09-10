@@ -50,8 +50,15 @@ fn find_sdl_gl_driver() -> Option<u32> {
 }
 
 fn main() {
-
-    init_neko();
+    let neko_vm = init_new_neko_vm();
+    let my_module = neko_vm.load_module("mymodule.n");
+    my_module.call_function("hello", &[]);
+    my_module.call_function("set_input", &[
+        ArgumentValue::Bool(true),
+        ArgumentValue::Bool(false),
+        ArgumentValue::Bool(true),
+        ArgumentValue::Bool(true)
+    ]);
 
     let window_size = (600,800);
 

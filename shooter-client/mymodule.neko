@@ -1,0 +1,22 @@
+objects =  $array();
+
+var input = {
+	left_down => false,
+	right_down => fale,
+	up_down => false,
+	down_down => false
+}
+
+var set_input = function(left,top,right,down) {
+	$print("Setting input: " + left + ", " + top + ", " + right + ", " + down);
+}
+
+
+update = function() {
+    $print("hello neko world!!\n");
+}
+
+$exports.hello = hello;
+$exports.set_input = set_input;
+$exports.x = 33;
+$exports.f = function(x) { return x * 2 + 1; }
