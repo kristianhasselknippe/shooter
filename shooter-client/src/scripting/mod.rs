@@ -79,6 +79,7 @@ extern "C" {
     fn neko_val_buffer(b: buffer, v: value);
     fn neko_val_field(o: value, f: field) -> value;
     fn neko_val_id(string: *const c_char) -> field;
+    fn neko_val_field_name(f: field) -> value;
 
     fn neko_val_call0(f: value) -> value;
     fn neko_val_call1(f: value, arg: value) -> value;
@@ -91,7 +92,7 @@ extern "C" {
     fn neko_call_stack(vm: *mut neko_vm) -> value;
 
     //EXTERN void val_iter_fields( value obj, void f( value v, field f, void * ), void *p );
-    fn neko_val_iter_fields(obj: value, f: extern fn(value, field, *const c_void), p: *const c_void);
+    fn neko_val_iter_fields(obj: value, f: extern fn(value, field, *mut c_void), p: *mut c_void);
 
     fn neko_val_this() -> value;
     fn neko_val_print(s: value);
@@ -99,10 +100,16 @@ extern "C" {
     fn neko_vm_dump_stack(vm: *mut neko_vm);
 }
 
-extern fn iter_fields_callback(v: value, f: field, p: *const c_void) {
+#[no_mangle]
+extern "C" fn iter_fields_callback(v: value, f: field, _: *mut c_void) {
+    println!("Callback::::");
     unsafe {
         let vv = v as *mut _value;
+        let field_name = neko_val_field_name(f);
+        neko_val_print(field_name);
         println!("::::::::::Value: {}", (*vv).t);
+
+
     }
 }
 
@@ -137,6 +144,11 @@ unsafe fn load_module(path: &str) -> NekoModule {
     /*println!("THIS: {}", (*this).t);
     neko_val_iter_fields(neko_val_this(), iter_fields_callback, ptr::null());
     println!("DOne");*/
+
+    let mymodule = neko_val_field_name(neko_val_id(CString::new("MyModule").unwrap().as_ptr()));
+    neko_val_print(mymodule);
+
+    neko_val_iter_fields(module, iter_fields_callback, ptr::null_mut());
 
 
     println!("==================");
