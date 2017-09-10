@@ -148,7 +148,15 @@ unsafe fn load_module(path: &str) -> NekoModule {
     let mymodule = neko_val_field_name(neko_val_id(CString::new("MyModule").unwrap().as_ptr()));
     neko_val_print(mymodule);
 
-    neko_val_iter_fields(module, iter_fields_callback, ptr::null_mut());
+    //neko_val_iter_fields(module, iter_fields_callback, ptr::null_mut());
+
+    let _classes = neko_val_field(module, neko_val_id(CString::new("__classes").unwrap().as_ptr()));
+    println!("==================");
+    println!("==================");
+    println!("==================");
+    println!("==================");
+    neko_val_iter_fields(_classes, iter_fields_callback, ptr::null_mut());
+
 
 
     println!("==================");
