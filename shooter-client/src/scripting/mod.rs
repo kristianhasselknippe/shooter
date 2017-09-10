@@ -6,6 +6,8 @@ use std::ffi::{CString,CStr};
 
 use std::env;
 
+use std::fmt;
+
 type neko_vm = c_void;
 
 enum val_type {
@@ -24,10 +26,34 @@ enum val_type {
 	VAL_32_BITS		= 0xFFFFFFFF,
 }
 
+impl fmt::Display for val_type {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            VAL_INT => { write!(fmt, "INT") },
+	        VAL_NULL => { write!(fmt, "NULL") },
+	        VAL_FLOAT => { write!(fmt, "FLOAT") },
+	        VAL_BOOL => { write!(fmt, "BOOL") },
+	        VAL_STRING => { write!(fmt, "STRING") },
+	        VAL_OBJECT => { write!(fmt, "OBJECT") },
+	        VAL_ARRAY => { write!(fmt, "ARRAY") },
+	        VAL_FUNCTION => { write!(fmt, "FUNCTION") },
+	        VAL_ABSTRACT => { write!(fmt, "ABSTRACT") },
+	        VAL_INT32 => { write!(fmt, "INT32") },
+	        VAL_PRIMITIVE => { write!(fmt, "PRIMITIVE") },
+	        VAL_JITFUN => { write!(fmt, "JITFUN") },
+	        VAL_32_BITS => { write!(fmt, "32_BITS") },
+        }
+    }
+}
+
 type value = *mut c_void;
 type buffer = *mut c_void;
 
 type field = int32_t;
+
+struct _value {
+    t: val_type,
+}
 
 struct vstring {
     t: val_type,
@@ -61,6 +87,23 @@ extern "C" {
     fn neko_val_callN(f: value, args: *const value, nargs: c_int) -> value;
 
     fn neko_buffer_to_string(b: buffer) -> *mut vstring;
+
+    fn neko_call_stack(vm: *mut neko_vm) -> value;
+
+    //EXTERN void val_iter_fields( value obj, void f( value v, field f, void * ), void *p );
+    fn neko_val_iter_fields(obj: value, f: extern fn(value, field, *const c_void), p: *const c_void);
+
+    fn neko_val_this() -> value;
+    fn neko_val_print(s: value);
+
+    fn neko_vm_dump_stack(vm: *mut neko_vm);
+}
+
+extern fn iter_fields_callback(v: value, f: field, p: *const c_void) {
+    unsafe {
+        let vv = v as *mut _value;
+        println!("::::::::::Value: {}", (*vv).t);
+    }
 }
 
 pub struct NekoVM {
@@ -88,6 +131,18 @@ unsafe fn load_module(path: &str) -> NekoModule {
         let neko_exc_string = neko_buffer_to_string(b);
         println!("Uncaught exception - {:?}", CStr::from_ptr(&(*neko_exc_string).c));
     }
+
+    //let this = neko_val_this() as *mut _value;
+    neko_val_print(neko_val_this());
+    /*println!("THIS: {}", (*this).t);
+    neko_val_iter_fields(neko_val_this(), iter_fields_callback, ptr::null());
+    println!("DOne");*/
+
+
+    println!("==================");
+    println!("==================");
+    println!("==================");
+    println!("==================");
 
     NekoModule {
         module_handle: module
@@ -142,33 +197,50 @@ impl ArgumentValue {
 }
 
 impl NekoModule {
-    pub fn call_function(&self, name: &str, args: &[ArgumentValue]) {
+    fn get_field(&self, name: &str) -> value {
+        unsafe {
+            neko_val_field(self.module_handle, neko_val_id(CString::new(name).unwrap().as_ptr() as _))
+        }
+    }
+
+    pub fn call_function(&self, vm: &NekoVM, name: &str, args: &[ArgumentValue]) {
         unsafe {
             let function = neko_val_field(self.module_handle, neko_val_id(CString::new(name).unwrap().as_ptr() as _));
 
+            println!("========");
+            neko_val_print(neko_call_stack(vm.vm_handle));
+            println!("========");
+
             println!("Calling function: {}", name);
+
+            println!("Function {:?}", function);
 
             let len = args.len();
 
-            let args: Vec<value> = args.iter().map(|i|i.as_neko_value()).collect();
-            println!("ArgLen: {}", len);
-            match len {
-                0 => { println!("0000000"); neko_val_call0(function); },
-                1 => { neko_val_call1(function, args[0]); },
-                2 => { neko_val_call2(function, args[0], args[1]); },
-                3 => { neko_val_call3(function, args[0], args[1], args[2]); },
-                _ => { neko_val_callN(function, args.as_slice().as_ptr(), len as _); },
-            };
-            println!("Done calling function");
+            let _val = function as *mut _value;
+
+            match (*_val).t {
+                val_type::VAL_FUNCTION => {
+                    let args: Vec<value> = args.iter().map(|i|i.as_neko_value()).collect();
+                    println!("ArgLen: {}", len);
+                    match len {
+                        0 => { neko_val_call0(function); },
+                        1 => { neko_val_call1(function, args[0]); },
+                        2 => { neko_val_call2(function, args[0], args[1]); },
+                        3 => { neko_val_call3(function, args[0], args[1], args[2]); },
+                        _ => { neko_val_callN(function, args.as_slice().as_ptr(), len as _); },
+                    };
+                },
+                val_type::VAL_NULL => {
+                    eprintln!("Value of name {} was NULL", name);
+                }
+                _ => {
+                    eprintln!("Value of name {} was not a function", name);
+                }
+            }
+
+
         }
-
-
-        /*let x = neko_val_field(module, neko_val_id(CString::new("x").unwrap().as_ptr() as _));
-        println!("foobar2");
-        let f = neko_val_field(module, neko_val_id(CString::new("f").unwrap().as_ptr() as _));
-        println!("foobar3");
-        let ret = neko_val_call1(f, x);
-        }*/
     }
 }
 
