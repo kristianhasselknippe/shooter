@@ -12,11 +12,16 @@ var set_input = function(left,top,right,down) {
 }
 
 
-update = function() {
+var update = function() {
+    $print("hello neko world!!\n");
+}
+
+var hello = function() {
     $print("hello neko world!!\n");
 }
 
 $exports.hello = hello;
 $exports.set_input = set_input;
+$exports.update = update;
 $exports.x = 33;
 $exports.f = function(x) { return x * 2 + 1; }

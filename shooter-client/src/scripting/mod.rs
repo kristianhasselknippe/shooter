@@ -6,10 +6,7 @@ use std::ffi::{CString,CStr};
 
 use std::env;
 
-
-enum vm { }
-
-type neko_vm = *mut c_void;
+type neko_vm = c_void;
 
 enum val_type {
     VAL_INT			= 0xFF,
@@ -27,15 +24,10 @@ enum val_type {
 	VAL_32_BITS		= 0xFFFFFFFF,
 }
 
-type value = *mut _value;
-
+type value = *mut c_void;
 type buffer = *mut c_void;
 
-struct _value {
-    t: val_type
-}
 type field = int32_t;
-
 
 struct vstring {
     t: val_type,
@@ -44,9 +36,13 @@ struct vstring {
 
 #[link(name = "neko")]
 extern "C" {
+    static val_true: value;
+    static val_false: value;
+
+
     fn neko_global_init();
-    fn neko_vm_alloc(unused: *mut c_void) -> neko_vm;
-    fn neko_vm_select(vm: *mut c_void);
+    fn neko_vm_alloc(unused: *mut c_void) -> *mut neko_vm;
+    fn neko_vm_select(vm: *mut neko_vm);
 
     fn neko_default_loader(argv: *mut *mut c_char, argc: c_int) -> value;
     fn neko_alloc_string( str: *const c_char ) -> value;
@@ -68,7 +64,7 @@ extern "C" {
 }
 
 pub struct NekoVM {
-    vm_handle: neko_vm
+    vm_handle: *mut neko_vm
 }
 
 pub struct NekoModule {
@@ -76,8 +72,6 @@ pub struct NekoModule {
 }
 
 unsafe fn load_module(path: &str) -> NekoModule {
-    println!("module Path: {}", path);
-
     let loader = neko_default_loader(ptr::null_mut(), 0);
 
     let mut args = [neko_alloc_string(CString::new(path).unwrap().as_ptr() as _),
@@ -94,13 +88,6 @@ unsafe fn load_module(path: &str) -> NekoModule {
         let neko_exc_string = neko_buffer_to_string(b);
         println!("Uncaught exception - {:?}", CStr::from_ptr(&(*neko_exc_string).c));
     }
-
-    println!("Module loaded");
-    println!("Trying to call fun");
-    let hello = neko_val_field(module, neko_val_id(CString::new("hello").unwrap().as_ptr() as _));
-    neko_val_call0(hello);
-
-    println!("Done call fun");
 
     NekoModule {
         module_handle: module
@@ -146,8 +133,8 @@ impl ArgumentValue {
             },
             &ArgumentValue::Bool(b) => {
                 match b {
-                    true => 1 as _,
-                    false => 0 as _,
+                    true => val_true as _,
+                    false => val_false as _,
                 }
             },
         }
@@ -159,11 +146,7 @@ impl NekoModule {
         unsafe {
             let function = neko_val_field(self.module_handle, neko_val_id(CString::new(name).unwrap().as_ptr() as _));
 
-            let hello = neko_val_field(self.module_handle, neko_val_id(CString::new("hello").unwrap().as_ptr() as _));
-            neko_val_call0(hello);
-
             println!("Calling function: {}", name);
-            println!("Func: {:?}", function);
 
             let len = args.len();
 
@@ -174,7 +157,7 @@ impl NekoModule {
                 1 => { neko_val_call1(function, args[0]); },
                 2 => { neko_val_call2(function, args[0], args[1]); },
                 3 => { neko_val_call3(function, args[0], args[1], args[2]); },
-                _ => { neko_val_callN(function, args.as_ptr(), args.len() as _); },
+                _ => { neko_val_callN(function, args.as_slice().as_ptr(), len as _); },
             };
             println!("Done calling function");
         }
