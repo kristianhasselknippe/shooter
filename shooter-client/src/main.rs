@@ -51,18 +51,37 @@ fn find_sdl_gl_driver() -> Option<u32> {
 
 fn main() {
     let neko_vm = init_new_neko_vm();
-    let my_module = neko_vm.load_module("mymodule.n");
-    my_module.call_function(&neko_vm, "set_input", &[
-        ArgumentValue::Bool(true),
-        ArgumentValue::Bool(false),
-        ArgumentValue::Bool(true),
-        ArgumentValue::Bool(true)
-    ]);
+    let module = neko_vm.load_module("mymodule.n");
+
+    let mm = module.get_haxe_class("MyModule");
 
 
-    my_module.call_function(&neko_vm, "hello", &[]);
-    my_module.call_function(&neko_vm, "main", &[]);
+    if let Ok(foo) = mm.call_static_function("main", &[]) {
+        println!("==============");
+        unsafe {
+            neko_val_print(foo);
+        }
+        println!("==============");
+    }
 
+
+    mm.print();
+    
+    println!("");
+    println!("Instance 1");
+    let m1 = mm.new(&[ArgumentValue::Bool(false),ArgumentValue::Bool(false)]);
+    println!("Instance 2");
+    let m2 = mm.new(&[ArgumentValue::Bool(true),ArgumentValue::Bool(true)]);
+
+    println!("Testing");
+
+    m1.get_field("x").print();
+    m1.get_field("y").print();
+    m2.get_field("x").print();
+    m2.get_field("y").print();
+
+    println!("Done testing");
+    
     let window_size = (600,800);
 
 

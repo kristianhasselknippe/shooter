@@ -95,22 +95,9 @@ extern "C" {
     fn neko_val_iter_fields(obj: value, f: extern fn(value, field, *mut c_void), p: *mut c_void);
 
     fn neko_val_this() -> value;
-    fn neko_val_print(s: value);
+    pub fn neko_val_print(s: value);
 
     fn neko_vm_dump_stack(vm: *mut neko_vm);
-}
-
-#[no_mangle]
-extern "C" fn iter_fields_callback(v: value, f: field, _: *mut c_void) {
-    println!("Callback::::");
-    unsafe {
-        let vv = v as *mut _value;
-        let field_name = neko_val_field_name(f);
-        neko_val_print(field_name);
-        println!("::::::::::Value: {}", (*vv).t);
-
-
-    }
 }
 
 pub struct NekoVM {
@@ -120,6 +107,8 @@ pub struct NekoVM {
 pub struct NekoModule {
     module_handle: value,
 }
+
+
 
 unsafe fn load_module(path: &str) -> NekoModule {
     let loader = neko_default_loader(ptr::null_mut(), 0);
@@ -138,31 +127,6 @@ unsafe fn load_module(path: &str) -> NekoModule {
         let neko_exc_string = neko_buffer_to_string(b);
         println!("Uncaught exception - {:?}", CStr::from_ptr(&(*neko_exc_string).c));
     }
-
-    //let this = neko_val_this() as *mut _value;
-    neko_val_print(neko_val_this());
-    /*println!("THIS: {}", (*this).t);
-    neko_val_iter_fields(neko_val_this(), iter_fields_callback, ptr::null());
-    println!("DOne");*/
-
-    let mymodule = neko_val_field_name(neko_val_id(CString::new("MyModule").unwrap().as_ptr()));
-    neko_val_print(mymodule);
-
-    //neko_val_iter_fields(module, iter_fields_callback, ptr::null_mut());
-
-    let _classes = neko_val_field(module, neko_val_id(CString::new("__classes").unwrap().as_ptr()));
-    println!("==================");
-    println!("==================");
-    println!("==================");
-    println!("==================");
-    neko_val_iter_fields(_classes, iter_fields_callback, ptr::null_mut());
-
-
-
-    println!("==================");
-    println!("==================");
-    println!("==================");
-    println!("==================");
 
     NekoModule {
         module_handle: module
@@ -191,10 +155,75 @@ impl NekoVM {
     }
 }
 
+fn get_field(obj: value, name: &str) -> value {
+    unsafe {
+        neko_val_field(obj, neko_val_id(CString::new(name).unwrap().as_ptr() as _))
+    }
+}
+
+fn call_function(v: value, name: &str, args: &[ArgumentValue]) -> Result<value, ()> {
+    unsafe {
+        let function = neko_val_field(v,
+                                      neko_val_id(CString::new(name)
+                                                  .unwrap()
+                                                  .as_ptr() as _));
+
+        neko_val_print(function);
+        
+        let len = args.len();
+        let _val = function as *mut _value;
+        
+        match (*_val).t {
+            val_type::VAL_FUNCTION => {
+                let args: Vec<value> = args.iter().map(|i|i.as_neko_value()).collect();
+                println!("ArgLen: {}", len);
+                let ret = match len {
+                    0 => { neko_val_call0(function) },
+                    1 => { neko_val_call1(function, args[0]) },
+                    2 => { neko_val_call2(function, args[0], args[1]) },
+                    3 => { neko_val_call3(function, args[0], args[1], args[2]) },
+                    _ => { neko_val_callN(function, args.as_slice().as_ptr(), len as _) },
+                };
+                Ok(ret)
+            },
+            val_type::VAL_NULL => {
+                eprintln!("Value of name {} was NULL", name);
+                Err(())
+            }
+            _ => {
+                eprintln!("Value of name {} was not a function", name);
+                Err(())
+            }
+        }
+    }
+}
+
 pub enum ArgumentValue {
     Number(i32),
     String(String),
     Bool(bool),
+}
+
+pub struct NekoObject {
+    handle: value
+}
+
+impl NekoObject {
+    pub fn get_field(&self, name: &str) -> NekoObject {
+        NekoObject {
+            handle: get_field(self.handle, name)
+        }
+    }
+
+    pub fn call_function(&self, name: &str, args: &[ArgumentValue]) -> Result<value, ()> {
+        call_function(self.handle, name, args)
+    }
+    
+    pub fn print_locals(&self) {
+        unsafe {
+            neko_val_print(self.handle);
+        }
+    }
 }
 
 impl ArgumentValue {
@@ -208,8 +237,8 @@ impl ArgumentValue {
             },
             &ArgumentValue::Bool(b) => {
                 match b {
-                    true => val_true as _,
-                    false => val_false as _,
+                    true => unsafe { val_true as _ },
+                    false => unsafe { val_false as _ },
                 }
             },
         }
@@ -217,57 +246,75 @@ impl ArgumentValue {
 }
 
 impl NekoModule {
-    fn get_field(&self, name: &str) -> value {
+    pub fn print_locals(&self) {
         unsafe {
-            neko_val_field(self.module_handle, neko_val_id(CString::new(name).unwrap().as_ptr() as _))
+            neko_val_print(self.module_handle);
+        }
+    }
+    
+    pub fn get_field(&self, name: &str) -> NekoObject {
+        NekoObject {
+            handle: get_field(self.module_handle, name),
+        }
+    }
+    
+    pub fn as_neko_object(&self) -> NekoObject {
+        NekoObject {
+            handle: self.module_handle,
         }
     }
 
-    pub fn call_function(&self, vm: &NekoVM, name: &str, args: &[ArgumentValue]) {
+    pub fn get_haxe_class(&self, name: &str) -> HaxeObject {
+        let ret = self.get_field("__classes");
+
+        let foo = ret.get_field(name);
+
+        HaxeObject {
+            handle: foo.handle
+        }
+    }
+}
+
+pub struct HaxeObject {
+    handle: value
+}
+
+impl HaxeObject {
+    pub fn get_field(&self, name: &str) -> HaxeObject {
+        HaxeObject {
+            handle: get_field(self.handle, name)
+        }
+    }
+    
+    pub fn get_super_class(&self) -> HaxeObject {
+        self.get_field("__super__")
+    }
+
+    pub fn call_static_function(&self, name: &str, args: &[ArgumentValue]) -> Result<value,()> {
+        call_function(self.handle, name, args)
+    }
+
+    pub fn call_method(&self, name: &str, args: &[ArgumentValue]) -> Result<value,()> {
+        let prototype = get_field(self.handle, "prototype");
+        call_function(prototype, name, args)
+    }
+
+    pub fn print(&self) {
         unsafe {
-            let function = neko_val_field(self.module_handle, neko_val_id(CString::new(name).unwrap().as_ptr() as _));
+            neko_val_print(self.handle);
+        }
+    }
 
-            println!("========");
-            neko_val_print(neko_call_stack(vm.vm_handle));
-            println!("========");
-
-            println!("Calling function: {}", name);
-
-            println!("Function {:?}", function);
-
-            let len = args.len();
-
-            let _val = function as *mut _value;
-
-            match (*_val).t {
-                val_type::VAL_FUNCTION => {
-                    let args: Vec<value> = args.iter().map(|i|i.as_neko_value()).collect();
-                    println!("ArgLen: {}", len);
-                    match len {
-                        0 => { neko_val_call0(function); },
-                        1 => { neko_val_call1(function, args[0]); },
-                        2 => { neko_val_call2(function, args[0], args[1]); },
-                        3 => { neko_val_call3(function, args[0], args[1], args[2]); },
-                        _ => { neko_val_callN(function, args.as_slice().as_ptr(), len as _); },
-                    };
-                },
-                val_type::VAL_NULL => {
-                    eprintln!("Value of name {} was NULL", name);
-                }
-                _ => {
-                    eprintln!("Value of name {} was not a function", name);
-                }
+    pub fn new(&self, args: &[ArgumentValue]) -> HaxeObject {
+        println!("Calling constructor");
+        if let Ok(new_obj) = self.call_static_function("new_", args) {
+            HaxeObject {
+                handle: new_obj,
             }
-
-
+        } else {
+            panic!("Could not find construtor");
         }
     }
 }
 
-/*pub struct ScriptEngine {
-    module: NekoModule
-}
 
-impl ScriptEngine {
-
-}*/
