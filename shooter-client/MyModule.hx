@@ -1,39 +1,48 @@
-class SuperClass {
-	private function priv_fun() {
-		trace("super class priv_fun");
-	}
+class Input {
+	var left_down: Bool;
+	var up_down: Bool;
+	var right_down: Bool;
+	var down_down: Bool;
 
-	public function pub_fun() {
-		trace("public function pub_fun");
+	public function new() {
+		this.left_down = false;
+		this.up_down = false;
+		this.right_down = false;
+		this.down_down = false;
 	}
 }
 
-class MyModule extends SuperClass {
+class Vector2 {
+	var x: Float;
+	var y: Float;
 
-	var x: Bool;
-	var y: Bool;
-	
-    static public function main() {
-	   trace("static public function main");
-	   var foo = MyModule.new_(false,true);
-	   trace(foo);
-	   return foo;
-    }
-
-	public function new(x:Bool,y:Bool) {
+	public function new(x:Float,y:Float) {
 		this.x = x;
 		this.y = y;
 	}
+}
 
-	public static function new_(x:Bool,y:Bool) {
-		return new MyModule(x,y);
-	}
+class GameObject {
+	var name: String;
+	var pos: Vector2;
 
-	public function do_something_else() {
-		trace("public function do_something_else");
-	}
+	public function new(name: String) {
+		this.name = name;
+		this.pos = new Vector2(0,0);
+	}	
+}
 
-	public function method_with_arg(foo: String) {
-		trace("public function method_with_arg" + foo);
+class GameState {
+	var game_objects: Array<GameObject>;
+	var input: Input;
+
+	public function new() {
+		this.game_objects = [];
+		this.input = new Input();
+	} public static function new_() { return new GameState(); }
+
+	public function add_new_game_object(name: String) {
+		this.game_objects.push(new GameObject(name));
 	}
 }
+

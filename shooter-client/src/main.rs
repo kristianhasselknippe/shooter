@@ -53,34 +53,14 @@ fn main() {
     let neko_vm = init_new_neko_vm();
     let module = neko_vm.load_module("mymodule.n");
 
-    let mm = module.get_haxe_class("MyModule");
-
-
-    if let Ok(foo) = mm.call_static_function("main", &[]) {
-        println!("==============");
-        unsafe {
-            neko_val_print(foo);
-        }
-        println!("==============");
-    }
-
-
-    mm.print();
+    let game_state = module.get_haxe_class("GameState");
+    game_state.print();
     
-    println!("");
-    println!("Instance 1");
-    let m1 = mm.new(&[ArgumentValue::Bool(false),ArgumentValue::Bool(false)]);
-    println!("Instance 2");
-    let m2 = mm.new(&[ArgumentValue::Bool(true),ArgumentValue::Bool(true)]);
+    game_state.call_method("add_new_game_object", &[
+        ArgumentValue::String("first_game_obj".to_string())
+    ]);
+    
 
-    println!("Testing");
-
-    m1.get_field("x").print();
-    m1.get_field("y").print();
-    m2.get_field("x").print();
-    m2.get_field("y").print();
-
-    println!("Done testing");
     
     let window_size = (600,800);
 

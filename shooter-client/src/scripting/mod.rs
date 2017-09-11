@@ -87,6 +87,12 @@ extern "C" {
     fn neko_val_call3(f: value, arg1: value, arg2: value, arg3: value) -> value;
     fn neko_val_callN(f: value, args: *const value, nargs: c_int) -> value;
 
+    fn neko_val_ocall0(o: value, f: field) -> value;
+	fn neko_val_ocall1(o: value, f: field, arg: value) -> value;
+	fn neko_val_ocall2(o: value, f: field, arg1: value, arg2: value) -> value;
+	fn neko_val_ocallN(o: value, f: field, args: *const value, nargs: c_int) -> value;
+	fn neko_val_callEx(vthis: value, f: value, args: *const value, nargs: c_int, exc: *const value ) -> value;
+
     fn neko_buffer_to_string(b: buffer) -> *mut vstring;
 
     fn neko_call_stack(vm: *mut neko_vm) -> value;
@@ -233,7 +239,9 @@ impl ArgumentValue {
                 panic!("Number arg not implemented");
             },
             &ArgumentValue::String(ref s) => {
-                panic!("String arg not implemented");
+                unsafe {
+                    neko_alloc_string(CString::new(s.as_str()).unwrap().as_ptr() as _)
+                }
             },
             &ArgumentValue::Bool(b) => {
                 match b {
@@ -295,8 +303,13 @@ impl HaxeObject {
     }
 
     pub fn call_method(&self, name: &str, args: &[ArgumentValue]) -> Result<value,()> {
-        let prototype = get_field(self.handle, "prototype");
-        call_function(prototype, name, args)
+        /*let prototype = get_field(self.handle, "prototype");
+        unsafe {
+            neko_val_print(self.handle);
+        }
+        call_function(prototype, name, args)*/
+        
+        val_ocall0(self.handle, name
     }
 
     pub fn print(&self) {
