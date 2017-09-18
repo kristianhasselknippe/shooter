@@ -91,7 +91,7 @@ extern "C" {
 	fn neko_val_ocall1(o: value, f: field, arg: value) -> value;
 	fn neko_val_ocall2(o: value, f: field, arg1: value, arg2: value) -> value;
 	fn neko_val_ocallN(o: value, f: field, args: *const value, nargs: c_int) -> value;
-	fn neko_val_callEx(vthis: value, f: value, args: *const value, nargs: c_int, exc: *const value ) -> value;
+	fn neko_val_ocallEx(vthis: value, f: value, args: *const value, nargs: c_int, exc: *const value ) -> value;
 
     fn neko_buffer_to_string(b: buffer) -> *mut vstring;
 
@@ -309,7 +309,9 @@ impl HaxeObject {
         }
         call_function(prototype, name, args)*/
         
-        val_ocall0(self.handle, name
+        //neko_val_ocall0(self.handle, name
+
+        Err(())
     }
 
     pub fn print(&self) {
