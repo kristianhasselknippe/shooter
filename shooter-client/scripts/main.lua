@@ -6,9 +6,7 @@ function main()
 end
 
 function create_entity(name)
-   print("Adding another entity")
    local id = entities_id_counter
-   print("adding entity: Name " .. name .. " id: " .. id)
    entities[id] = {
 	  name = name,
 	  position = {
@@ -34,6 +32,7 @@ function update_input(left,up,right,down)
    input.down_down = down
 end
 
+speed = 0.5
 function update_entities(dt)
    for _,e in ipairs(entities) do
 	  if e.name == "player" then
@@ -43,7 +42,8 @@ function update_entities(dt)
 		 if input.up_down then vec.y = vec.y + 1 end
 		 if input.right_down then vec.x = vec.x + 1 end
 		 if input.down_down then vec.y = vec.y - 1 end
-		 e.position = vec
+		 e.position.x = e.position.x + vec.x * dt * speed
+		 e.position.y = e.position.y + vec.y * dt * speed
 	  end
    end
 end
