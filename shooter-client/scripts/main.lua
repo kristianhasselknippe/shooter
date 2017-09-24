@@ -1,4 +1,4 @@
-entities_id_counter = 0
+entities_id_counter = 1
 entities = {}
 
 function main()
@@ -6,9 +6,9 @@ function main()
 end
 
 function create_entity(name)
+   print("Adding another entity")
    local id = entities_id_counter
-   print("Name " .. name .. " id: " .. id)
-   entities_id_counter = entities_id_counter + 1
+   print("adding entity: Name " .. name .. " id: " .. id)
    entities[id] = {
 	  name = name,
 	  position = {
@@ -16,6 +16,7 @@ function create_entity(name)
 		 y = 0,
 	  }
    }
+   entities_id_counter = entities_id_counter + 1
    return id
 end
 
@@ -31,13 +32,12 @@ function update_input(left,up,right,down)
    input.up_down = up
    input.right_down = right
    input.down_down = down
-
-   print("Input updated " .. tostring(left) .. " " .. tostring(up) .. " " .. tostring(right) .. " " .. tostring(down))
 end
 
 function update_entities(dt)
-   for i,e in ipairs(entities) do
+   for _,e in ipairs(entities) do
 	  if e.name == "player" then
+
 		 local vec = { x = 0, y = 0 }
 		 if input.left_down then vec.x = vec.x - 1 end
 		 if input.up_down then vec.y = vec.y + 1 end
@@ -49,9 +49,6 @@ function update_entities(dt)
 end
 
 function get_entity(id)
-   print("attempting to get entity for id: " .. id)
    local ret = entities[id]
-   print("Ret " .. tostring(ret))
-   print("X: " .. ret.position.x .. " Y: " .. ret.position.y)
-   return entities[id].position
+   return entities[id]
 end

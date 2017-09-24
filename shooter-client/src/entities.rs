@@ -59,6 +59,7 @@ impl Sprite {
 
 #[derive(Debug)]
 pub struct Entity {
+    pub name: String,
     pub pos: Vector3<f32>,
 }
 
@@ -66,9 +67,10 @@ pub struct Entity {
 pub struct EntityRef(u32);
 
 impl Entity {
-    pub fn new(pos: Vector2<f32>) -> Entity {
+    pub fn new(name: &str, pos: Vector2<f32>) -> Entity {
         Entity {
             pos: Vector3::new(pos.x, pos.y, 0.0),
+            name: name.to_string(),
         }
     }
 }
@@ -92,27 +94,7 @@ impl<'a> GameState<'a> {
     }
 
     pub fn get_entity(&mut self, entity_ref: &EntityRef) -> Entity {
-        //let o = self.script_engine.call_function("get_entity", &[ScriptValue::Number(entity_ref.0 as f64)]);
-        let mut fun: LuaFunction<_> = self.script_engine.lua.get("get_entity").unwrap();
-        let mut result: LuaTable<_> = fun.call_with_args((entity_ref.0)).unwrap();
-
-        let mut x = 0.0;
-        let mut y = 0.0;
-
-
-        for (k, v) in result.iter::<String, f64>().filter_map(|e| e) {
-            println!("{} => {}", k, v);
-        }
-        /*for &(ref k, ref v) in o.extract_field("position").extract_object_vec() {
-            if k.extract_string() == "x" { x = v.extract_number() }
-            if k.extract_string() == "y" { y = v.extract_number() }
-        }*/
-
-        println!("X: {}, Y: {}", x, y);
-
-        return Entity {
-            pos: Vector3::new(x as f32,y as f32, 0.0)
-        }
+        self.script_engine.get_entity(entity_ref.0)
     }
 
     pub fn update_entities(&mut self, dt: f64) {
