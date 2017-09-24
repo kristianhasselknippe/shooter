@@ -11,6 +11,9 @@ use shader::ShaderProgram;
 use std::collections::HashMap;
 use super::input::Input;
 use super::camera::Camera;
+use super::scripting::*;
+
+use super::scripting::hlua::{LuaFunction,LuaTable};
 
 pub struct Sprite {
     pub pos: Vector3<f32>,
@@ -70,169 +73,59 @@ impl Entity {
     }
 }
 
-
-#[derive(Hash,Clone,Copy,Eq,PartialEq, Debug)]
-pub struct ComponentRef(u32);
-
-pub trait Component {
-    fn update(&mut self, e: &mut Entity, dt: f32, game_state: &GameState);
+pub struct GameState<'a> {
+    script_engine: ScriptEngine<'a>,
 }
 
-struct Ownership {
-    owning_entity: EntityRef,
-    component: ComponentRef,
-}
-
-pub struct GameState {
-    entities: HashMap<EntityRef,Rc<RefCell<Entity>>>,
-    components: HashMap<ComponentRef, Rc<RefCell<Component>>>,
-
-    relationships: Vec<Ownership>,
-}
-
-impl GameState {
-    pub fn new() -> GameState {
+impl<'a> GameState<'a> {
+    pub fn new() -> GameState<'a> {
+        let mut script_engine = ScriptEngine::new();
         GameState {
-            entities: HashMap::new(),
-            components: HashMap::new(),
-
-            relationships: Vec::new(),
+            script_engine: script_engine,
         }
     }
 
-    pub fn add_entity(&mut self, entity: &Rc<RefCell<Entity>>) -> EntityRef {
-        let id = self.entities.len() as u32;
-        let ret = EntityRef(id);
-        self.entities.insert(ret, entity.clone());
+    pub fn new_entity(&mut self, name: &str) -> EntityRef {
+        let id = self.script_engine.add_entity(name);
+        let ret = EntityRef(id as u32);
         ret
     }
 
-    pub fn get_entity(&self, entity_ref: &EntityRef) -> Ref<Entity> {
-        self.entities.get(entity_ref).unwrap().borrow()
-    }
+    pub fn get_entity(&mut self, entity_ref: &EntityRef) -> Entity {
+        //let o = self.script_engine.call_function("get_entity", &[ScriptValue::Number(entity_ref.0 as f64)]);
+        let mut fun: LuaFunction<_> = self.script_engine.lua.get("get_entity").unwrap();
+        let mut result: LuaTable<_> = fun.call_with_args((entity_ref.0)).unwrap();
 
-    pub fn get_entity_mut(&self, entity_ref: &EntityRef) -> RefMut<Entity> {
-        self.entities.get(entity_ref).unwrap().borrow_mut()
-    }
+        let mut x = 0.0;
+        let mut y = 0.0;
 
-    pub fn add_component<T: Component + 'static>(&mut self, comp: &Rc<RefCell<T>>, entity_ref: &EntityRef) -> ComponentRef {
-        let id = self.components.len() as u32;
-        let ret = ComponentRef(id);
-        self.components.insert(ret, comp.clone());
 
-        self.relationships.push(Ownership {
-            owning_entity: entity_ref.clone(),
-            component: ret.clone(),
-        });
-
-        ret
-    }
-
-    pub fn get_component_mut(&self, comp_ref: &ComponentRef) -> RefMut<Component> {
-        self.components.get(comp_ref).unwrap().borrow_mut()
-    }
-
-    pub fn update(&self, dt: f32) {
-        for rel in &self.relationships {
-            let mut c = self.get_component_mut(&rel.component);
-            let mut e = self.get_entity_mut(&rel.owning_entity);
-
-            c.update(&mut e, dt, self);
+        for (k, v) in result.iter::<String, f64>().filter_map(|e| e) {
+            println!("{} => {}", k, v);
         }
-    }
-}
+        /*for &(ref k, ref v) in o.extract_field("position").extract_object_vec() {
+            if k.extract_string() == "x" { x = v.extract_number() }
+            if k.extract_string() == "y" { y = v.extract_number() }
+        }*/
 
-pub struct PlayerController {
-    acceleration: Vector3<f32>,
-    speed: Vector3<f32>,
-    input: Rc<RefCell<Input>>,
-    max_speed: f32,
-}
+        println!("X: {}, Y: {}", x, y);
 
-impl PlayerController {
-    pub fn new(input: &Rc<RefCell<Input>>, acceleration: f32, max_speed: f32) -> PlayerController {
-        PlayerController {
-            input: input.clone(),
-            acceleration: Vector3::new(acceleration,acceleration,acceleration),
-            speed: Vector3::new(0.0,0.0,0.0),
-            max_speed: max_speed,
-        }
-    }
-}
-
-const EPS: f32 = 0.001;
-
-impl Component for PlayerController {
-    fn update(&mut self, entity: &mut Entity, dt: f32, game_state: &GameState) {
-        let mut input_vector = self.input.borrow().normalized_input_vector();
-
-        let mut at_max_speed_x = false;
-        let mut at_max_speed_y = false;
-
-        if input_vector.x < EPS && input_vector.x > -EPS {
-            input_vector.x = -self.speed.x.signum();
-        } else {
-            if self.speed.x > self.max_speed {
-                at_max_speed_x = true;
-                self.speed.x = self.max_speed;
-            }
-        }
-        if input_vector.y < EPS && input_vector.y > -EPS {
-            input_vector.y = -self.speed.y.signum();
-        } else {
-            if self.speed.y > self.max_speed {
-                at_max_speed_y = true;
-                self.speed.y = self.max_speed;
-            }
-        }
-
-        let speed_change = input_vector.component_mul(&self.acceleration) * dt;
-        if !at_max_speed_x {
-            self.speed.x += speed_change.x;
-        }
-        if !at_max_speed_y {
-            self.speed.y += speed_change.y;
-        }
-
-        entity.pos += self.speed * dt;
-    }
-}
-
-pub struct PlayerCamera {
-    player: EntityRef,
-    camera: Camera,
-    input: Rc<RefCell<Input>>,
-}
-
-impl PlayerCamera {
-    pub fn new(player: &EntityRef, camera: Camera, input: &Rc<RefCell<Input>>) -> PlayerCamera {
-        PlayerCamera {
-            player: player.clone(),
-            camera: camera,
-            input: input.clone(),
+        return Entity {
+            pos: Vector3::new(x as f32,y as f32, 0.0)
         }
     }
 
-    pub fn camera_matrix(&self, game_state: &GameState) -> Matrix4<f32> {
-        self.camera.camera_matrix()
+    pub fn update_entities(&mut self, dt: f64) {
+        self.script_engine.update_entities(dt);
     }
-}
 
-impl Component for PlayerCamera {
-    fn update(&mut self, entity: &mut Entity, dt: f32, game_state: &GameState) {
-        let player_entity = game_state.get_entity(&self.player);
-        let player_vec = player_entity.pos - entity.pos;
-
-        entity.pos += dt * player_vec;
-
-
-        /*let input_vector = self.input.borrow().normalized_input_vector();
-
-        entity.pos.x += dt * input_vector.x;
-        entity.pos.y += dt * input_vector.y;*/
-
-        /*println!("PlayerPos: ({},{}), CamPos: ({},{})",
-                 player_entity.pos.x, player_entity.pos.y,
-                 entity.pos.x, entity.pos.y);*/
+    pub fn update_input(&mut self, input: &Input) {
+        self.script_engine.call_function("update_input", &[
+            ScriptValue::Bool(input.left_down),
+            ScriptValue::Bool(input.up_down),
+            ScriptValue::Bool(input.right_down),
+            ScriptValue::Bool(input.down_down),
+        ]);
     }
+
 }

@@ -51,19 +51,6 @@ fn find_sdl_gl_driver() -> Option<u32> {
 
 fn main() {
 
-
-    let mut script_engine = ScriptEngine::new();
-
-    script_engine.call_function("main", &[]);
-
-    script_engine.call_function("update_input", &[
-        ScriptValue::Bool(false),
-        ScriptValue::Bool(true),
-        ScriptValue::Bool(true),
-        ScriptValue::Bool(false),
-    ]);
-
-
     let window_size = (600,800);
 
 
@@ -115,46 +102,39 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut events = sdl_context.event_pump().unwrap();
 
-    let input = Rc::new(RefCell::new(Input::new(events)));
+    let mut input = Input::new(events);
 
     let mut game_state = GameState::new();
 
-    let player_entity = game_state.add_entity(&Rc::new(RefCell::new((Entity::new(Vector2::new(0.0,0.0))))));
-    let player_controller = Rc::new(RefCell::new(PlayerController::new(&input, 30.0, 20.0)));
-    game_state.add_component(&player_controller, &player_entity);
-
+    let player_ref = game_state.new_entity("player");
     let mut camera = Camera::new_orthographic(50.0,50.0);
-    let mut camera_controller = Rc::new(RefCell::new(PlayerCamera::new(&player_entity, camera, &input)));
-    let mut camera_entity = game_state.add_entity(&Rc::new(RefCell::new(Entity::new(Vector2::new(0.0,0.0)))));
-    game_state.add_component(&camera_controller, &camera_entity);
-
-
+    let camera_ref = game_state.new_entity("camera");
 
     let text = Text::new("this is some text", &draw_context);
 
     'running: loop {
         let dt = time.delta_time() as f32;
         {
-            input.borrow_mut().update_sdl_input();
+            input.update_sdl_input();
+            game_state.update_input(&input);
         }
 
-        if input.borrow().escape {
+        if input.escape {
             break 'running;
         }
 
-        game_state.update(dt);
+        game_state.update_entities(dt as f64);
 
         //update player sprite position since they are not yet connected
-        let p_entity = game_state.get_entity(&player_entity);
+        let p_entity = game_state.get_entity(&player_ref);
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
-        let cam_entity = game_state.get_entity(&camera_entity);
-
+        let cam_entity = game_state.get_entity(&camera_ref);
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
-        let projection = camera_controller.borrow().camera_matrix(&game_state);
+        let projection = camera.camera_matrix();
         let camera_matrix = projection * view;
 
         /*for y in 0..10 {
