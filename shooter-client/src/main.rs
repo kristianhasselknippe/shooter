@@ -50,16 +50,18 @@ fn find_sdl_gl_driver() -> Option<u32> {
 }
 
 fn main() {
-    let neko_vm = scripting::neko::init_new_neko_vm();
-    let module = neko_vm.load_module("mymodule.n");
 
-    let game_state = module.get_haxe_class("GameState");
-    game_state.print();
 
-    game_state.call_method("add_new_game_object", &[
-        ArgumentValue::String("first_game_obj".to_string())
+    let mut script_engine = ScriptEngine::new();
+
+    script_engine.call_function("main", &[]);
+
+    script_engine.call_function("update_input", &[
+        ScriptValue::Bool(false),
+        ScriptValue::Bool(true),
+        ScriptValue::Bool(true),
+        ScriptValue::Bool(false),
     ]);
-
 
 
     let window_size = (600,800);
