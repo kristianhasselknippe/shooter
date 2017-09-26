@@ -113,6 +113,8 @@ color = vec4(distance,distance,distance,1.0);");
     let text = Text::new("this is some text", &draw_context);
 
     'running: loop {
+        game_state.pre_update();
+
         let dt = time.delta_time() as f32;
         {
             input.update_sdl_input();

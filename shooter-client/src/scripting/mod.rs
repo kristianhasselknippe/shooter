@@ -1,4 +1,9 @@
 pub extern crate hlua;
+
+pub mod script;
+
+use self::script::*;
+
 use super::na::Vector3;
 use self::hlua::{Lua,LuaFunction,LuaRead,Push,AsMutLua,AnyLuaValue,LuaFunctionCallError,LuaTable};
 use std::fs::File;
@@ -59,6 +64,7 @@ impl ScriptValue {
 
 pub struct ScriptEngine<'a> {
     pub lua: Lua<'a>,
+    script_watcher: ScriptWatcher, //TODO(Rename ScriptWatcher)
 }
 
 impl<'a> ScriptEngine<'a> {
@@ -68,8 +74,13 @@ impl<'a> ScriptEngine<'a> {
         let foo = lua.execute_from_reader::<(),_>(File::open(&Path::new("scripts/main.lua")).unwrap());
 
         ScriptEngine {
-            lua: lua
+            lua: lua,
+            script_watcher: ScriptWatcher::new(&Path::new("scripts")),
         }
+    }
+
+    pub fn pre_update(&mut self) {
+        self.script_watcher.tick();
     }
 
     pub fn call_function(&mut self, name: &str, args: &[ScriptValue]) -> ScriptValue {
