@@ -32,7 +32,7 @@ function update_input(left,up,right,down)
    input.down_down = down
 end
 
-speed = 0.5
+speed = 20.5
 function update_entities(dt)
    for _,e in ipairs(entities) do
 	  if e.name == "player" then
