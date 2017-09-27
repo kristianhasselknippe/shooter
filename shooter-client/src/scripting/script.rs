@@ -9,31 +9,32 @@ use std::sync::mpsc::{Receiver,Sender,channel};
 
 use std::env::current_dir;
 
-fn script_watcher(scripts_path: &Path, event_sender: Sender<DebouncedEvent>) -> notify::Result<()> {
+fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
 
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx, Duration::from_secs(0)));
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1)).unwrap();
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
-    try!(watcher.watch(scripts_path, RecursiveMode::Recursive));
+    println!("Watching path: {:?}", scripts_path);
 
-    // This is a simple loop, but you may want to use more complex logic here,
-    // for example to handle I/O.
-    spawn(move || {
-        println!("Starting file watcher loop");
-        loop {
-            for ev in rx.try_iter() {
-                println!("Got file event - {:?}", ev);
-                event_sender.send(ev);
-            }
+    watcher.watch(scripts_path, RecursiveMode::Recursive).unwrap();
 
+    loop {
+        match rx.recv() {
+            Ok(event) => {
+                println!("{:?}", event);
+                sender.send(event);
+            },
+            Err(e) => {
+                println!("watch error: {:?}", e);
+                break;
+            },
         }
-    });
-    Ok(())
+    }
 }
 
 #[derive(Hash,Eq,PartialEq)]
@@ -51,11 +52,14 @@ pub struct ScriptWatcher {
 
 impl ScriptWatcher {
     pub fn new(scripts_path: &Path) -> ScriptWatcher {
-        let (tx, rx) = channel();
         let mut cd = current_dir().unwrap();
         cd.push(scripts_path);
         println!("Path dir: {:?}", &cd);
-        script_watcher(&cd, tx).unwrap();
+        let (tx,rx) = channel();
+        spawn(move ||{
+            script_watcher(&cd, tx);
+        });
+
         ScriptWatcher {
             script_id_counter: 0,
             script_paths: HashMap::new(),
@@ -73,9 +77,11 @@ impl ScriptWatcher {
     }
 
     pub fn tick(&mut self) {
-        for event in self.rx.try_iter() {
-            println!("Got an event");
-            println!("{:?}", event);
+        loop {
+            match self.rx.try_recv() {
+                Ok(event) => println!("{:?}", event),
+                Err(e) => { break; },
+            }
         }
     }
 }
