@@ -71,16 +71,20 @@ impl<'a> ScriptEngine<'a> {
     pub fn new() -> ScriptEngine<'a> {
         let mut lua = Lua::new();
         lua.openlibs();
-        let foo = lua.execute_from_reader::<(),_>(File::open(&Path::new("scripts/main.lua")).unwrap());
+
+        let mut sw = ScriptWatcher::new(&Path::new("scripts"));
+
+        sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
 
         ScriptEngine {
             lua: lua,
-            script_watcher: ScriptWatcher::new(&Path::new("scripts")),
+            script_watcher: sw,
         }
     }
 
     pub fn pre_update(&mut self) {
-        self.script_watcher.tick();
+        self.script_watcher.tick(&mut self.lua);
     }
 
     pub fn call_function(&mut self, name: &str, args: &[ScriptValue]) -> ScriptValue {

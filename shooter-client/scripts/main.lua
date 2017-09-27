@@ -1,6 +1,3 @@
-entities_id_counter = 1
-entities = {}
-
 function main()
    print("Hello world from lua")
 end
@@ -18,12 +15,7 @@ function create_entity(name)
    return id
 end
 
-input  = {
-   left_down = false,
-   up_down = false,
-   right_down = false,
-   down_down = false,
-}
+
 
 function update_input(left,up,right,down)
    input.left_down = left
@@ -32,7 +24,7 @@ function update_input(left,up,right,down)
    input.down_down = down
 end
 
-speed = 20.5
+speed = 10.5
 function update_entities(dt)
    for _,e in ipairs(entities) do
 	  if e.name == "player" then

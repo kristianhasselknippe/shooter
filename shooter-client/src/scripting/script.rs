@@ -1,11 +1,14 @@
 extern crate notify;
 
 use self::notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
+use self::notify::DebouncedEvent::*;
 use std::path::{PathBuf,Path};
 use std::time::Duration;
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver,Sender,channel};
+use super::hlua::Lua;
+use std::fs::File;
 
 use std::env::current_dir;
 
@@ -26,7 +29,6 @@ fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     loop {
         match rx.recv() {
             Ok(event) => {
-                println!("{:?}", event);
                 sender.send(event);
             },
             Err(e) => {
@@ -37,27 +39,41 @@ fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     }
 }
 
-#[derive(Hash,Eq,PartialEq)]
+#[derive(Hash,Eq,PartialEq,Clone,Copy)]
 pub struct ScriptId(i32);
+#[derive(Clone)]
 pub struct Script {
     id: ScriptId,
-    file: PathBuf,
+    path: PathBuf,
+}
+
+impl Script {
+    pub fn new(id: ScriptId, path: &Path) -> Script {
+        Script {
+            id: id,
+            path: path.to_path_buf(),
+        }
+    }
+
+    pub fn load(&self, lua: &mut Lua) {
+        println!("Loading script: {:?}", self.path.file_name().unwrap());
+        let file = File::open(&self.path).unwrap();
+        lua.execute_from_reader::<(),_>(file).unwrap();
+    }
 }
 
 pub struct ScriptWatcher {
     script_id_counter: i32,
-    script_paths: HashMap<ScriptId, PathBuf>,
+    script_paths: HashMap<ScriptId, Script>,
     rx: Receiver<DebouncedEvent>,
 }
 
 impl ScriptWatcher {
     pub fn new(scripts_path: &Path) -> ScriptWatcher {
-        let mut cd = current_dir().unwrap();
-        cd.push(scripts_path);
-        println!("Path dir: {:?}", &cd);
         let (tx,rx) = channel();
+        let dir = scripts_path.to_path_buf();
         spawn(move ||{
-            script_watcher(&cd, tx);
+            script_watcher(&dir, tx);
         });
 
         ScriptWatcher {
@@ -70,16 +86,38 @@ impl ScriptWatcher {
     pub fn new_script_from_file(&mut self, path: &Path) -> Script {
         let id = ScriptId(self.script_id_counter);
         self.script_id_counter += 1;
-        Script {
-            id: id,
-            file: path.to_path_buf(),
-        }
+
+        let ret = Script::new(id,path);
+        self.script_paths.insert(id, ret.clone());
+        ret
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, lua: &mut Lua) {
         loop {
             match self.rx.try_recv() {
-                Ok(event) => println!("{:?}", event),
+                Ok(event) => {
+                    //println!("{:?}", event);
+                    match event {
+                        NoticeWrite(path) => { },
+                        NoticeRemove(path) => {
+
+                        },
+                        Create(path) => { },
+                        Write(path) => {
+                            for (k,p) in &self.script_paths {
+                                if path.ends_with(&p.path) {
+                                    p.load(lua);
+                                }
+                            }
+                        },
+                        Chmod(path) => { },
+                        Remove(path) => { },
+                        Rename(from, to) => { },
+                        Rescan => { },
+                        Error(err, path) => { },
+                    }
+
+                },
                 Err(e) => { break; },
             }
         }
