@@ -19,6 +19,7 @@ mod entities;
 mod time;
 mod input;
 mod scripting;
+mod fps_counter;
 
 use scripting::*;
 use shader::*;
@@ -31,6 +32,7 @@ use input::*;
 use camera::*;
 use time::*;
 use input::*;
+use fps_counter::*;
 
 use std::path::Path;
 use na::*;
@@ -112,10 +114,16 @@ color = vec4(distance,distance,distance,1.0);");
 
     let text = Text::new("this is some text", &draw_context);
 
+    let mut fps_counter = FpsCounter::new();
+
     'running: loop {
+        let dt = time.delta_time();
+        fps_counter.update(dt);
+
+
+        let dt = dt as f32;
         game_state.pre_update();
 
-        let dt = time.delta_time() as f32;
         {
             input.update_sdl_input();
             game_state.update_input(&input);
@@ -165,6 +173,6 @@ color = vec4(distance,distance,distance,1.0);");
 
         canvas.present();
 
-        time.wait_until_frame_target();
+        //time.wait_until_frame_target();
     }
 }
