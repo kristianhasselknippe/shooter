@@ -128,10 +128,23 @@ impl Lua {
         }
     }
 
+    pub fn call(&self, name: &str, args: &[LuaObject]) -> Result<LuaObject, ()> {
+        unsafe {
+            let name = CString::new(name).unwrap();
+            lua_getglobal(self.handle as _, name.as_ptr() as _);
+            let mut results = -1;
+            lua_call(self.handle as _, 0, results);
+            let result = lua_tonumberx(self.handle as _, 0, null_mut());
+            println!("Result: {}", result);
+        }
+        Err(())
+    }
+
     pub fn get(&self, name: &str) -> Option<LuaObject> {
         let name_c = CString::new(name).unwrap();
         unsafe {
-            lua_getglobal(self.handle as _, name_c.as_ptr() as _);
+            //lua_getglobal(self.handle as _, name_c.as_ptr() as _);
+
         }
         None
     }

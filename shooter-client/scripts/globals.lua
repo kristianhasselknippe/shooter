@@ -7,3 +7,8 @@ input  = {
    right_down = false,
    down_down = false,
 }
+
+function get_some()
+   print("Called get some");
+   return 123;
+end
