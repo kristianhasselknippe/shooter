@@ -71,20 +71,19 @@ impl Lua {
 
 
     pub fn execute_from_reader(&self, reader: &mut Read) {
-        let mut code = String::new();
-        reader.read_to_string(&mut code);
+        let mut code = Vec::new();
+        reader.read_to_end(&mut code);
         let len = code.len();
-        let c_string = CString::new(code).unwrap();
 
         struct Buffer {
             pos: i32,
-            buffer: CString,
+            buffer: Vec<u8>,
             len: i32,
         }
 
         let mut buffer = Buffer {
             pos: 0,
-            buffer: c_string,
+            buffer: code,
             len: len as i32,
         };
 
@@ -95,19 +94,14 @@ impl Lua {
             unsafe {
                 let mut buffer: *mut Buffer = data as _;
 
-                println!("CodeLen : {}", (*buffer).len);
-                println!("CodePos : {}", (*buffer).pos);
 
                 if (*buffer).pos == (*buffer).len {
-                    println!("Setting to 0");
                     (*size) = 0;
                     return 0 as *const c_char;
                 } else {
                     (*buffer).pos += (*buffer).len;
-                    println!("Setting buffer pos: {}", (*buffer).pos);
-                    (*size) = (*buffer).len as _;
-                    println!("Size is now: {}", *size);
-                    return data as *const c_char
+                    (*size) = (*buffer).len as size_t;
+                    return (*buffer).buffer.as_ptr() as *const c_char
                 }
             }
 
@@ -115,7 +109,15 @@ impl Lua {
 
         unsafe {
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
+
             println!("Result: {:?}", result);
+            if result == LUA_OK {
+                let mut results = 0;
+                lua_call(self.handle as _, 0, 0);
+                println!("NResults {}", results);
+            } else {
+                panic!("Error loading script");
+            }
         }
     }
 
@@ -127,6 +129,10 @@ impl Lua {
     }
 
     pub fn get(&self, name: &str) -> Option<LuaObject> {
+        let name_c = CString::new(name).unwrap();
+        unsafe {
+            lua_getglobal(self.handle as _, name_c.as_ptr() as _);
+        }
         None
     }
 }
