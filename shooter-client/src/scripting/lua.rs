@@ -134,7 +134,7 @@ impl Lua {
             lua_getglobal(self.handle as _, name.as_ptr() as _);
             let mut results = -1;
             lua_call(self.handle as _, 0, results);
-            let result = lua_tonumberx(self.handle as _, 0, null_mut());
+            let result = lua_tonumberx(self.handle as _, -1, null_mut());
             println!("Result: {}", result);
         }
         Err(())

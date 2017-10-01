@@ -83,7 +83,8 @@ impl ScriptEngine {
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
-        self.lua.get("foobar");
+        println!("Getting lua");
+        self.lua.call("foobar", &[]);
         println!("Get me some entities");
         let ret = Vec::new();
         let mut entities: LuaObject = self.lua.get("entities").unwrap();
@@ -104,9 +105,10 @@ impl ScriptEngine {
     pub fn add_entity(&mut self, name: &str) -> f64 {
         println!("ADding entity");
         let r = self.call("create_entity", &[ScriptValue::String(name.to_string())]);
-        match r {
+        /*match r {
             ScriptValue::Number(n) => n,
             _ => panic!("Add entity function didn't return a number"),
-        }
+    }*/
+        0.0
     }
 }
