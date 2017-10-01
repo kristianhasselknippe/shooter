@@ -5,7 +5,7 @@ pub mod script;
 use self::script::*;
 
 use super::na::Vector3;
-use self::hlua::{Lua,LuaFunction,LuaRead,Push,AsMutLua,AnyLuaValue,LuaFunctionCallError,LuaTable};
+use self::hlua::{Lua,LuaFunction,LuaRead,Push,PushGuard,AsMutLua,AnyLuaValue,LuaFunctionCallError,LuaTable};
 use std::fs::File;
 use std::path::Path;
 use std::collections::HashMap;
@@ -75,6 +75,7 @@ impl<'a> ScriptEngine<'a> {
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
 
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
 
         ScriptEngine {
@@ -111,23 +112,44 @@ impl<'a> ScriptEngine<'a> {
         ]);
     }
 
-    pub fn get_entity(&mut self, id: u32) -> Entity {
-        let mut fun: LuaFunction<_> = self.lua.get("get_entity").unwrap();
-        let mut table: LuaTable<_> = fun.call_with_args((id as f64)).unwrap();
-
+    fn create_entity_from_lua_table<T: AsMutLua<'a>>(t: &mut LuaTable<T>) -> Entity {
         let mut x: f64 = 0.0;
         let mut y: f64 = 0.0;
         {
-            let mut pos: LuaTable<_> = table.get("position").unwrap();
+            let mut pos: LuaTable<_> = t.get("position").unwrap();
             x = pos.get("x").unwrap();
             y = pos.get("y").unwrap();
         }
-        let name: String = table.get("name").unwrap();
+        let name: String = t.get("name").unwrap();
 
         Entity {
             pos: Vector3::new(x as f32,y as f32,0.0),
             name: name,
         }
+    }
+
+    pub fn get_entity(&mut self, id: u32) -> Entity {
+        let mut fun: LuaFunction<_> = self.lua.get("get_entity").unwrap();
+        let mut table: LuaTable<_> = fun.call_with_args((id as f64)).unwrap();
+        ScriptEngine::create_entity_from_lua_table(&mut table)
+    }
+
+    pub fn get_entities(&mut self) -> Vec<Entity> {
+        println!("Get me some entities");
+        let ret = Vec::new();
+        let mut entities: LuaTable<_> = self.lua.get("entities").unwrap();
+        for e in entities.iter::<i32,_>() {
+            println!("Getting entitites: {:?}", e);
+            if let Some(e) = e {
+                let (k,v) : (i32, LuaTable<Lua<'a>>) = e;
+
+            }
+            /*if let Some(e) = v {
+                let entity = ScriptEngine::create_entity_from_lua_table(&e.1);
+                ret.push(entity);
+            }*/
+        }
+        ret
     }
 
     pub fn update_entities(&mut self, dt: f64) {

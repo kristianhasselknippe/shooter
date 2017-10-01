@@ -2,21 +2,6 @@ function main()
    print("Hello world from lua")
 end
 
-function create_entity(name)
-   local id = entities_id_counter
-   entities[id] = {
-	  name = name,
-	  position = {
-		 x = 0,
-		 y = 0,
-	  }
-   }
-   entities_id_counter = entities_id_counter + 1
-   return id
-end
-
-
-
 function update_input(left,up,right,down)
    input.left_down = left
    input.up_down = up

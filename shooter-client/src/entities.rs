@@ -97,6 +97,10 @@ impl<'a> GameState<'a> {
         self.script_engine.get_entity(entity_ref.0)
     }
 
+    pub fn get_entities(&mut self) -> Vec<Entity> {
+        self.script_engine.get_entities()
+    }
+
     pub fn pre_update(&mut self) {
         self.script_engine.pre_update();
     }

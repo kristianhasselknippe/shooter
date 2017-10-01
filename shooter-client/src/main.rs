@@ -120,6 +120,7 @@ color = vec4(distance,distance,distance,1.0);");
         let dt = time.delta_time();
         fps_counter.update(dt);
 
+        let entitites___ = game_state.get_entities();
 
         let dt = dt as f32;
         game_state.pre_update();
