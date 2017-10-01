@@ -15,3 +15,7 @@ function build_scene()
    print("building scene")
 end
 build_scene()
+
+print("we are loading scene");
+print("we are loading scene");
+print("we are loading scene");

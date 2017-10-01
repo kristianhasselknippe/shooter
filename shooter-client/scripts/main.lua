@@ -1,3 +1,4 @@
+
 function main()
    print("Hello world from lua")
 end

@@ -57,8 +57,8 @@ impl Script {
 
     pub fn load(&self, lua: &Lua) {
         println!("Loading script: {:?}", self.path.file_name().unwrap());
-        let file = File::open(&self.path).unwrap();
-        lua.execute_from_reader(&file);
+        let mut file = File::open(&self.path).unwrap();
+        lua.execute_from_reader(&mut file);
     }
 }
 

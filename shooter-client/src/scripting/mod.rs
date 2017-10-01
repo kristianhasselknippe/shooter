@@ -1,5 +1,3 @@
-pub extern crate lua52_sys;
-
 pub mod script;
 pub mod lua;
 
