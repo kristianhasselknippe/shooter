@@ -13,7 +13,6 @@ use super::input::Input;
 use super::camera::Camera;
 use super::scripting::*;
 
-use super::scripting::hlua::{LuaFunction,LuaTable};
 
 pub struct Sprite {
     pub pos: Vector3<f32>,
@@ -75,12 +74,12 @@ impl Entity {
     }
 }
 
-pub struct GameState<'a> {
-    script_engine: ScriptEngine<'a>,
+pub struct GameState {
+    script_engine: ScriptEngine,
 }
 
-impl<'a> GameState<'a> {
-    pub fn new() -> GameState<'a> {
+impl GameState {
+    pub fn new() -> GameState {
         let mut script_engine = ScriptEngine::new();
         GameState {
             script_engine: script_engine,
@@ -110,7 +109,7 @@ impl<'a> GameState<'a> {
     }
 
     pub fn update_input(&mut self, input: &Input) {
-        self.script_engine.call_function("update_input", &[
+        self.script_engine.call("update_input", &[
             ScriptValue::Bool(input.left_down),
             ScriptValue::Bool(input.up_down),
             ScriptValue::Bool(input.right_down),

@@ -2,14 +2,14 @@ extern crate notify;
 
 use self::notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
 use self::notify::DebouncedEvent::*;
+use super::lua::*;
 use std::path::{PathBuf,Path};
 use std::time::Duration;
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver,Sender,channel};
-use super::hlua::Lua;
 use std::fs::File;
-
+use std::io::Read;
 use std::env::current_dir;
 
 fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
@@ -55,10 +55,10 @@ impl Script {
         }
     }
 
-    pub fn load(&self, lua: &mut Lua) {
+    pub fn load(&self, lua: &Lua) {
         println!("Loading script: {:?}", self.path.file_name().unwrap());
         let file = File::open(&self.path).unwrap();
-        lua.execute_from_reader::<(),_>(file).unwrap();
+        lua.execute_from_reader(&file);
     }
 }
 
