@@ -175,7 +175,7 @@ impl Lua {
             let stack_size = lua_gettop(self.handle as _);
             println!("Calling stuff: {}", stack_size);
 
-            let mut results = 0;
+            let mut results = 1;
             let mut msgh = 0;
             let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
             match error_status {
