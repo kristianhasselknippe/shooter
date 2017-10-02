@@ -8,7 +8,7 @@ input  = {
    down_down = false,
 }
 
-function get_some()
-   print("Called get some");
+function get_some(foo, bar)
+   print("Called get some" .. foo .. " ::: " .. bar);
    return 123;
 end

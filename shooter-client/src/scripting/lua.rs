@@ -10,29 +10,23 @@ use std::ffi::{CString,CStr};
 pub enum LuaType {
     LuaObject,
     LuaArray,
-    String,
-    Number,
-    Bool,
+    String(String),
+    Number(f64),
+    Bool(bool),
     Function
 }
 
-#[derive(Clone,Debug)]
-pub struct LuaObject {
-    handle: i32,
-    lua_type: LuaType
-}
+impl LuaType {
 
-impl LuaObject {
-
-    pub fn call(&self, args: &[LuaObject]) -> Option<LuaObject> {
+    pub fn call(&self, args: &[LuaType]) -> Option<LuaType> {
         None
     }
 
-    pub fn get(&self, name: &str) -> Option<LuaObject> {
+    pub fn get(&self, name: &str) -> Option<LuaType> {
         None
     }
 
-    pub fn iter(&self) -> Result<Vec<LuaObject>, ()> {
+    pub fn iter(&self) -> Result<Vec<LuaType>, ()> {
         Err(())
     }
 }
@@ -128,19 +122,42 @@ impl Lua {
         }
     }
 
-    pub fn call(&self, name: &str, args: &[LuaObject]) -> Result<LuaObject, ()> {
+    pub fn call(&self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         unsafe {
             let name = CString::new(name).unwrap();
             lua_getglobal(self.handle as _, name.as_ptr() as _);
+
+            for a in args {
+                match a {
+                    &LuaType::String(ref s) => {
+                        let c_str = CString::new(s.clone()).unwrap();
+                        lua_pushstring(self.handle as _, c_str.as_ptr() as _);
+                    },
+                    &LuaType::Number(n) => {
+                        lua_pushnumber(self.handle as _, n);
+                    },
+                    &LuaType::Bool(b) => {
+                        lua_pushboolean(self.handle as _, if b { 1 } else { 0 });
+                    },
+                    _ => {
+                        panic!("Unsupported argument type");
+                    }
+                }
+            }
+
+            let stack_size = lua_gettop(self.handle as _);
+
+            println!("Calling stuff: {}", stack_size);
             let mut results = 0;
-            lua_call(self.handle as _, 0, results);
-            let result = lua_tonumberx(self.handle as _, -1, null_mut());
-            println!("Result: {}", result);
+            lua_call(self.handle as _, args.len() as i32, results);
+            println!("Done calling stuff");
+            //let result = lua_tonumberx(self.handle as _, -1, null_mut());
+            println!("Results: {}", results);
         }
         Err(())
     }
 
-    pub fn get(&self, name: &str) -> Option<LuaObject> {
+    pub fn get(&self, name: &str) -> Option<LuaType> {
         let name_c = CString::new(name).unwrap();
         unsafe {
             //lua_getglobal(self.handle as _, name_c.as_ptr() as _);

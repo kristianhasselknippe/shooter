@@ -59,7 +59,7 @@ impl ScriptEngine {
         ]);
     }
 
-    fn create_entity_from_lua_table(t: &mut LuaObject) -> Entity {
+    fn create_entity_from_lua_table(t: &mut LuaType) -> Entity {
         let mut x: f64 = 0.0;
         let mut y: f64 = 0.0;
         /*{
@@ -77,17 +77,20 @@ impl ScriptEngine {
     }
 
     pub fn get_entity(&mut self, id: u32) -> Entity {
-        let mut fun: LuaObject = self.lua.get("get_entity").unwrap();
-        let mut table: LuaObject = fun.call(&[]).unwrap();
+        let mut fun: LuaType = self.lua.get("get_entity").unwrap();
+        let mut table: LuaType = fun.call(&[]).unwrap();
         ScriptEngine::create_entity_from_lua_table(&mut table)
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
         println!("Getting lua");
-        self.lua.call("get_some", &[]);
+        self.lua.call("get_some", &[
+            LuaType::String("this is somethign ay".to_string()),
+            LuaType::Number(42.123123)
+        ]);
         println!("Get me some entities");
         let ret = Vec::new();
-        let mut entities: LuaObject = self.lua.get("entities").unwrap();
+        let mut entities: LuaType = self.lua.get("entities").unwrap();
         for e in entities.iter() {
             println!("Getting entitites: {:?}", e);
             /*if let Some(e) = v {
