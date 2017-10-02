@@ -132,7 +132,7 @@ impl Lua {
         unsafe {
             let name = CString::new(name).unwrap();
             lua_getglobal(self.handle as _, name.as_ptr() as _);
-            let mut results = -1;
+            let mut results = 0;
             lua_call(self.handle as _, 0, results);
             let result = lua_tonumberx(self.handle as _, -1, null_mut());
             println!("Result: {}", result);

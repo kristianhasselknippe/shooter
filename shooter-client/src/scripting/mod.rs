@@ -84,7 +84,7 @@ impl ScriptEngine {
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
         println!("Getting lua");
-        self.lua.call("foobar", &[]);
+        self.lua.call("get_some", &[]);
         println!("Get me some entities");
         let ret = Vec::new();
         let mut entities: LuaObject = self.lua.get("entities").unwrap();
