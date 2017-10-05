@@ -5,15 +5,32 @@ use self::lua52_sys::*;
 use std::ptr::{null,null_mut};
 use libc::{c_void,size_t,c_char,free,realloc};
 use std::ffi::{CString,CStr};
+use super::ScriptValue;
 
 #[derive(Clone,Debug)]
 pub enum LuaType {
-    LuaObject,
-    LuaArray,
+    Object,
+    Array,
     String(String),
     Number(f64),
     Bool(bool),
-    Function
+    Function,
+    Null
+}
+
+impl From<ScriptValue> for LuaType
+{
+    fn from(sv: ScriptValue) -> Self {
+        match sv {
+            ScriptValue::Object => { LuaType::Object },
+            ScriptValue::Array => { LuaType::Array },
+            ScriptValue::String(s) => { LuaType::String(s) },
+            ScriptValue::Number(n) => { LuaType::Number(n) },
+            ScriptValue::Bool(b) => { LuaType::Bool(b) },
+            ScriptValue::Function => { LuaType::Function },
+            ScriptValue::Null => { LuaType::Null },
+        }
+    }
 }
 
 impl LuaType {
@@ -54,7 +71,7 @@ impl Lua {
         unsafe {
             let state = lua_newstate(alloc, null_mut());
 
-            println!("State: {:?}", state);
+            //println!("State: {:?}", state);
             Lua {
                 handle: state
             }
@@ -81,9 +98,6 @@ impl Lua {
             len: len as i32,
         };
 
-
-        println!("CODELEN: {}", &buffer.len);
-
         extern "C" fn read(_: *mut lua_State, data: *mut c_void, size: *mut size_t) -> *const c_char {
             unsafe {
                 let mut buffer: *mut Buffer = data as _;
@@ -104,11 +118,9 @@ impl Lua {
         unsafe {
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
 
-            println!("Result: {:?}", result);
             if result == LUA_OK {
                 let mut results = 0;
                 lua_call(self.handle as _, 0, 0);
-                println!("NResults {}", results);
             } else {
                 panic!("Error loading script");
             }
@@ -116,7 +128,6 @@ impl Lua {
     }
 
     pub fn open_libs(&self) {
-        println!("Opening libs");
         unsafe {
             luaL_openlibs(self.handle);
         }
@@ -145,22 +156,30 @@ impl Lua {
     fn pop_value(&self) -> Option<LuaType> {
         unsafe {
             let t = lua_type(self.handle as _, 0);
-            println!("T: {}", t);
-            println!("LuaNumber: {}", LUA_TNUMBER);
             match t {
-                LUA_TNIL => { println!("Got nil"); },
-                LUA_TNUMBER => { println!("Got number"); },
-                LUA_TBOOLEAN => { println!("Got bool"); },
-                LUA_TSTRING => { println!("Got string"); },
-                LUA_TTABLE => { println!("Got table"); },
-                LUA_TFUNCTION => { println!("Got function"); },
-                LUA_TUSERDATA => { println!("Got user data"); },
-                LUA_TTHREAD => { println!("Got thread"); },
-                LUA_TLIGHTUSERDATA => { println!("Got light user data"); },
+                LUA_TNIL => { println!("Got null"); Some(LuaType::Null) },
+                LUA_TNUMBER => {
+                    let number = lua_tonumberx(self.handle as _, 0, null_mut());
+                    println!("Got number {}", number);
+                    Some(LuaType::Number(number))
+                },
+                LUA_TBOOLEAN => { println!("Got bool"); None },
+                LUA_TSTRING => {
+                    println!("Got string");
+                    let mut chars = lua_tostring(self.handle as _, 0);
+                    let c_string = CString::from_raw(chars as _);
+                    let ret = c_string.into_string().unwrap();
+                    println!("Returning string: {}", ret);
+                    Some(LuaType::String(ret))
+                },
+                LUA_TTABLE => { println!("Got ttable"); None },
+                LUA_TFUNCTION => { println!("Got funciton"); None },
+                LUA_TUSERDATA => { println!("Got user data"); None },
+                LUA_TTHREAD => { println!("Got thread"); None },
+                LUA_TLIGHTUSERDATA => { println!("Got light userdata"); None },
                 _ => { panic!("Unrecognized type"); }
             }
         }
-        None
     }
 
     pub fn call(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
@@ -172,11 +191,9 @@ impl Lua {
                 self.push_value(&a);
             }
 
-            let stack_size = lua_gettop(self.handle as _);
-            println!("Calling stuff: {}", stack_size);
-
             let mut results = 1;
             let mut msgh = 0;
+            println!("Calling function: {}", n);
             let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
             match error_status {
                 LUA_ERRRUN => {
@@ -194,16 +211,11 @@ impl Lua {
             }
 
             let stack_size = lua_gettop(self.handle as _);
-            println!("stack size: {}", stack_size);
-
-
-
             let result = self.pop_value();
-
-
-            println!("Done calling stuff");
-            //let result = lua_tonumberx(self.handle as _, -1, null_mut());
-            println!("Results: {}", results);
+            return match result {
+                Some(res) => Ok(res),
+                None => Err(()),
+            }
         }
         Err(())
     }

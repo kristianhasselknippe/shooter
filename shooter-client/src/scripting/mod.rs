@@ -2,7 +2,7 @@ pub mod script;
 pub mod lua;
 
 use self::script::*;
-use lua::*;
+use self::lua::*;
 
 use super::na::Vector3;
 use std::fs::File;
@@ -17,7 +17,25 @@ pub enum ScriptValue {
     Number(f64),
     Bool(bool),
     String(String),
+    Array,
+    Object,
+    Function,
     Null,
+}
+
+impl From<LuaType> for ScriptValue
+{
+    fn from(sv: LuaType) -> Self {
+        match sv {
+            LuaType::Object => { ScriptValue::Object },
+            LuaType::Array => { ScriptValue::Array },
+            LuaType::String(s) => { ScriptValue::String(s) },
+            LuaType::Number(n) => { ScriptValue::Number(n) },
+            LuaType::Bool(b) => { ScriptValue::Bool(b) },
+            LuaType::Function => { ScriptValue::Function },
+            LuaType::Null => { ScriptValue::Null },
+        }
+    }
 }
 
 pub struct ScriptEngine {
@@ -46,8 +64,11 @@ impl ScriptEngine {
         self.script_watcher.tick(&mut self.lua);
     }
 
-    pub fn call(&mut self, name: &str, args: &[ScriptValue]) -> ScriptValue {
-        ScriptValue::Null
+    pub fn call(&mut self, name: &str, args: &[ScriptValue]) -> Result<ScriptValue, ()> {
+        let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
+        self.lua.call(name, &lua_args).and_then(|r| {
+            Ok(ScriptValue::from(r))
+        })
     }
 
     pub fn update_input(&mut self, left_down: bool,up_down: bool,right_down: bool,down_down: bool) {
@@ -84,11 +105,11 @@ impl ScriptEngine {
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
         println!("Getting lua");
-        self.lua.call("get_some", &[
+        let result = self.lua.call("get_some", &[
             LuaType::String("this is somethign ay".to_string()),
             LuaType::Number(42.123123)
-        ]);
-        println!("Get me some entities");
+        ]).unwrap();
+        println!("Result form calling get_some: {:?}", result);
         let ret = Vec::new();
         let mut entities: LuaType = self.lua.get("entities").unwrap();
         for e in entities.iter() {

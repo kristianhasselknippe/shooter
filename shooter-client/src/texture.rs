@@ -37,7 +37,6 @@ impl Image {
 
         match (color_type,image_data) {
             (ColorType::RGB(bit_depth),DecodingResult::U8(data)) => {
-                println!("Loading RGB image with pixel depth: {}", bit_depth);
                 Image {
                     image_format: ImageFormat::RGB,
                     data: data,
@@ -45,7 +44,6 @@ impl Image {
                 }
             },
             (ColorType::RGBA(bit_depth),DecodingResult::U8(data)) => {
-                println!("Loading RGBA image with pixel depth: {}", bit_depth);
                 Image {
                     image_format: ImageFormat::RGBA,
                     data: data,
@@ -61,7 +59,6 @@ impl Image {
         let image_file = File::create(path).unwrap();
         let encoder = PNGEncoder::new(image_file);
         //using a bit depth of 8 here TODO(should make that tweakable?)
-        println!("PNG Width: {}, Height: {}", width, height);
         encoder.encode(bytes, width, height, color_type).unwrap();
     }
 
@@ -69,7 +66,6 @@ impl Image {
         let mut image_file = File::create(path).unwrap();
         let mut encoder = BMPEncoder::new(&mut image_file);
         //using a bit depth of 8 here TODO(should make that tweakable?)
-        println!("BMP Width: {}, Height: {}", width, height);
         encoder.encode(bytes, width, height, ColorType::RGBA(8)).unwrap();
     }
 }
@@ -240,7 +236,6 @@ impl MemoryTexture {
     }
 
     pub fn draw(&self, dc: &DrawContext, pos: (f32,f32), size: (f32,f32)) {
-        println!("Drawing {:?}", self.format);
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
@@ -300,7 +295,6 @@ impl TextureAtlas {
                 fb_height = tex.size.1;
             }
         }
-        println!("FB: {:?}", (fb_width, fb_height));
 
         let mut fb = Framebuffer::new(fb_width, fb_height);
         fb.bind(dc);
@@ -327,7 +321,6 @@ impl TextureAtlas {
                 size: size,
             });
 
-            println!("Drawing tex: size - {:?}", size);
 
             tex.draw(dc, pos, size);
         }
@@ -391,9 +384,9 @@ impl Framebuffer {
             gl::Viewport(0, 0, self.width as i32, self.height as i32);
 
             let status = gl::CheckFramebufferStatus(gl::FRAMEBUFFER);
-            println!("{:?}", status);
+            //println!("{:?}", status);
             if status == gl::FRAMEBUFFER_COMPLETE {
-                println!("Framebuffer is complete");
+                //println!("Framebuffer is complete");
             }
         }
     }

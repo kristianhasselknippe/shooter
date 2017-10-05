@@ -10,5 +10,5 @@ input  = {
 
 function get_some(foo, bar)
    print("Called get some" .. foo .. " ::: " .. bar);
-   return "foiobar";
+   return 123123;
 end

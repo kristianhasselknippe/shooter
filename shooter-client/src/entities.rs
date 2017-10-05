@@ -81,6 +81,7 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> GameState {
         let mut script_engine = ScriptEngine::new();
+
         GameState {
             script_engine: script_engine,
         }

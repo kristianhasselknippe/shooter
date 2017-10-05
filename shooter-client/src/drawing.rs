@@ -28,7 +28,6 @@ impl DrawContext {
     }
 
     pub fn bind(&mut self) {
-        println!("Binding vertex array object");
         self.vertex_array.bind();
     }
 
