@@ -155,18 +155,18 @@ impl Lua {
 
     fn pop_value(&self) -> Option<LuaType> {
         unsafe {
-            let t = lua_type(self.handle as _, 0);
+            let t = lua_type(self.handle as _, -1);
             match t {
                 LUA_TNIL => { println!("Got null"); Some(LuaType::Null) },
                 LUA_TNUMBER => {
-                    let number = lua_tonumberx(self.handle as _, 0, null_mut());
+                    let number = lua_tonumberx(self.handle as _, -1, null_mut());
                     println!("Got number {}", number);
                     Some(LuaType::Number(number))
                 },
                 LUA_TBOOLEAN => { println!("Got bool"); None },
                 LUA_TSTRING => {
                     println!("Got string");
-                    let mut chars = lua_tostring(self.handle as _, 0);
+                    let mut chars = lua_tostring(self.handle as _, -1);
                     let c_string = CString::from_raw(chars as _);
                     let ret = c_string.into_string().unwrap();
                     println!("Returning string: {}", ret);
@@ -211,6 +211,7 @@ impl Lua {
             }
 
             let stack_size = lua_gettop(self.handle as _);
+            println!("Popping value by call: {}", n);
             let result = self.pop_value();
             return match result {
                 Some(res) => Ok(res),

@@ -8,6 +8,7 @@ function create_entity(name)
 	  }
    }
    entities_id_counter = entities_id_counter + 1
+   print("Lua returning id: " .. id)
    return id
 end
 

@@ -88,7 +88,7 @@ impl GameState {
     }
 
     pub fn new_entity(&mut self, name: &str) -> EntityRef {
-        let id = self.script_engine.add_entity(name);
+       let id = self.script_engine.add_entity(name);
         let ret = EntityRef(id as u32);
         ret
     }

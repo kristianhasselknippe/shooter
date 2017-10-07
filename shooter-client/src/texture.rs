@@ -29,6 +29,7 @@ pub struct Image {
 
 impl Image {
     pub fn from_png(path: &Path) -> Image {
+        println!("Loading image from path: {:?}", path);
         let image_file = File::open(path).unwrap();
         let mut decoder = PNGDecoder::new(image_file);
         let dim = decoder.dimensions().unwrap();

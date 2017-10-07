@@ -65,10 +65,13 @@ impl ScriptEngine {
     }
 
     pub fn call(&mut self, name: &str, args: &[ScriptValue]) -> Result<ScriptValue, ()> {
+        println!("Calling: {}", name);
         let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
-        self.lua.call(name, &lua_args).and_then(|r| {
+        let ret = self.lua.call(name, &lua_args).and_then(|r| {
             Ok(ScriptValue::from(r))
-        })
+        });
+        println!("Done calling: {}", name);
+        ret
     }
 
     pub fn update_input(&mut self, left_down: bool,up_down: bool,right_down: bool,down_down: bool) {
@@ -104,12 +107,12 @@ impl ScriptEngine {
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
-        println!("Getting lua");
+        /*println!("Getting lua");
         let result = self.lua.call("get_some", &[
             LuaType::String("this is somethign ay".to_string()),
             LuaType::Number(42.123123)
         ]).unwrap();
-        println!("Result form calling get_some: {:?}", result);
+        println!("Result form calling get_some: {:?}", result);*/
         let ret = Vec::new();
         let mut entities: LuaType = self.lua.get("entities").unwrap();
         for e in entities.iter() {
@@ -127,8 +130,9 @@ impl ScriptEngine {
     }
 
     pub fn add_entity(&mut self, name: &str) -> f64 {
-        println!("ADding entity");
+        println!("Adding entity");
         let r = self.call("create_entity", &[ScriptValue::String(name.to_string())]);
+        println!("Got back resutl: {:?}", r);
         /*match r {
             ScriptValue::Number(n) => n,
             _ => panic!("Add entity function didn't return a number"),
