@@ -33,21 +33,6 @@ impl From<ScriptValue> for LuaType
     }
 }
 
-impl LuaType {
-
-    pub fn call(&self, args: &[LuaType]) -> Option<LuaType> {
-        None
-    }
-
-    pub fn get(&self, name: &str) -> Option<LuaType> {
-        None
-    }
-
-    pub fn iter(&self) -> Result<Vec<LuaType>, ()> {
-        Err(())
-    }
-}
-
 pub struct Lua {
     handle: *mut lua_State,
 }
@@ -78,8 +63,6 @@ impl Lua {
         }
 
     }
-
-
 
     pub fn execute_from_reader(&self, reader: &mut Read) {
         let mut code = Vec::new();
@@ -124,6 +107,72 @@ impl Lua {
             } else {
                 panic!("Error loading script");
             }
+        }
+    }
+
+    fn call(&self, args: &[LuaType]) -> Result<LuaType, ()> {
+        unsafe {
+            for a in args {
+                self.push_value(&a);
+            }
+
+            let mut results = 1;
+            let mut msgh = 0;
+            let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
+            match error_status {
+                LUA_ERRRUN => {
+                    let mut error_message = lua_tostring(self.handle as _, -1) as *mut i8;
+                    let err_msg_c_str = CString::from_raw(error_message);
+                    let error_message_s = err_msg_c_str.to_str().unwrap();
+                    panic!("Runtime error calling function {}", error_message_s);
+                },
+                LUA_OK => {
+                    println!("Function call was ok");
+                },
+                _ => {
+                    panic!("Not ok");
+                }
+            }
+            let result = self.pop_value();
+            return match result {
+                Some(res) => Ok(res),
+                None => Err(()),
+            }
+        }
+        Err(())
+    }
+
+    pub fn call_method(&self, object: &LuaType, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
+        println!("Calling method: {}", n);
+        unsafe {
+            let name = CString::new(n).unwrap();
+            lua_getfield(self.handle as _, -1, name.as_ptr() as _);
+            self.call(args)
+        }
+    }
+
+    pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
+        println!("Calling global: {}", n);
+        unsafe {
+            let name = CString::new(n).unwrap();
+            lua_getglobal(self.handle as _, name.as_ptr() as _);
+            self.call(args)
+        }
+    }
+
+    pub fn get_field(&self, object: &LuaType, name: &str) -> Option<LuaType> {
+        let name_c = CString::new(name).unwrap();
+        unsafe {
+            lua_getfield(self.handle as _, -1, name_c.as_ptr() as _);
+            self.pop_value()
+        }
+    }
+
+    pub fn get_global(&self, name: &str) -> Option<LuaType> {
+        let name_c = CString::new(name).unwrap();
+        unsafe {
+            lua_getglobal(self.handle as _, name_c.as_ptr() as _);
+            self.pop_value()
         }
     }
 
@@ -180,53 +229,5 @@ impl Lua {
                 _ => { panic!("Unrecognized type"); }
             }
         }
-    }
-
-    pub fn call(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        unsafe {
-            let name = CString::new(n).unwrap();
-            lua_getglobal(self.handle as _, name.as_ptr() as _);
-
-            for a in args {
-                self.push_value(&a);
-            }
-
-            let mut results = 1;
-            let mut msgh = 0;
-            println!("Calling function: {}", n);
-            let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
-            match error_status {
-                LUA_ERRRUN => {
-                    let mut error_message = lua_tostring(self.handle as _, -1) as *mut i8;
-                    let err_msg_c_str = CString::from_raw(error_message);
-                    let error_message_s = err_msg_c_str.to_str().unwrap();
-                    panic!("Runtime error calling function {}", error_message_s);
-                },
-                LUA_OK => {
-                    println!("Function call was ok");
-                },
-                _ => {
-                    panic!("Not ok");
-                }
-            }
-
-            let stack_size = lua_gettop(self.handle as _);
-            println!("Popping value by call: {}", n);
-            let result = self.pop_value();
-            return match result {
-                Some(res) => Ok(res),
-                None => Err(()),
-            }
-        }
-        Err(())
-    }
-
-    pub fn get(&self, name: &str) -> Option<LuaType> {
-        let name_c = CString::new(name).unwrap();
-        unsafe {
-            lua_getglobal(self.handle as _, name_c.as_ptr() as _);
-
-        }
-        None
     }
 }

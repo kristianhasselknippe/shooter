@@ -67,7 +67,7 @@ impl ScriptEngine {
     pub fn call(&mut self, name: &str, args: &[ScriptValue]) -> Result<ScriptValue, ()> {
         println!("Calling: {}", name);
         let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
-        let ret = self.lua.call(name, &lua_args).and_then(|r| {
+        let ret = self.lua.call_global(name, &lua_args).and_then(|r| {
             Ok(ScriptValue::from(r))
         });
         println!("Done calling: {}", name);
@@ -101,8 +101,7 @@ impl ScriptEngine {
     }
 
     pub fn get_entity(&mut self, id: u32) -> Entity {
-        let mut fun: LuaType = self.lua.get("get_entity").unwrap();
-        let mut table: LuaType = fun.call(&[]).unwrap();
+        let mut table: LuaType = self.lua.call_global("get_entity", &[LuaType::Number(id as f64)]).unwrap();
         ScriptEngine::create_entity_from_lua_table(&mut table)
     }
 
@@ -114,24 +113,19 @@ impl ScriptEngine {
         ]).unwrap();
         println!("Result form calling get_some: {:?}", result);*/
         let ret = Vec::new();
-        let mut entities: LuaType = self.lua.get("entities").unwrap();
-        for e in entities.iter() {
-            println!("Getting entitites: {:?}", e);
-            /*if let Some(e) = v {
-                let entity = ScriptEngine::create_entity_from_lua_table(&e.1);
-                ret.push(entity);
-            }*/
-        }
+        let mut entities: LuaType = self.lua.get_global("entities").unwrap();
+
+
         ret
     }
 
     pub fn update_entities(&mut self, dt: f64) {
-        self.call("update_entities", &[ScriptValue::Number(dt)]);
+        self.lua.call_global("update_entities", &[LuaType::Number(dt)]);
     }
 
     pub fn add_entity(&mut self, name: &str) -> f64 {
         println!("Adding entity");
-        let r = self.call("create_entity", &[ScriptValue::String(name.to_string())]);
+        let r = self.lua.call_global("create_entity", &[LuaType::String(name.to_string())]);
         println!("Got back resutl: {:?}", r);
         /*match r {
             ScriptValue::Number(n) => n,
