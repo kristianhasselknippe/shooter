@@ -14,7 +14,6 @@ speed = 10.5
 function update_entities(dt)
    for _,e in ipairs(entities) do
 	  if e.name == "player" then
-
 		 local vec = { x = 0, y = 0 }
 		 if input.left_down then vec.x = vec.x - 1 end
 		 if input.up_down then vec.y = vec.y + 1 end

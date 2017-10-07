@@ -123,11 +123,10 @@ color = vec4(distance,distance,distance,1.0);");
         let dt = time.delta_time();
         fps_counter.update(dt);
 
-        let entitites___ = game_state.get_entities();
+        let entities = game_state.get_entities();
 
         let dt = dt as f32;
         game_state.pre_update();
-
         {
             input.update_sdl_input();
             game_state.update_input(&input);
@@ -140,7 +139,7 @@ color = vec4(distance,distance,distance,1.0);");
         game_state.update_entities(dt as f64);
 
         //update player sprite position since they are not yet connected
-        let p_entity = game_state.get_entity(&player_ref);
+        let p_entity = entities.iter().filter(|e| e.name == "player").nth(0).unwrap();
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
 

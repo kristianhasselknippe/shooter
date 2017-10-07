@@ -40,7 +40,6 @@ impl ScriptEngine {
     }
 
     pub fn call(&mut self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        println!("Calling: {}", name);
         let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
         let ret = self.lua.call_global(name, &lua_args).and_then(|r| {
             Ok(LuaType::from(r))

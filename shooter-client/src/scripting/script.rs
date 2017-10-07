@@ -18,7 +18,7 @@ fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
 
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1)).unwrap();
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_millis(100)).unwrap();
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
