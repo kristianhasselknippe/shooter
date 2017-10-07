@@ -13,6 +13,7 @@ use of::OrderedFloat;
 #[derive(Clone,Debug)]
 pub enum LuaType {
     Table(Vec<(LuaType, LuaType)>),
+    Array(Vec<LuaType>),
     String(String),
     Number(OrderedFloat<f64>),
     Bool(bool),
@@ -42,6 +43,13 @@ impl LuaType {
         }   
     }
 
+    pub fn unwrap_array<'a>(&'a self) -> &'a Vec<LuaType> {
+        match self {
+            &LuaType::Array(ref arr) => arr,
+            _ => panic!("Lua type was not a table"),
+        }
+    }
+
     pub fn get<'a>(&'a self, name: &str) -> Result<&'a LuaType,()> {
         match self {
             &LuaType::Table(ref fields) => {
@@ -51,8 +59,8 @@ impl LuaType {
                             return Ok(v);
                         }
                     }
-
                 }
+                println!("{:?}", self);
                 panic!("Could not find field {} on lua table", name);
             }
             _ => panic!("LuaType was not a table; can't get field {}", name),
@@ -196,9 +204,7 @@ impl Lua {
                     let error_message_s = err_msg_c_str.to_str().unwrap();
                     panic!("Runtime error calling function {}", error_message_s);
                 },
-                LUA_OK => {
-                    println!("Function call was ok");
-                },
+                LUA_OK => { },
                 _ => {
                     panic!("Not ok");
                 }
@@ -222,7 +228,6 @@ impl Lua {
     }
 
     pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        println!("Calling global: {}", n);
         unsafe {
             let name = CString::new(n).unwrap();
             lua_getglobal(self.handle as _, name.as_ptr() as _);
@@ -310,17 +315,31 @@ impl Lua {
                 Some(LuaType::String(ret))
             },
             LUA_TTABLE => {
-                let mut fields = Vec::new();
+                let mut keys = Vec::new();
+                let mut values = Vec::new();
+                let mut is_array = true;
                 unsafe {
                     lua_pushnil(self.handle as _);
                     while lua_next(self.handle as _, -2) != 0 {
                         let val = self.pop_value().unwrap();
-                        let field = self.get_top_value().unwrap();
-                        fields.push((field,val));
+                        let key = self.get_top_value().unwrap();
+                        match &key {
+                            &LuaType::Number(_) => (),
+                            _ => is_array = false,
+                        }
+                        keys.push(key);
+                        values.push(val);
                     }
                 }
-                
-                Some(LuaType::Table(fields))
+                if is_array {
+                    Some(LuaType::Array(values))
+                } else {
+                    let mut table = Vec::new();
+                    for i in 0..keys.len() {
+                        table.push((keys[i].clone(), values[i].clone()));
+                    }
+                    Some(LuaType::Table(table))
+                }
             },
             LUA_TFUNCTION => { println!("Got funciton"); None },
             LUA_TUSERDATA => { println!("Got user data"); None },

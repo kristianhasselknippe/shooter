@@ -119,8 +119,6 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut fps_counter = FpsCounter::new();
 
-    return;
-
     'running: loop {
         let dt = time.delta_time();
         fps_counter.update(dt);

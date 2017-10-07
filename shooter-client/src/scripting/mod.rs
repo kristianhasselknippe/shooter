@@ -45,7 +45,6 @@ impl ScriptEngine {
         let ret = self.lua.call_global(name, &lua_args).and_then(|r| {
             Ok(LuaType::from(r))
         });
-        println!("Done calling: {}", name);
         ret
     }
 
@@ -81,16 +80,18 @@ impl ScriptEngine {
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
-        /*println!("Getting lua");
-        let result = self.lua.call("get_some", &[
-            LuaType::String("this is somethign ay".to_string()),
-            LuaType::Number(42.123123)
-        ]).unwrap();
-        println!("Result form calling get_some: {:?}", result);*/
-        let ret = Vec::new();
-        let mut entities: LuaType = self.lua.get_global("entities").unwrap();
+        let entities = self.lua.get_global("entities").unwrap();
 
-
+        let mut ret = Vec::new();
+        for entity in entities.unwrap_array() {
+            let pos = entity.get("position").unwrap();
+            let x = pos.get("x").unwrap().unwrap_number();
+            let y = pos.get("y").unwrap().unwrap_number();
+            ret.push(Entity {
+                name: entity.get("name").unwrap().unwrap_string().to_string(),
+                pos: Vector3::new(x as f32,y as f32,0.0),
+            });
+        }
         ret
     }
 
