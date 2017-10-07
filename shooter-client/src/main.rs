@@ -7,6 +7,9 @@ extern crate image;
 extern crate rusttype;
 extern crate time as t;
 extern crate libc;
+extern crate ordered_float as of;
+
+mod tests;
 
 mod shader;
 mod mesh;
@@ -115,6 +118,8 @@ color = vec4(distance,distance,distance,1.0);");
     let text = Text::new("this is some text", &draw_context);
 
     let mut fps_counter = FpsCounter::new();
+
+    return;
 
     'running: loop {
         let dt = time.delta_time();

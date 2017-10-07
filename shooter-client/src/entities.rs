@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use super::input::Input;
 use super::camera::Camera;
 use super::scripting::*;
-
+use super::scripting::lua::LuaType;
 
 pub struct Sprite {
     pub pos: Vector3<f32>,
@@ -111,10 +111,10 @@ impl GameState {
 
     pub fn update_input(&mut self, input: &Input) {
         self.script_engine.call("update_input", &[
-            ScriptValue::Bool(input.left_down),
-            ScriptValue::Bool(input.up_down),
-            ScriptValue::Bool(input.right_down),
-            ScriptValue::Bool(input.down_down),
+            LuaType::Bool(input.left_down),
+            LuaType::Bool(input.up_down),
+            LuaType::Bool(input.right_down),
+            LuaType::Bool(input.down_down),
         ]);
     }
 

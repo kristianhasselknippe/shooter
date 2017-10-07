@@ -9,34 +9,9 @@ use std::fs::File;
 use std::path::Path;
 use std::collections::HashMap;
 use std::mem::transmute;
+use of::OrderedFloat;
 
 use super::entities::*;
-
-#[derive(Clone,Debug)]
-pub enum ScriptValue {
-    Number(f64),
-    Bool(bool),
-    String(String),
-    Array,
-    Object,
-    Function,
-    Null,
-}
-
-impl From<LuaType> for ScriptValue
-{
-    fn from(sv: LuaType) -> Self {
-        match sv {
-            LuaType::Object => { ScriptValue::Object },
-            LuaType::Array => { ScriptValue::Array },
-            LuaType::String(s) => { ScriptValue::String(s) },
-            LuaType::Number(n) => { ScriptValue::Number(n) },
-            LuaType::Bool(b) => { ScriptValue::Bool(b) },
-            LuaType::Function => { ScriptValue::Function },
-            LuaType::Null => { ScriptValue::Null },
-        }
-    }
-}
 
 pub struct ScriptEngine {
     pub lua: Lua,
@@ -64,11 +39,11 @@ impl ScriptEngine {
         self.script_watcher.tick(&mut self.lua);
     }
 
-    pub fn call(&mut self, name: &str, args: &[ScriptValue]) -> Result<ScriptValue, ()> {
+    pub fn call(&mut self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         println!("Calling: {}", name);
         let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
         let ret = self.lua.call_global(name, &lua_args).and_then(|r| {
-            Ok(ScriptValue::from(r))
+            Ok(LuaType::from(r))
         });
         println!("Done calling: {}", name);
         ret
@@ -76,10 +51,10 @@ impl ScriptEngine {
 
     pub fn update_input(&mut self, left_down: bool,up_down: bool,right_down: bool,down_down: bool) {
         self.call("update_input", &[
-            ScriptValue::Bool(left_down),
-            ScriptValue::Bool(up_down),
-            ScriptValue::Bool(right_down),
-            ScriptValue::Bool(down_down)
+            LuaType::Bool(left_down),
+            LuaType::Bool(up_down),
+            LuaType::Bool(right_down),
+            LuaType::Bool(down_down)
         ]);
     }
 
@@ -101,7 +76,7 @@ impl ScriptEngine {
     }
 
     pub fn get_entity(&mut self, id: u32) -> Entity {
-        let mut table: LuaType = self.lua.call_global("get_entity", &[LuaType::Number(id as f64)]).unwrap();
+        let mut table: LuaType = self.lua.call_global("get_entity", &[LuaType::Number(OrderedFloat(id as f64))]).unwrap();
         ScriptEngine::create_entity_from_lua_table(&mut table)
     }
 
@@ -120,7 +95,7 @@ impl ScriptEngine {
     }
 
     pub fn update_entities(&mut self, dt: f64) {
-        self.lua.call_global("update_entities", &[LuaType::Number(dt)]);
+        self.lua.call_global("update_entities", &[LuaType::Number(OrderedFloat(dt))]);
     }
 
     pub fn add_entity(&mut self, name: &str) -> f64 {
@@ -128,7 +103,7 @@ impl ScriptEngine {
         let r = self.lua.call_global("create_entity", &[LuaType::String(name.to_string())]);
         println!("Got back resutl: {:?}", r);
         /*match r {
-            ScriptValue::Number(n) => n,
+            LuaType::Number(n) => n,
             _ => panic!("Add entity function didn't return a number"),
     }*/
         0.0
