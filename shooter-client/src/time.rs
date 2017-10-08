@@ -10,7 +10,7 @@ pub struct Time {
 
 }
 
-const millis_in_60_fps: f64 = 16.66;
+const MILLIS_IN_60_FPS: f64 = 16.66;
 
 impl Time {
     pub fn new(target_fps: i32) -> Time {
@@ -34,7 +34,7 @@ impl Time {
         let t = precise_time_s();
         let dt = t - self.last_time;
 
-        let diff = millis_in_60_fps - dt;
+        let diff = MILLIS_IN_60_FPS - dt;
 
         if diff > 0.0 {
             sleep(Duration::from_millis(diff as u64));

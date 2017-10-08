@@ -3,7 +3,6 @@ use super::gl;
 use super::gl::types::*;
 use std::mem;
 use std::ptr;
-use std::os::raw::c_void;
 
 pub struct Mesh {
     vbo: GLuint,

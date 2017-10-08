@@ -1,9 +1,6 @@
 use rusttype::{FontCollection, Scale, point, PositionedGlyph};
-use std::io::Write;
 use std::path::Path;
 
-use super::gl;
-use super::gl::types::*;
 use super::drawing::*;
 use super::mesh::*;
 use super::texture::*;
@@ -41,7 +38,6 @@ impl Font {
 
         // Desired font pixel height
         let height: f32 = 14.0; // to get 80 chars across (fits most terminals); adjust as desired
-        let pixel_height = height.ceil() as usize;
 
         // 2x scale in x direction to counter the aspect ratio of monospace characters.
         let scale = Scale { x: height, y: height };
@@ -64,7 +60,7 @@ impl Font {
             let h = bounding_box.height();
 
             let mut glyph_data: Vec<u8> = Vec::with_capacity((w*h) as usize);
-            for i in 0..(w*h) {
+            for _ in 0..(w*h) {
                 glyph_data.push(0);
             }
 
@@ -129,7 +125,7 @@ impl Font {
         let n_pixels = self.glyphs.len() * (cell_size * cell_size) as usize;
 
         let mut ret = Vec::with_capacity(n_pixels as usize);
-        for i in 0..n_pixels {
+        for _ in 0..n_pixels {
             ret.push(0);
         }
 
@@ -165,7 +161,7 @@ impl Font {
 
         let mut ret = Vec::with_capacity(data.len() * 4);
         for d in data {
-            for i in 0..4 {
+            for _ in 0..4 {
                 ret.push(d);
             }
         }
@@ -190,8 +186,8 @@ impl Text {
 
         //println!("FontSize: {:?}", font_size);
 
-        let font_width = (font_size.0 as f32/dc.width as f32);
-        let font_height = (font_size.1 as f32/dc.height as f32);
+        let font_width = font_size.0 as f32/dc.width as f32;
+        let font_height = font_size.1 as f32/dc.height as f32;
         //println!("W: {}, H: {}", font_width, font_height);
 
         let mesh = Mesh::create_rect(font_width, font_height);

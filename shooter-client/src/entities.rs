@@ -1,16 +1,10 @@
-use na::{Vector2,Point3,Isometry3,Vector3,Matrix4};
-use alga::linear::Transformation;
+use na::{Vector2,Vector3,Matrix4};
 use texture::{Texture,TextureUnit};
 use mesh::{Mesh};
 use std::path::{Path};
-use drawing::*;
-use std::cell::{RefCell,Ref,RefMut};
-use std::rc::Rc;
 
 use shader::ShaderProgram;
-use std::collections::HashMap;
 use super::input::Input;
-use super::camera::Camera;
 use super::scripting::*;
 use super::scripting::lua::LuaType;
 
@@ -80,7 +74,7 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> GameState {
-        let mut script_engine = ScriptEngine::new();
+        let script_engine = ScriptEngine::new();
 
         GameState {
             script_engine: script_engine,
@@ -88,13 +82,9 @@ impl GameState {
     }
 
     pub fn new_entity(&mut self, name: &str) -> EntityRef {
-       let id = self.script_engine.add_entity(name);
+        let id = self.script_engine.add_entity(name);
         let ret = EntityRef(id as u32);
         ret
-    }
-
-    pub fn get_entity(&mut self, entity_ref: &EntityRef) -> Entity {
-        self.script_engine.get_entity(entity_ref.0)
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
@@ -115,7 +105,7 @@ impl GameState {
             LuaType::Bool(input.up_down),
             LuaType::Bool(input.right_down),
             LuaType::Bool(input.down_down),
-        ]);
+        ]).unwrap();
     }
 
 }

@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 pub struct FpsCounter {
     frame_count: i32,
     accum_time: f64,

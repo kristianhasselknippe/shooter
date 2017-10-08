@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate shooter_common;
 extern crate sdl2;
 extern crate gl;
@@ -8,8 +10,6 @@ extern crate rusttype;
 extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
-
-mod tests;
 
 mod scene;
 mod shader;
@@ -25,27 +25,18 @@ mod input;
 mod scripting;
 mod fps_counter;
 
-use scripting::*;
 use shader::*;
-use mesh::*;
 use drawing::*;
 use texture::*;
 use entities::*;
 use text::*;
-use input::*;
 use camera::*;
 use time::*;
 use input::*;
 use fps_counter::*;
-use scene::*;
 
 use std::path::Path;
 use na::*;
-use alga::linear::Transformation;
-use gl::types::*;
-
-use std::cell::RefCell;
-use std::rc::Rc;
 
 fn find_sdl_gl_driver() -> Option<u32> {
     for (index, item) in sdl2::render::drivers().enumerate() {
@@ -74,7 +65,7 @@ fn main() {
         .unwrap();
 
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
-    canvas.window().gl_set_context_to_current();
+    canvas.window().gl_set_context_to_current().unwrap();
 
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
@@ -95,27 +86,27 @@ fn main() {
 color = vec4(distance,distance,distance,1.0);");
     program.use_program();
 
-    texture_atlas.bind(&draw_context);
+    texture_atlas.bind();
 
     /*let mut m = Mesh::create_quad();
     m.draw_now();*/
 
-    let mut batch = Batch::new();
+    //let batch = Batch::new();
 
     let mut player_sprite = Sprite::from_png(Path::new("assets/mario.png"), 5.0, 5.0);
-    let mut background_sprite = Sprite::from_png(Path::new("assets/overworld.png"), 15.0, 15.0);
+    let background_sprite = Sprite::from_png(Path::new("assets/overworld.png"), 15.0, 15.0);
 
     let mut time = Time::new(60);
 
-    let mut events = sdl_context.event_pump().unwrap();
+    let events = sdl_context.event_pump().unwrap();
 
     let mut input = Input::new(events);
 
     let mut game_state = GameState::new();
 
-    let player_ref = game_state.new_entity("player");
-    let mut camera = Camera::new_orthographic(50.0,50.0);
-    let camera_ref = game_state.new_entity("camera");
+    game_state.new_entity("player");
+    let camera = Camera::new_orthographic(50.0,50.0);
+    game_state.new_entity("camera");
 
     let text = Text::new("this is some text", &draw_context);
 
@@ -147,7 +138,7 @@ color = vec4(distance,distance,distance,1.0);");
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
-        let cam_entity = game_state.get_entity(&camera_ref);
+        let cam_entity = entities.iter().filter(|e| e.name == "camera").nth(0).unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
         let projection = camera.camera_matrix();
         let camera_matrix = projection * view;

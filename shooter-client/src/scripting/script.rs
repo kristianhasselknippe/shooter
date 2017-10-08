@@ -9,8 +9,6 @@ use std::thread::spawn;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver,Sender,channel};
 use std::fs::File;
-use std::io::Read;
-use std::env::current_dir;
 
 fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     // Create a channel to receive the events.
@@ -29,7 +27,7 @@ fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     loop {
         match rx.recv() {
             Ok(event) => {
-                sender.send(event);
+                sender.send(event).unwrap();
             },
             Err(e) => {
                 println!("watch error: {:?}", e);
@@ -98,27 +96,27 @@ impl ScriptWatcher {
                 Ok(event) => {
                     //println!("{:?}", event);
                     match event {
-                        NoticeWrite(path) => { },
-                        NoticeRemove(path) => {
+                        NoticeWrite(_) => { },
+                        NoticeRemove(_) => {
 
                         },
-                        Create(path) => { },
+                        Create(_) => { },
                         Write(path) => {
-                            for (k,p) in &self.script_paths {
+                            for (_,p) in &self.script_paths {
                                 if path.ends_with(&p.path) {
                                     p.load(lua);
                                 }
                             }
                         },
-                        Chmod(path) => { },
-                        Remove(path) => { },
-                        Rename(from, to) => { },
+                        Chmod(_) => { },
+                        Remove(_) => { },
+                        Rename(_, _) => { },
                         Rescan => { },
-                        Error(err, path) => { },
+                        Error(_, _) => { },
                     }
 
                 },
-                Err(e) => { break; },
+                Err(_) => { break; },
             }
         }
     }

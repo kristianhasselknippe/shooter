@@ -10,10 +10,7 @@ use super::mesh::*;
 use super::shader::*;
 use std::os::raw::c_void;
 use std::ptr;
-
 use std::collections::HashMap;
-
-use super::na::{Point2,Vector2};
 
 #[derive(Debug)]
 pub enum ImageFormat {
@@ -37,14 +34,14 @@ impl Image {
         let color_type = decoder.colortype().unwrap();
 
         match (color_type,image_data) {
-            (ColorType::RGB(bit_depth),DecodingResult::U8(data)) => {
+            (ColorType::RGB(_),DecodingResult::U8(data)) => {
                 Image {
                     image_format: ImageFormat::RGB,
                     data: data,
                     dim: dim,
                 }
             },
-            (ColorType::RGBA(bit_depth),DecodingResult::U8(data)) => {
+            (ColorType::RGBA(_),DecodingResult::U8(data)) => {
                 Image {
                     image_format: ImageFormat::RGBA,
                     data: data,
@@ -236,7 +233,7 @@ impl MemoryTexture {
         MemoryTexture::new(&img.data, img.dim.0, img.dim.1, img.image_format)
     }
 
-    pub fn draw(&self, dc: &DrawContext, pos: (f32,f32), size: (f32,f32)) {
+    pub fn draw(&self, pos: (f32,f32), size: (f32,f32)) {
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
@@ -275,7 +272,7 @@ impl TextureAtlas {
         atlas_ref
     }
 
-    pub fn bind(&mut self, dc: &DrawContext) {
+    pub fn bind(&mut self) {
         match &self.texture {
             &None => {
                 panic!("TextureAtlas was bound before packed");
@@ -290,7 +287,7 @@ impl TextureAtlas {
 
         let mut fb_width: u32 = 0;
         let mut fb_height: u32 = 0;
-        for &(ref tex, atlas_ref) in &self.memory_textures {
+        for &(ref tex, _) in &self.memory_textures {
             fb_width += tex.size.0;
             if tex.size.1 > fb_height {
                 fb_height = tex.size.1;
@@ -298,7 +295,7 @@ impl TextureAtlas {
         }
 
         let mut fb = Framebuffer::new(fb_width, fb_height);
-        fb.bind(dc);
+        fb.bind();
 
         let program = ShaderProgram::create_program("texture_atlas");
         program.use_program();
@@ -309,8 +306,8 @@ impl TextureAtlas {
 
         let mut x = 0.0;
         for &(ref tex, atlas_ref) in &self.memory_textures {
-            let width = (tex.size.0 as f32 / fb_width as f32);
-            let height = (tex.size.1 as f32 / fb_height as f32);
+            let width = tex.size.0 as f32 / fb_width as f32;
+            let height = tex.size.1 as f32 / fb_height as f32;
 
             let pos = ((x * 2.0) - 1.0, -1.0);
             x += width;
@@ -323,13 +320,13 @@ impl TextureAtlas {
             });
 
 
-            tex.draw(dc, pos, size);
+            tex.draw(pos, size);
         }
 
         let pixel_data = unsafe {
             let size = 4*fb_width*fb_height;
             let mut pixel_data: Vec<u8> = Vec::with_capacity(size as usize);
-            for i in 0..size { pixel_data.push(150); }
+            for _ in 0..size { pixel_data.push(150); }
                 gl::ReadPixels(0, 0, (fb_width) as i32, (fb_height) as i32, gl::RGBA,
                                gl::UNSIGNED_BYTE, pixel_data.as_mut_ptr() as *mut c_void);
                 pixel_data
@@ -369,7 +366,7 @@ impl Framebuffer {
         }
     }
 
-    pub fn bind(&mut self, dc: &DrawContext) {
+    pub fn bind(&mut self) {
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.handle);
 

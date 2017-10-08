@@ -1,8 +1,5 @@
 use std::path::Path;
-use super::lua::*;
-use super::scripting::script::*;
-use super::scripting::*;
-use std::env::current_dir;
+use super::lua::{Lua};
 
 fn get_lua() -> Lua {
     let mut lua = Lua::new();
@@ -31,3 +28,4 @@ fn test_lua_field() {
     let myObj = lua.get_global("myObject").unwrap();
     println!("X: {:?}, Y: {:?}", myObj.get("x"), myObj.get("y"));
 }
+

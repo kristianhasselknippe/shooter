@@ -5,10 +5,7 @@ use self::script::*;
 use self::lua::*;
 
 use super::na::Vector3;
-use std::fs::File;
 use std::path::Path;
-use std::collections::HashMap;
-use std::mem::transmute;
 use of::OrderedFloat;
 
 use super::entities::*;
@@ -53,29 +50,7 @@ impl ScriptEngine {
             LuaType::Bool(up_down),
             LuaType::Bool(right_down),
             LuaType::Bool(down_down)
-        ]);
-    }
-
-    fn create_entity_from_lua_table(t: &mut LuaType) -> Entity {
-        let mut x: f64 = 0.0;
-        let mut y: f64 = 0.0;
-        /*{
-            let mut pos: LuaTable<_> = t.get("position").unwrap();
-            x = pos.get("x").unwrap();
-            y = pos.get("y").unwrap();
-        }
-        let name: String = t.get("name").unwrap();*/
-        let name = "foobar";
-
-        Entity {
-            pos: Vector3::new(x as f32,y as f32,0.0),
-            name: name.to_string(),
-        }
-    }
-
-    pub fn get_entity(&mut self, id: u32) -> Entity {
-        let mut table: LuaType = self.lua.call_global("get_entity", &[LuaType::Number(OrderedFloat(id as f64))]).unwrap();
-        ScriptEngine::create_entity_from_lua_table(&mut table)
+        ]).unwrap();
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
@@ -95,7 +70,7 @@ impl ScriptEngine {
     }
 
     pub fn update_entities(&mut self, dt: f64) {
-        self.lua.call_global("update_entities", &[LuaType::Number(OrderedFloat(dt))]);
+        self.lua.call_global("update_entities", &[LuaType::Number(OrderedFloat(dt))]).unwrap();
     }
 
     pub fn add_entity(&mut self, name: &str) -> f64 {

@@ -144,7 +144,7 @@ impl Lua {
 
     pub fn execute_from_reader(&self, reader: &mut Read) {
         let mut code = Vec::new();
-        reader.read_to_end(&mut code);
+        reader.read_to_end(&mut code).unwrap();
         let len = code.len();
 
         struct Buffer {
@@ -179,8 +179,7 @@ impl Lua {
         unsafe {
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
 
-            if result == LUA_OK {
-                let mut results = 0;
+            if result == LUA_OK {                
                 lua_call(self.handle as _, 0, 0);
             } else {
                 panic!("Error loading script");
@@ -194,12 +193,12 @@ impl Lua {
                 self.push_value(&a);
             }
 
-            let mut results = 1;
-            let mut msgh = 0;
+            let results = 1;
+            let msgh = 0;
             let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
             match error_status {
                 LUA_ERRRUN => {
-                    let mut error_message = lua_tostring(self.handle as _, -1) as *mut i8;
+                    let error_message = lua_tostring(self.handle as _, -1) as *mut i8;
                     let err_msg_c_str = CString::from_raw(error_message);
                     let error_message_s = err_msg_c_str.to_str().unwrap();
                     panic!("Runtime error calling function {}", error_message_s);
@@ -215,11 +214,9 @@ impl Lua {
                 None => Err(()),
             }
         }
-        Err(())
     }
 
-    pub fn call_method(&self, object: &LuaType, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        println!("Calling method: {}", n);
+    pub fn call_method(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         unsafe {
             let name = CString::new(n).unwrap();
             lua_getfield(self.handle as _, -1, name.as_ptr() as _);
@@ -235,7 +232,7 @@ impl Lua {
         }
     }
 
-    pub fn get_field(&self, object: &LuaType, name: &str) -> Option<LuaType> {
+    pub fn get_field(&self, name: &str) -> Option<LuaType> {
         let name_c = CString::new(name).unwrap();
         unsafe {
             lua_getfield(self.handle as _, -1, name_c.as_ptr() as _);
