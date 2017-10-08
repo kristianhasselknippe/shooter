@@ -178,16 +178,18 @@ impl Lua {
 
         unsafe {
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
-
+            self.print_stack_dump();
             if result == LUA_OK {                
                 lua_call(self.handle as _, 0, 0);
+                println!("Call done:");
+                self.print_stack_dump();
             } else {
                 panic!("Error loading script");
             }
         }
     }
 
-    fn call(&self, args: &[LuaType]) -> Result<LuaType, ()> {
+    fn call(&self, args: &[LuaType], n: &str) -> Result<LuaType, ()> {
         unsafe {
             for a in args {
                 self.push_value(&a);
@@ -201,7 +203,7 @@ impl Lua {
                     let error_message = lua_tostring(self.handle as _, -1) as *mut i8;
                     let err_msg_c_str = CString::from_raw(error_message);
                     let error_message_s = err_msg_c_str.to_str().unwrap();
-                    panic!("Runtime error calling function {}", error_message_s);
+                    panic!("Runtime error calling function {}: {}", n, error_message_s);
                 },
                 LUA_OK => { },
                 _ => {
@@ -220,7 +222,7 @@ impl Lua {
         unsafe {
             let name = CString::new(n).unwrap();
             lua_getfield(self.handle as _, -1, name.as_ptr() as _);
-            self.call(args)
+            self.call(args, n)
         }
     }
 
@@ -228,7 +230,7 @@ impl Lua {
         unsafe {
             let name = CString::new(n).unwrap();
             lua_getglobal(self.handle as _, name.as_ptr() as _);
-            self.call(args)
+            self.call(args, n)
         }
     }
 

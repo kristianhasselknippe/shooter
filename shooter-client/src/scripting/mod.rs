@@ -21,10 +21,14 @@ impl ScriptEngine {
         lua.open_libs();
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
-
+        sw.new_script_from_file(&Path::new("scripts/vector.lua")).load(&mut lua);
+        lua.print_stack_dump();
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);
+        println!("Doen loading scnee");
         sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
+
+        println!("Done loading scripts");
 
         ScriptEngine {
             lua: lua,

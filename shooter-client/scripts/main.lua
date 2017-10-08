@@ -1,4 +1,3 @@
-
 function main()
    print("Hello world from lua")
 end
@@ -22,10 +21,25 @@ function update_entities(dt)
 		 e.position.x = e.position.x + vec.x * dt * speed
 		 e.position.y = e.position.y + vec.y * dt * speed
 	  end
+	  if e.name == "camera" then
+		 local player_pos = get_entity("player").position
+		 --local dir = player_pos - e.position
+		 
+	  end
    end
 end
 
+
+   
 function get_entity(id)
-   local ret = entities[id]
-   return entities[id]
+   if type(id) == number then
+	  local ret = entities[id]
+	  return entities[id]
+   elseif type(id) == string then
+	  for e in entities do
+		 if e.name == id then
+			return e
+		 end
+	  end
+   end
 end
