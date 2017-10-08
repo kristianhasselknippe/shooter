@@ -4,6 +4,10 @@ use super::gl::types::*;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
+use na::{Point3,Isometry3,Vector3,Matrix4};
+use texture::{Texture,TextureUnit};
+use shader::ShaderProgram;
+use std::path::{Path};
 
 pub trait Drawable {
     fn draw(&self);

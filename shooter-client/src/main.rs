@@ -11,6 +11,7 @@ extern crate ordered_float as of;
 
 mod tests;
 
+mod scene;
 mod shader;
 mod mesh;
 mod drawing;
@@ -36,6 +37,7 @@ use camera::*;
 use time::*;
 use input::*;
 use fps_counter::*;
+use scene::*;
 
 use std::path::Path;
 use na::*;
