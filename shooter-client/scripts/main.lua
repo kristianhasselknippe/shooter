@@ -1,3 +1,5 @@
+local helpers = require "helpers"
+
 function main()
    print("Hello world from lua")
 end
@@ -32,11 +34,11 @@ end
 
    
 function get_entity(id)
-   if type(id) == number then
+   if type(id) == "number" then
 	  local ret = entities[id]
 	  return entities[id]
-   elseif type(id) == string then
-	  for e in entities do
+   elseif type(id) == "string" then
+	  for k,e in pairs(entities) do
 		 if e.name == id then
 			return e
 		 end

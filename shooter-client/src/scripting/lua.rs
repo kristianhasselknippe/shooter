@@ -183,16 +183,14 @@ impl Lua {
 
         unsafe {
             lua_getglobal(self.handle as _, CString::new("package".to_string()).unwrap().as_ptr() as _);
-            self.print_stack_dump();
             lua_getfield(self.handle as _, -1, CString::new("loaded".to_string()).unwrap().as_ptr() as _);
-            self.print_stack_dump();
-            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
+
+            let cn = format!("{}\0", module_name);
+            let chunk_name = cn.as_bytes();
+            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
             if result == LUA_OK {
-                self.print_stack_dump();
                 lua_call(self.handle as _, 0, 1); //should return a module
-                self.print_stack_dump();
                 lua_setfield(self.handle as _, -2, CString::new(module_name.to_string()).unwrap().as_ptr() as _);
-                self.print_stack_dump();
                 self.pop();
                 self.pop();
             } else {
