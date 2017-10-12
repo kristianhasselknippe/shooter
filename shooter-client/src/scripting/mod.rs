@@ -21,19 +21,31 @@ impl ScriptEngine {
         lua.open_libs();
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
+        println!("Loading vector");
         sw.new_script_from_file(&Path::new("scripts/vector.lua")).load(&mut lua);
+        println!("Done loading vector");
         lua.print_stack_dump();
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
+        println!("Getting package");
+        let loaded = lua.get_global("input").unwrap();
+        println!("Input : {:?}", loaded);
+        println!("Stack size -- {}", lua.get_stack_size());
+
         sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);
         println!("Doen loading scnee");
+
+
+        
         sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
+
+        
 
         println!("Done loading scripts");
 
         ScriptEngine {
             lua: lua,
             script_watcher: sw,
-        }
+        } 
     }
 
     pub fn pre_update(&mut self) {

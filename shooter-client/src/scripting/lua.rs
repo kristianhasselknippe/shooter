@@ -18,6 +18,8 @@ pub enum LuaType {
     Number(OrderedFloat<f64>),
     Bool(bool),
     Function,
+    Thread,
+    UserData,
     Null
 }
 
@@ -132,17 +134,20 @@ impl Lua {
                 }
                 println!("  ");  /* put a separator */
             }
-            println!("");  /* end the listing */
+            if (top > 0) {
+                println!("");  /* end the listing */
+            }
         }
         
     }
 
     pub fn load(&self, path: &Path) {
         let mut file = File::open(path).unwrap();
-        self.execute_from_reader(&mut file);
+        let filename = path.file_stem().unwrap().to_str().unwrap().to_string();
+        self.execute_from_reader(&mut file, &filename);
     }
 
-    pub fn execute_from_reader(&self, reader: &mut Read) {
+    pub fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
         let mut code = Vec::new();
         reader.read_to_end(&mut code).unwrap();
         let len = code.len();
@@ -162,7 +167,7 @@ impl Lua {
         extern "C" fn read(_: *mut lua_State, data: *mut c_void, size: *mut size_t) -> *const c_char {
             unsafe {
                 let mut buffer: *mut Buffer = data as _;
-
+                
 
                 if (*buffer).pos == (*buffer).len {
                     (*size) = 0;
@@ -177,12 +182,19 @@ impl Lua {
         }
 
         unsafe {
-            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
+            lua_getglobal(self.handle as _, CString::new("package".to_string()).unwrap().as_ptr() as _);
             self.print_stack_dump();
-            if result == LUA_OK {                
-                lua_call(self.handle as _, 0, 0);
-                println!("Call done:");
+            lua_getfield(self.handle as _, -1, CString::new("loaded".to_string()).unwrap().as_ptr() as _);
+            self.print_stack_dump();
+            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  b"chunk\0".as_ptr() as *const _, null());
+            if result == LUA_OK {
                 self.print_stack_dump();
+                lua_call(self.handle as _, 0, 1); //should return a module
+                self.print_stack_dump();
+                lua_setfield(self.handle as _, -2, CString::new(module_name.to_string()).unwrap().as_ptr() as _);
+                self.print_stack_dump();
+                self.pop();
+                self.pop();
             } else {
                 panic!("Error loading script");
             }
@@ -210,11 +222,9 @@ impl Lua {
                     panic!("Not ok");
                 }
             }
-            let result = self.pop_value();
-            return match result {
-                Some(res) => Ok(res),
-                None => Err(()),
-            }
+            let result = self.get_top_value(0);
+            self.pop();
+            Ok(result)
         }
     }
 
@@ -238,7 +248,9 @@ impl Lua {
         let name_c = CString::new(name).unwrap();
         unsafe {
             lua_getfield(self.handle as _, -1, name_c.as_ptr() as _);
-            self.pop_value()
+            let ret = Some(self.get_top_value(0));
+            self.pop();
+            ret
         }
     }
 
@@ -246,7 +258,9 @@ impl Lua {
         let name_c = CString::new(name).unwrap();
         unsafe {
             lua_getglobal(self.handle as _, name_c.as_ptr() as _);
-            self.pop_value()
+            let ret = Some(self.get_top_value(0));
+            self.pop();
+            ret
         }
     }
 
@@ -283,67 +297,79 @@ impl Lua {
         }
     }
 
-    pub fn get_top_value(&self) -> Option<LuaType> {
+    fn top_as_string(&self) -> LuaType {
+        let ret = unsafe {
+            let chars = lua_tostring(self.handle as _, -1);
+            let c_str = CStr::from_ptr(chars as _);
+            let ret = c_str.to_str().unwrap().to_string();
+            ret
+        };
+        //println!("Got string. {}", ret);
+        LuaType::String(ret)
+    }
+
+    fn top_as_bool(&self) -> LuaType {
+        let ret = unsafe {
+            lua_toboolean(self.handle as _, -1)
+        };
+        //println!("Got bool: {}", ret);
+        LuaType::Bool(if ret == 0 { false } else { true })
+    }
+
+    fn top_as_number(&self) -> LuaType {
+        let number = unsafe {
+            let ret = lua_tonumberx(self.handle as _, -1, null_mut());
+            ret
+        };
+        //println!("Got number {}", number);
+        LuaType::Number(OrderedFloat(number))
+    }
+
+    fn top_as_table(&self, stack_size: i32) -> LuaType {
+        let mut keys = Vec::new();
+        let mut values = Vec::new();
+        let mut is_array = true;
+        unsafe {
+            lua_pushnil(self.handle as _);
+            while lua_next(self.handle as _, -2) != 0 {
+                let val = self.get_top_value(stack_size + 1);
+                self.pop();
+                let key = self.get_top_value(stack_size + 1);
+                match &key {
+                    &LuaType::Number(_) => (),
+                    _ => is_array = false,
+                }
+                keys.push(key);
+                values.push(val);
+            }
+        }
+
+        if is_array {
+            LuaType::Array(values)
+        } else {
+            let mut table = Vec::new();
+            for i in 0..keys.len() {
+                table.push((keys[i].clone(), values[i].clone()));
+            }
+            LuaType::Table(table)
+        }
+    }
+
+    pub fn get_top_value(&self, stack_size: i32) -> LuaType {
         let t = unsafe {
             lua_type(self.handle as _, -1)
         };
+
         match t {
-            LUA_TNIL => {
-                Some(LuaType::Null)
-            },
-            LUA_TNUMBER => {
-                let number = unsafe {
-                    let ret = lua_tonumberx(self.handle as _, -1, null_mut());
-                    ret
-                };
-                Some(LuaType::Number(OrderedFloat(number)))
-            },
-            LUA_TBOOLEAN => {
-                let ret = unsafe {
-                    lua_toboolean(self.handle as _, -1)
-                };
-                Some(LuaType::Bool(if ret == 0 { false } else { true }))
-            },
-            LUA_TSTRING => {
-                let ret = unsafe {
-                    let chars = lua_tostring(self.handle as _, -1);
-                    let c_str = CStr::from_ptr(chars as _);
-                    let ret = c_str.to_str().unwrap().to_string();
-                    ret
-                };
-                Some(LuaType::String(ret))
-            },
-            LUA_TTABLE => {
-                let mut keys = Vec::new();
-                let mut values = Vec::new();
-                let mut is_array = true;
-                unsafe {
-                    lua_pushnil(self.handle as _);
-                    while lua_next(self.handle as _, -2) != 0 {
-                        let val = self.pop_value().unwrap();
-                        let key = self.get_top_value().unwrap();
-                        match &key {
-                            &LuaType::Number(_) => (),
-                            _ => is_array = false,
-                        }
-                        keys.push(key);
-                        values.push(val);
-                    }
-                }
-                if is_array {
-                    Some(LuaType::Array(values))
-                } else {
-                    let mut table = Vec::new();
-                    for i in 0..keys.len() {
-                        table.push((keys[i].clone(), values[i].clone()));
-                    }
-                    Some(LuaType::Table(table))
-                }
-            },
-            LUA_TFUNCTION => { println!("Got funciton"); None },
-            LUA_TUSERDATA => { println!("Got user data"); None },
-            LUA_TTHREAD => { println!("Got thread"); None },
-            LUA_TLIGHTUSERDATA => { println!("Got light userdata"); None },
+            LUA_TNIL => { LuaType::Null },
+            LUA_TNUMBER => { self.top_as_number() },
+            LUA_TBOOLEAN => { self.top_as_bool() },
+            LUA_TSTRING => { self.top_as_string() },
+            LUA_TTABLE => { self.top_as_table(stack_size) },
+            LUA_TFUNCTION => { LuaType::Function },
+            LUA_TUSERDATA => { LuaType::UserData },
+            LUA_TTHREAD => { LuaType::Thread },
+            LUA_TLIGHTUSERDATA => { LuaType::UserData },
             _ => { panic!("Unrecognized type"); }
         }
     }
@@ -352,9 +378,4 @@ impl Lua {
         unsafe { lua_pop(self.handle as _, 1); }
     }
 
-    pub fn pop_value(&self) -> Option<LuaType> {
-        let ret = self.get_top_value();
-        self.pop();
-        ret
-    }
 }

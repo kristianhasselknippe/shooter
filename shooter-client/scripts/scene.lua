@@ -1,8 +1,5 @@
-for k,v in package.loaded do
-   print("Key " .. tostring(k))
-end
-
-
+local vector = require "vector"
+print("Loaded vector");
 function create_entity(name)
    local id = entities_id_counter
    entities[id] = {
