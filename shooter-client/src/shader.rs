@@ -37,6 +37,7 @@ impl Shader {
                 let mut len = 0;
                 gl::GetShaderiv(vertex_shader, gl::INFO_LOG_LENGTH, &mut len);
                 let mut buf = Vec::with_capacity((len as usize) - 1);
+                for i in 0..len { buf.push(0); }
                 gl::GetShaderInfoLog(vertex_shader, len, ptr::null_mut(), buf.as_mut_ptr() as *mut GLchar);
                 panic!("{}", str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8"));
             }

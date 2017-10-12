@@ -54,19 +54,29 @@ fn main() {
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+
+    let gl_attr = video_subsystem.gl_attr();
+    gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+    gl_attr.set_context_flags().debug().set();
+    gl_attr.set_context_major_version(3);
+    gl_attr.set_context_minor_version(3);
+
+
     let window = video_subsystem.window("Shooter", window_size.0, window_size.1)
         .opengl()
         .build()
         .unwrap();
 
-    let mut canvas = window.into_canvas()
-        .index(find_sdl_gl_driver().unwrap())
-        .build()
-        .unwrap();
+    let major = window.subsystem().gl_attr().context_major_version();
+    let minor = window.subsystem().gl_attr().context_minor_version();
+
+    println!("Major {}, Minor {}", major, minor);
+    
 
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
-    canvas.window().gl_set_context_to_current().unwrap();
 
+    let gl_context = window.gl_create_context().unwrap();
+    window.gl_make_current(&gl_context).unwrap();
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
@@ -167,7 +177,8 @@ color = vec4(distance,distance,distance,1.0);");
 
 
 
-        canvas.present();
+        window.gl_swap_window();
+        
 
         //time.wait_until_frame_target();
     }
