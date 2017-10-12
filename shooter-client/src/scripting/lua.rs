@@ -45,10 +45,10 @@ impl LuaType {
         }   
     }
 
-    pub fn unwrap_array<'a>(&'a self) -> &'a Vec<LuaType> {
+    pub fn unwrap_array<'a>(&'a self) -> Option<&'a Vec<LuaType>> {
         match self {
-            &LuaType::Array(ref arr) => arr,
-            _ => panic!("Lua type was not a table"),
+            &LuaType::Array(ref arr) => Some(arr),
+            _ => None,
         }
     }
 

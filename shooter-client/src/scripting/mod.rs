@@ -29,8 +29,6 @@ impl ScriptEngine {
 
         println!("Done loading modules");
         lua.print_stack_dump();
-        
-
         println!("Done loading scripts");
 
         ScriptEngine {
@@ -64,14 +62,10 @@ impl ScriptEngine {
         let entities = self.lua.get_global("entities").unwrap();
 
         let mut ret = Vec::new();
-        for entity in entities.unwrap_array() {
-            let pos = entity.get("position").unwrap();
-            let x = pos.get("x").unwrap().unwrap_number();
-            let y = pos.get("y").unwrap().unwrap_number();
-            ret.push(Entity {
-                name: entity.get("name").unwrap().unwrap_string().to_string(),
-                pos: Vector3::new(x as f32,y as f32,0.0),
-            });
+        if let Some(entities) = entities.unwrap_array() {
+            for entity in entities {
+                ret.push(Entity::from_lua_type(&entity));
+            }
         }
         ret
     }
@@ -80,14 +74,19 @@ impl ScriptEngine {
         self.lua.call_global("update_entities", &[LuaType::Number(OrderedFloat(dt))]).unwrap();
     }
 
-    pub fn add_entity(&mut self, name: &str) -> f64 {
+    pub fn get_entity(&self, name: &str) -> Option<Entity> {
+        let e = self.lua.call_global("get_entity", &[LuaType::String(name.to_string())]).unwrap();
+        match e {
+            LuaType::Table(_) => Some(Entity::from_lua_type(&e)),
+            _ => {
+                print!("Got null while tryingt og et entity {}", name);
+                None
+            },
+        }
+    }
+
+    pub fn add_entity(&mut self, name: &str) {
         println!("Adding entity");
         let r = self.lua.call_global("create_entity", &[LuaType::String(name.to_string())]);
-        println!("Got back resutl: {:?}", r);
-        /*match r {
-            LuaType::Number(n) => n,
-            _ => panic!("Add entity function didn't return a number"),
-    }*/
-        0.0
     }
 }

@@ -132,13 +132,13 @@ color = vec4(distance,distance,distance,1.0);");
         game_state.update_entities(dt as f64);
 
         //update player sprite position since they are not yet connected
-        let p_entity = entities.iter().filter(|e| e.name == "player").nth(0).unwrap();
+        let p_entity = game_state.get_entity("player").unwrap();
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
-        let cam_entity = entities.iter().filter(|e| e.name == "camera").nth(0).unwrap();
+        let cam_entity = game_state.get_entity("camera").unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
         let projection = camera.camera_matrix();
         let camera_matrix = projection * view;

@@ -56,6 +56,18 @@ pub struct Entity {
     pub pos: Vector3<f32>,
 }
 
+impl Entity {
+    pub fn from_lua_type(t: &LuaType) -> Entity {
+        let pos = t.get("position").unwrap();
+        let x = pos.get("x").unwrap().unwrap_number();
+        let y = pos.get("y").unwrap().unwrap_number();
+        Entity {
+            name: t.get("name").unwrap().unwrap_string().to_string(),
+            pos: Vector3::new(x as f32,y as f32,0.0),
+        }
+    }
+}
+
 #[derive(Hash,Clone,Copy,Eq,PartialEq, Debug)]
 pub struct EntityRef(u32);
 
@@ -81,14 +93,16 @@ impl GameState {
         }
     }
 
-    pub fn new_entity(&mut self, name: &str) -> EntityRef {
+    pub fn new_entity(&mut self, name: &str) {
         let id = self.script_engine.add_entity(name);
-        let ret = EntityRef(id as u32);
-        ret
     }
 
     pub fn get_entities(&mut self) -> Vec<Entity> {
         self.script_engine.get_entities()
+    }
+
+    pub fn get_entity(&self, name: &str) -> Option<Entity> {
+        self.script_engine.get_entity(name)
     }
 
     pub fn pre_update(&mut self) {
