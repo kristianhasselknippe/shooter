@@ -132,6 +132,11 @@ color = vec4(distance,distance,distance,1.0);");
 
 
     //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
+
+    unsafe {
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+    };
     
     let mut fps_counter = FpsCounter::new();
     'running: loop {
