@@ -20,6 +20,7 @@ mod texture;
 mod text;
 mod camera;
 mod entities;
+mod game_state;
 mod time;
 mod input;
 mod scripting;
@@ -34,6 +35,7 @@ use camera::*;
 use time::*;
 use input::*;
 use fps_counter::*;
+use game_state::*;
 
 use std::path::Path;
 use na::*;

@@ -22,7 +22,23 @@ impl ScriptEngine {
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
         sw.new_script_from_file(&Path::new("scripts/debug.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/vector.lua")).load(&mut lua);
+
+        sw.new_script_from_file(&Path::new("scripts/math/vec3.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/vec2.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/constants.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/mat4.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/utils.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/color.lua")).load(&mut lua);
+
+        sw.new_script_from_file(&Path::new("scripts/math/intersect.lua")).load(&mut lua);
+
+        sw.new_script_from_file(&Path::new("scripts/math/mesh.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/octree.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/quat.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/simplex.lua")).load(&mut lua);
+
+
+        
         sw.new_script_from_file(&Path::new("scripts/helpers.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);

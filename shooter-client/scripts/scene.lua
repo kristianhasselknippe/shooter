@@ -1,4 +1,4 @@
-local vector = require "vector"
+local vec2 = require "vec2"
 local helpers = require "helpers"
 
 local entity = {}
@@ -16,7 +16,7 @@ function entity:add_component(comp)
 end
 
 function create_entity(name)
-   entities[name] = new(name, vector.new(0,0))
+   entities[name] = new(name, vec2.new(0,0))
 end
 
 function get_entity(name)

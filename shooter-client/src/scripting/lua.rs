@@ -190,11 +190,28 @@ impl Lua {
             lua_getglobal(self.handle as _, CString::new("package".to_string()).unwrap().as_ptr() as _);
             lua_getfield(self.handle as _, -1, CString::new("loaded".to_string()).unwrap().as_ptr() as _);
 
+            println!("Loading module: {}", module_name);
+
             let cn = format!("{}\0", module_name);
             let chunk_name = cn.as_bytes();
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
             if result == LUA_OK {
-                lua_call(self.handle as _, 0, 1); //should return a module
+                if module_name != "debug" {
+                    let error_handler_function = CString::new("main_error_handler").unwrap();
+                    lua_getglobal(self.handle as _, error_handler_function.as_ptr() as _);
+                    lua_insert(self.handle as _, -2);
+                }
+
+                self.print_stack_dump();
+                
+                lua_pcall(self.handle as _, 0, 1, -2); //should return a module
+
+                if module_name != "debug" {
+                    lua_remove(self.handle as _, -2); // remove the debug function
+                }
+
+                self.print_stack_dump();
+                
                 lua_setfield(self.handle as _, -2, CString::new(module_name.to_string()).unwrap().as_ptr() as _);
                 self.pop();
                 self.pop();
