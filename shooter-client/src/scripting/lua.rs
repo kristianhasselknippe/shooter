@@ -210,7 +210,6 @@ impl Lua {
             let error_handler_function = CString::new("main_error_handler").unwrap();
             lua_getglobal(self.handle as _, error_handler_function.as_ptr() as _);
             lua_insert(self.handle as _, -2);
-            self.print_stack_dump();
             for a in args {
                 self.push_value(&a);
             }

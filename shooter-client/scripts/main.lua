@@ -27,10 +27,8 @@ function update_entities(dt)
 	  if e.name == "camera" then
 		 local player_pos = get_entity("player").position
 		 local direction = player_pos - e.position
-		 print("Dir " .. helpers.tprint(direction))
-		 local dir = direction.normalizeInplace()
-		 print("Diretion " .. helpers.tprint(dir))
-		 --e.position = e.position + direction * dt;
+		 local dir = direction:normalizeInplace()
+		 e.position = e.position + direction * dt;
 	  end
    end
 end

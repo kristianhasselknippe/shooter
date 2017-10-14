@@ -49,11 +49,15 @@ fn find_sdl_gl_driver() -> Option<u32> {
 
 fn main() {
 
-    let window_size = (600,800);
+    let window_size = (800,600);
 
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+
+    let swap_interval = video_subsystem.gl_get_swap_interval();
+    println!("Swap interval: {}", swap_interval);
+    
 
     let gl_attr = video_subsystem.gl_attr();
     
@@ -64,19 +68,24 @@ fn main() {
 
     let window = video_subsystem.window("Shooter", window_size.0, window_size.1)
         .opengl()
+        .resizable()
         .build()
         .unwrap();
 
     let major = window.subsystem().gl_attr().context_major_version();
     let minor = window.subsystem().gl_attr().context_minor_version();
-
     println!("Major {}, Minor {}", major, minor);
+    
     let gl_context = window.gl_create_context().unwrap();
     window.gl_make_current(&gl_context).unwrap();
     
-
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
-
+    
+    let mut canvas = window.into_canvas()
+        .index(find_sdl_gl_driver().unwrap())
+        .build()
+        .unwrap();
+    
 
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
@@ -116,13 +125,15 @@ color = vec4(distance,distance,distance,1.0);");
     let mut game_state = GameState::new();
 
     game_state.new_entity("player");
-    let camera = Camera::new_orthographic(50.0,50.0);
+    let camera = Camera::new_orthographic(60.0,60.0);
     game_state.new_entity("camera");
 
     let text = Text::new("this is some text", &draw_context);
 
-    let mut fps_counter = FpsCounter::new();
 
+    //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
+    
+    let mut fps_counter = FpsCounter::new();
     'running: loop {
         let dt = time.delta_time();
         fps_counter.update(dt);
@@ -154,6 +165,11 @@ color = vec4(distance,distance,distance,1.0);");
         let projection = camera.camera_matrix();
         let camera_matrix = projection * view;
 
+
+        //Drawing
+
+        
+
         /*for y in 0..10 {
             for x in 0..10 {
                 let w = 1.0;
@@ -178,7 +194,8 @@ color = vec4(distance,distance,distance,1.0);");
 
 
 
-        window.gl_swap_window();
+        //window.gl_swap_window();
+        canvas.present();
         
 
         //time.wait_until_frame_target();
