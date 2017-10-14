@@ -56,11 +56,11 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
 
     let gl_attr = video_subsystem.gl_attr();
+    
     gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
     gl_attr.set_context_flags().debug().set();
     gl_attr.set_context_major_version(3);
     gl_attr.set_context_minor_version(3);
-
 
     let window = video_subsystem.window("Shooter", window_size.0, window_size.1)
         .opengl()
@@ -71,12 +71,13 @@ fn main() {
     let minor = window.subsystem().gl_attr().context_minor_version();
 
     println!("Major {}, Minor {}", major, minor);
+    let gl_context = window.gl_create_context().unwrap();
+    window.gl_make_current(&gl_context).unwrap();
     
 
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
 
-    let gl_context = window.gl_create_context().unwrap();
-    window.gl_make_current(&gl_context).unwrap();
+
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::fs::File;
 use self::lua52_sys::*;
 use std::ptr::{null,null_mut};
-use libc::{c_void,size_t,c_char,free,realloc};
+use libc::{c_void,size_t,c_char,c_int,free,realloc};
 use std::ffi::{CString,CStr};
 use of::OrderedFloat;
 
@@ -21,6 +21,11 @@ pub enum LuaType {
     Thread,
     UserData,
     Null
+}
+
+extern {
+ //void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
+    pub fn luaL_traceback(L: *mut lua_State, L1: *mut lua_State, msg: *const c_char, level: c_int);
 }
 
 impl LuaType {
@@ -201,13 +206,19 @@ impl Lua {
 
     fn call(&self, args: &[LuaType], n: &str) -> Result<LuaType, ()> {
         unsafe {
+
+            let error_handler_function = CString::new("main_error_handler").unwrap();
+            lua_getglobal(self.handle as _, error_handler_function.as_ptr() as _);
+            lua_insert(self.handle as _, -2);
+            self.print_stack_dump();
             for a in args {
                 self.push_value(&a);
             }
 
-            let results = 1;
-            let msgh = 0;
-            let error_status = lua_pcall(self.handle as _, args.len() as i32, results, msgh);
+
+
+            let msgh = -(args.len() as i32 + 2);
+            let error_status = lua_pcall(self.handle as _, args.len() as i32, 1, msgh);
             match error_status {
                 LUA_ERRRUN => {
                     let error_message = lua_tostring(self.handle as _, -1) as *mut i8;
@@ -216,23 +227,18 @@ impl Lua {
                     panic!("Runtime error calling function {}: {}", n, error_message_s);
                 },
                 LUA_OK => { },
-                _ => {
-                    panic!("Not ok");
-                }
+                LUA_ERRMEM => { panic!("Memory error"); },
+                LUA_ERRERR => { panic!("Error running the error handler"); }
+                LUA_ERRGCMM => { panic!("Error running GC"); },
+                _ => { panic!("Unknown error calling function: {}", n); }
             }
             let result = self.get_top_value(0);
+            self.pop();
             self.pop();
             Ok(result)
         }
     }
 
-    pub fn call_method(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        unsafe {
-            let name = CString::new(n).unwrap();
-            lua_getfield(self.handle as _, -1, name.as_ptr() as _);
-            self.call(args, n)
-        }
-    }
 
     pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         unsafe {

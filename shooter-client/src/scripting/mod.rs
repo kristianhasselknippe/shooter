@@ -21,6 +21,7 @@ impl ScriptEngine {
         lua.open_libs();
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
+        sw.new_script_from_file(&Path::new("scripts/debug.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/vector.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/helpers.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
