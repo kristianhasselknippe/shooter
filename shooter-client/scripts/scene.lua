@@ -7,6 +7,7 @@ local function new(name, pos)
    return setmetatable({
 		 name = name,
 		 position = pos,
+		 rotation = 0,
 		 components = {}
 	}, entity)
 end

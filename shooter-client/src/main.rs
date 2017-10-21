@@ -10,6 +10,8 @@ extern crate rusttype;
 extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
+#[macro_use]
+extern crate lazy_static;
 
 mod scene;
 mod shader;
@@ -143,7 +145,6 @@ color = vec4(distance,distance,distance,1.0);");
     let mut fps_counter = FpsCounter::new();
     'running: loop {
         let dt = time.delta_time();
-        fps_counter.update(dt);
 
         let entities = game_state.get_entities();
 
@@ -164,6 +165,7 @@ color = vec4(distance,distance,distance,1.0);");
         let p_entity = game_state.get_entity("player").unwrap();
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
+        player_sprite.rot = p_entity.rot;
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
@@ -205,6 +207,7 @@ color = vec4(distance,distance,distance,1.0);");
         canvas.present();
         
 
-        //time.wait_until_frame_target();
+        time.wait_until_frame_target();
+        fps_counter.update(dt);
     }
 }

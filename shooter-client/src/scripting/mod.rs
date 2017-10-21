@@ -1,5 +1,6 @@
 pub mod script;
 pub mod lua;
+pub mod userdata;
 
 use self::script::*;
 use self::lua::*;
@@ -9,6 +10,7 @@ use std::path::Path;
 use of::OrderedFloat;
 
 use super::entities::*;
+use super::camera::Camera;
 
 pub struct ScriptEngine {
     pub lua: Lua,
@@ -20,21 +22,27 @@ impl ScriptEngine {
         let mut lua = Lua::new();
         lua.open_libs();
 
+        println!("Loading userdata libraries");
+        lua.new_userdata(&Camera::get_userdata());
+        println!("Done loading userdata libraries");
+
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
         sw.new_script_from_file(&Path::new("scripts/debug.lua")).load(&mut lua);
 
         sw.new_script_from_file(&Path::new("scripts/math/vec3.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/math/vec2.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/math/constants.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/mat4.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/quat.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/math/utils.lua")).load(&mut lua);
+        sw.new_script_from_file(&Path::new("scripts/math/mat4.lua")).load(&mut lua);
+
         sw.new_script_from_file(&Path::new("scripts/math/color.lua")).load(&mut lua);
 
         sw.new_script_from_file(&Path::new("scripts/math/intersect.lua")).load(&mut lua);
 
         sw.new_script_from_file(&Path::new("scripts/math/mesh.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/math/octree.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/quat.lua")).load(&mut lua);
+
         sw.new_script_from_file(&Path::new("scripts/math/simplex.lua")).load(&mut lua);
 
 
@@ -43,6 +51,8 @@ impl ScriptEngine {
         sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);
         sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
+
+
 
         println!("Done loading modules");
         lua.print_stack_dump();

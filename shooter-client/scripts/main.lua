@@ -12,15 +12,21 @@ function update_input(left,up,right,down)
    input.down_down = down
 end
 
-speed = 10.5
+speed = 3.5
 function update_entities(dt)
    for name,e in pairs(entities) do
 	  if e.name == "player" then
 		 local vec = vec2.new(0,0)
-		 if input.left_down then vec.x = vec.x - 1 end
-		 if input.up_down then vec.y = vec.y + 1 end
-		 if input.right_down then vec.x = vec.x + 1 end
-		 if input.down_down then vec.y = vec.y - 1 end
+		 if input.left_down then
+			vec.x = vec.x - speed
+			e.rotation = e.rotation + 10
+		 end
+		 if input.up_down then vec.y = vec.y + speed end
+		 if input.right_down then
+			vec.x = vec.x + speed
+			e.rotation = e.rotation - 0.1
+		 end
+		 if input.down_down then vec.y = vec.y - speed end
 
 		 e.position = e.position + vec * dt * speed;
 	  end
@@ -28,7 +34,12 @@ function update_entities(dt)
 		 local player_pos = get_entity("player").position
 		 local direction = player_pos - e.position
 		 local dir = vec2.normalize(direction)
-		 e.position = e.position + direction * dt;
+		 e.position = player_pos --e.position + direction * dt * speed / 2;
 	  end
    end
 end
+
+print("trying");
+helpers.tprint(Camera);
+Camera.set_size();
+print("Done");

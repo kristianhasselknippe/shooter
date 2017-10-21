@@ -1,6 +1,6 @@
 pub struct FpsCounter {
     frame_count: i32,
-    accum_time: f64,
+    accum_time: f32,
 }
 
 impl FpsCounter {
@@ -11,7 +11,7 @@ impl FpsCounter {
         }
     }
 
-    pub fn update(&mut self, dt: f64) {
+    pub fn update(&mut self, dt: f32) {
         self.frame_count += 1;
         self.accum_time += dt;
 

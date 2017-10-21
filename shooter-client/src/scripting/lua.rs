@@ -1,4 +1,4 @@
-extern crate lua52_sys;
+pub extern crate lua52_sys;
 
 use std::io::Read;
 use std::path::Path;
@@ -8,6 +8,7 @@ use std::ptr::{null,null_mut};
 use libc::{c_void,size_t,c_char,c_int,free,realloc};
 use std::ffi::{CString,CStr};
 use of::OrderedFloat;
+
 
 
 #[derive(Clone,Debug)]
@@ -23,9 +24,40 @@ pub enum LuaType {
     Null
 }
 
+#[no_mangle]
+#[derive(Debug)]
+pub struct luaL_Reg {
+    name: *const c_char,
+    func: Option<lua_CFunction>
+}
+
+unsafe impl Sync for luaL_Reg {}
+
+
+impl luaL_Reg {
+    pub fn new(name: &str, func: lua_CFunction) -> luaL_Reg {
+        let name = format!("{}\0", name);
+        luaL_Reg {
+            name: name.as_bytes().as_ptr() as _,
+            func: Some(func),
+        }
+     }
+
+    pub fn null() -> luaL_Reg {
+        luaL_Reg {
+            name: null(),
+            func: None,
+        }
+    }
+}
+
 extern {
- //void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
+    //void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
     pub fn luaL_traceback(L: *mut lua_State, L1: *mut lua_State, msg: *const c_char, level: c_int);
+
+    //void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup);
+    pub fn luaL_setfuncs(L: *mut lua_State, l: *const luaL_Reg, nup: c_int);
+
 }
 
 impl LuaType {
@@ -84,6 +116,16 @@ impl Drop for Lua {
     }
 }
 
+pub struct UserData {
+    pub name: String,
+    pub size: i32,
+    pub methods: &'static Vec<luaL_Reg>,
+}
+
+pub trait UserDataProvider {
+    fn get_userdata() -> UserData;
+}
+
 impl Lua {
     pub fn new() -> Lua {
         extern "C" fn alloc(_ud: *mut c_void,
@@ -105,10 +147,26 @@ impl Lua {
 
             //println!("State: {:?}", state);
             Lua {
-                handle: state
+                handle: state,
             }
         }
 
+    }
+
+    pub fn new_userdata(&mut self, userdata: &UserData) {
+        unsafe {
+            println!("{:?}", userdata.methods);
+
+            lua_newtable(self.handle as _);
+            self.print_stack_dump();
+            luaL_setfuncs(self.handle as _, userdata.methods.as_ptr() as _, 0);
+            self.print_stack_dump();
+            lua_setglobal(self.handle as _, CString::new(userdata.name.clone()).unwrap().as_ptr() as _);
+            self.print_stack_dump();
+
+            let fo = self.get_global("Camera");
+            println!("{:?}", fo);
+        }
     }
 
     pub fn print_stack_dump(&self) {
@@ -202,7 +260,7 @@ impl Lua {
                     lua_insert(self.handle as _, -2);
                 }
 
-                self.print_stack_dump();
+                //self.print_stack_dump();
                 
                 lua_pcall(self.handle as _, 0, 1, -2); //should return a module
 
@@ -210,7 +268,7 @@ impl Lua {
                     lua_remove(self.handle as _, -2); // remove the debug function
                 }
 
-                self.print_stack_dump();
+                //self.print_stack_dump();
                 
                 lua_setfield(self.handle as _, -2, CString::new(module_name.to_string()).unwrap().as_ptr() as _);
                 self.pop();
@@ -321,11 +379,11 @@ impl Lua {
         let ret = unsafe {
             let chars = lua_tostring(self.handle as _, -1);
             let c_str = CStr::from_ptr(chars as _);
-            let ret = c_str.to_str().unwrap().to_string();
-            ret
+            if let Ok(ret)  = c_str.to_str() {
+                return LuaType::String(ret.to_string())
+            }
+            return LuaType::String("not UTF8".to_string())
         };
-        //println!("Got string. {}", ret);
-        LuaType::String(ret)
     }
 
     fn top_as_bool(&self) -> LuaType {
