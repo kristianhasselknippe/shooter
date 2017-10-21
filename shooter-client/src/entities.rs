@@ -82,12 +82,13 @@ impl Entity {
     pub fn new(name: &str, pos: Vector2<f32>) -> Entity {
         Entity {
             pos: Vector3::new(pos.x, pos.y, 0.0),
-            name: name.to_string(),
             rot: 0.0,
+            name: name.to_string(),
         }
     }
 }
 
-struct Component {
+pub struct Component {
     
 }
+

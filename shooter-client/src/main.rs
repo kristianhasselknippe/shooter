@@ -129,14 +129,7 @@ color = vec4(distance,distance,distance,1.0);");
     let mut game_state = GameState::new();
 
     game_state.new_entity("player");
-    let camera = Camera::new_orthographic(60.0,60.0);
     game_state.new_entity("camera");
-
-    let camera_int_ptr = unsafe { std::mem::transmute::<_,usize>(&camera) };
-    println!("Camerapos: {}", camera_int_ptr);
-    game_state.script_engine.call("set_camera", &[
-        LuaType::Number(of::OrderedFloat(camera_int_ptr as f64))
-    ]);
 
     let text = Text::new("this is some text", &draw_context);
 
@@ -177,7 +170,9 @@ color = vec4(distance,distance,distance,1.0);");
 
         let cam_entity = game_state.get_entity("camera").unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
-        let projection = camera.camera_matrix();
+
+        let mut camera: *mut Camera = *game_state.script_engine.lua.get_userdata::<Camera>("Camera");
+        let projection = unsafe { (*camera).camera_matrix() };
         let camera_matrix = projection * view;
 
 

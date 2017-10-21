@@ -14,6 +14,11 @@ end
 
 speed = 3.5
 function update_entities(dt)
+
+   if (Camera.instance == nil) then
+		 Camera.instance = Camera.new(60.0,60.0)
+   end
+   
    for name,e in pairs(entities) do
 	  if e.name == "player" then
 		 local vec = vec2.new(0,0)
@@ -44,8 +49,4 @@ function update_entities(dt)
 		 e.position = player_pos --e.position + direction * dt * speed / 2;
 	  end
    end
-end
-
-function set_camera(camera)
-   Camera.instance = camera
 end

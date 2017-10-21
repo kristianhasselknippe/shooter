@@ -172,6 +172,14 @@ impl Lua {
         }
     }
 
+    pub fn get_userdata<T: UserDataProvider>(&self, name: &str) -> Box<*mut T> {
+        unsafe {
+            lua_getglobal(self.handle as _, CString::new(name.to_string()).unwrap().as_ptr() as _);
+            lua_getfield(self.handle as _, -1, CString::new("instance".to_string()).unwrap().as_ptr() as _);
+            Box::new(lua_touserdata(self.handle as _, -1) as *mut T)
+        }
+    }
+
     pub fn print_stack_dump(&self) {
         unsafe {
             let top = lua_gettop(self.handle as _);

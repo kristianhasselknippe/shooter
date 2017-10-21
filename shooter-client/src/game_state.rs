@@ -5,6 +5,8 @@ use input::*;
 
 pub struct GameState {
     pub script_engine: ScriptEngine,
+
+    pub components: Vec<Component>
 }
 
 impl GameState {
@@ -13,6 +15,7 @@ impl GameState {
 
         GameState {
             script_engine: script_engine,
+            components: Vec::new(),
         }
     }
 
@@ -44,5 +47,4 @@ impl GameState {
             LuaType::Bool(input.down_down),
         ]).unwrap();
     }
-
 }

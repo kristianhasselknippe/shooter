@@ -29,30 +29,30 @@ impl Camera {
 
 extern "C" fn set_size(L: *mut lua_State) -> c_int {
     unsafe {
-        let mut camera = (luaL_checknumber(L, 1)) as usize;
+        let mut camera = (lua_touserdata(L, 1)) as *mut Camera;
         let x = luaL_checknumber(L, 2);
         let y = luaL_checknumber(L, 3);
 
-
-        let mut camera = transmute::<_, *mut Camera>(camera);
-        
-        let cam = &(*camera);
-        
-
         let old_size = (*camera).size;
-
-        println!("Old size {:?}", old_size);
-
         let new_camera_values = Camera::new_orthographic(old_size.0 + x as f32, old_size.1 + y as f32);
-
-        println!("New size {:?}", new_camera_values.size);
         
         (*camera).projection = new_camera_values.projection;
         (*camera).size = new_camera_values.size;
     }
-
-    println!("Setting camera size");
     
+    1
+}
+
+extern "C" fn new_camera(L: *mut lua_State) -> c_int {
+    unsafe {
+        let lua_camera = lua_newuserdata(L, size_of::<Camera>() as _) as *mut Camera;
+        let x = luaL_checknumber(L, 1);
+        let y = luaL_checknumber(L, 2);
+        let cam = Camera::new_orthographic(x as f32, y as f32);
+
+        (*lua_camera).projection = cam.projection;
+        (*lua_camera).size = cam.size;
+    }
     1
 }
 
@@ -60,6 +60,7 @@ impl UserDataProvider for Camera {
     fn get_userdata() -> UserData {       
         let mut ret = Vec::new();
         ret.push(luaL_Reg::new("set_size", set_size));
+        ret.push(luaL_Reg::new("new", new_camera));
         ret.push(luaL_Reg::null());
         
         UserData {
