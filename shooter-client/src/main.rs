@@ -10,8 +10,6 @@ extern crate rusttype;
 extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
-#[macro_use]
-extern crate lazy_static;
 
 mod scene;
 mod shader;

@@ -3,7 +3,6 @@ use super::scripting::lua::{UserData, UserDataProvider, luaL_Reg};
 use super::scripting::lua::lua52_sys::*;
 use std::mem::size_of;
 use libc::{c_int};
-use super::lazy_static;
 
 pub struct Camera {
     projection: Matrix4<f32>,
@@ -37,24 +36,17 @@ extern "C" fn set_size(L: *mut lua_State) -> c_int{
     1
 }
 
-lazy_static! {
-    static ref LIBRARY: Vec<luaL_Reg> = {
-        let mut ret = Vec::new();
-        ret.push(luaL_Reg::new("set_size", set_size));
-        ret.push(luaL_Reg::null());
-        ret
-    };
-}
-
 impl UserDataProvider for Camera {
     fn get_userdata() -> UserData {
         
-
+        let mut ret = Vec::new();
+        ret.push(luaL_Reg::new("set_size", set_size));
+        ret.push(luaL_Reg::null());
         
         UserData {
             name: "Camera".to_string(),
             size: size_of::<Camera>() as i32,
-            methods: & *LIBRARY,
+            methods: ret,
         }
     }
 }

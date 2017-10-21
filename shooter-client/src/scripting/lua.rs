@@ -119,7 +119,7 @@ impl Drop for Lua {
 pub struct UserData {
     pub name: String,
     pub size: i32,
-    pub methods: &'static Vec<luaL_Reg>,
+    pub methods: Vec<luaL_Reg>,
 }
 
 pub trait UserDataProvider {
