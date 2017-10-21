@@ -21,12 +21,19 @@ function update_entities(dt)
 			vec.x = vec.x - speed
 			e.rotation = e.rotation + 10
 		 end
-		 if input.up_down then vec.y = vec.y + speed end
 		 if input.right_down then
 			vec.x = vec.x + speed
 			e.rotation = e.rotation - 0.1
 		 end
-		 if input.down_down then vec.y = vec.y - speed end
+		 
+		 if input.up_down then
+			vec.y = vec.y + speed
+			Camera.set_size(Camera.instance, 0.1 * speed, 0.1 * speed);
+		 end
+		 if input.down_down then
+			vec.y = vec.y - speed
+			Camera.set_size(Camera.instance, 0.1 * -speed, 0.1 * -speed);
+		 end
 
 		 e.position = e.position + vec * dt * speed;
 	  end
@@ -39,7 +46,6 @@ function update_entities(dt)
    end
 end
 
-print("trying");
-helpers.tprint(Camera);
-Camera.set_size();
-print("Done");
+function set_camera(camera)
+   Camera.instance = camera
+end

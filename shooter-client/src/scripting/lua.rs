@@ -58,6 +58,9 @@ extern {
     //void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup);
     pub fn luaL_setfuncs(L: *mut lua_State, l: *const luaL_Reg, nup: c_int);
 
+    //lua_Number luaL_checknumber (lua_State *L, int arg);
+    pub fn luaL_checknumber(L: *mut lua_State, arg: c_int) -> lua_Number;
+
 }
 
 impl LuaType {

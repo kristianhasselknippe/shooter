@@ -4,7 +4,7 @@ use scripting::lua::*;
 use input::*;
 
 pub struct GameState {
-    script_engine: ScriptEngine,
+    pub script_engine: ScriptEngine,
 }
 
 impl GameState {

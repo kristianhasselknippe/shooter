@@ -88,7 +88,6 @@ impl Entity {
     }
 }
 
-
 struct Component {
     
 }

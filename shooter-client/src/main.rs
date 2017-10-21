@@ -37,6 +37,8 @@ use input::*;
 use fps_counter::*;
 use game_state::*;
 
+use scripting::lua::LuaType;
+
 use std::path::Path;
 use na::*;
 
@@ -129,6 +131,12 @@ color = vec4(distance,distance,distance,1.0);");
     game_state.new_entity("player");
     let camera = Camera::new_orthographic(60.0,60.0);
     game_state.new_entity("camera");
+
+    let camera_int_ptr = unsafe { std::mem::transmute::<_,usize>(&camera) };
+    println!("Camerapos: {}", camera_int_ptr);
+    game_state.script_engine.call("set_camera", &[
+        LuaType::Number(of::OrderedFloat(camera_int_ptr as f64))
+    ]);
 
     let text = Text::new("this is some text", &draw_context);
 
