@@ -9,7 +9,11 @@ use libc::{c_void,size_t,c_char,c_int,free,realloc};
 use std::ffi::{CString,CStr};
 use of::OrderedFloat;
 
-
+macro_rules! cstringptr {
+    ($name:expr) => {
+        CString::new($name).unwrap().as_ptr() as _
+    }
+}
 
 #[derive(Clone,Debug)]
 pub enum LuaType {
@@ -127,59 +131,84 @@ pub trait UserDataProvider {
     fn get_userdata() -> UserData;
 }
 
-
- pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
-        unsafe {
-            println!("Creating userdata for {:?}", userdata.methods);
-
-            lua_newtable(L);
-            luaL_setfuncs(L, userdata.methods.as_ptr() as _, 0);
-            lua_setglobal(L, CString::new(userdata.name.clone()).unwrap().as_ptr() as _);
-        }
-    }
-
-    pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
-        unsafe {
-            lua_getglobal(L, CString::new(name.to_string()).unwrap().as_ptr() as _);
-            lua_getfield(L, -1, CString::new("instance".to_string()).unwrap().as_ptr() as _);
-            Box::new(lua_touserdata(L, -1) as *mut T)
-        }
-    }
-
-    pub fn print_stack_dump(L: *mut lua_State) {
-        unsafe {
-            let top = lua_gettop(L);
-            println!("StackSize: {}", top);
-            for i in 1 .. top + 1 {
-                let t = lua_type(L, i);
-                match t {
-                    LUA_TSTRING => {
-                        let lua_str = lua_tostring(L, i);
-                        let c_str = CStr::from_ptr(lua_str);
-                        /* strings */println!("\t{} => {}", i, c_str.to_str().unwrap());
-                    },
-                    LUA_TBOOLEAN => {
-                        /* booleans */
-                        println!("\t{} => {}", i, if lua_toboolean(L, i) == 1  { "true" } else { "false" });
-                    },
-                    LUA_TNUMBER => {
-                        /* numbers */
-                        println!("\t{} => {}", i, lua_tonumberx(L, i, null_mut()));
-                    },
-                    _ => {
-                        let lua_str = lua_typename(L, t);
-                        let c_str = CStr::from_ptr(lua_str);
-                        println!("\t{} => {}",i, c_str.to_str().unwrap());
-                    }   
-                }
-                println!("  ");  /* put a separator */
-            }
-            if (top > 0) {
-                println!("");  /* end the listing */
+fn push_value(L: *mut lua_State, val: &LuaType) {
+    unsafe {
+        match val {
+            &LuaType::String(ref s) => {
+                lua_pushstring(L, cstringptr!(s.clone()));
+            },
+            &LuaType::Number(n) => {
+                lua_pushnumber(L, n.0);
+            },
+            &LuaType::Bool(b) => {
+                lua_pushboolean(L, if b { 1 } else { 0 });
+            },
+            _ => {
+                panic!("Unsupported argument type");
             }
         }
-        
     }
+}
+
+pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
+    unsafe {
+        println!("Creating userdata for {:?}", userdata.methods);
+
+        lua_newtable(L);
+        luaL_setfuncs(L, userdata.methods.as_ptr() as _, 0);
+        lua_setglobal(L, cstringptr!(userdata.name.clone()));
+    }
+}
+
+pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
+    unsafe {
+        lua_getglobal(L, cstringptr!(name.to_string()));
+        lua_getfield(L, -1, cstringptr!("instance".to_string()));
+        Box::new(lua_touserdata(L, -1) as *mut T)
+    }
+}
+
+pub fn print_stack_dump(L: *mut lua_State) {
+    unsafe {
+        let top = lua_gettop(L);
+        println!("StackSize: {}", top);
+        for i in 1 .. top + 1 {
+            let t = lua_type(L, i);
+            match t {
+                LUA_TSTRING => {
+                    let lua_str = lua_tostring(L, i);
+                    let c_str = CStr::from_ptr(lua_str);
+                    /* strings */println!("\t{} => {}", i, c_str.to_str().unwrap());
+                },
+                LUA_TBOOLEAN => {
+                    /* booleans */
+                    println!("\t{} => {}", i, if lua_toboolean(L, i) == 1  { "true" } else { "false" });
+                },
+                LUA_TNUMBER => {
+                    /* numbers */
+                    println!("\t{} => {}", i, lua_tonumberx(L, i, null_mut()));
+                },
+                _ => {
+                    let lua_str = lua_typename(L, t);
+                    let c_str = CStr::from_ptr(lua_str);
+                    println!("\t{} => {}",i, c_str.to_str().unwrap());
+                }   
+            }
+            println!("  ");  /* put a separator */
+        }
+        if (top > 0) {
+            println!("");  /* end the listing */
+        }
+    }
+    
+}
+
+pub fn set_field(L: *mut lua_State, name: &str, value: &LuaType) {
+    push_value(L, value);
+    unsafe {
+        lua_setfield(L, -2, cstringptr!(name));
+    }
+}
 
 impl Lua {
     pub fn new() -> Lua {
@@ -260,8 +289,8 @@ impl Lua {
         }
 
         unsafe {
-            lua_getglobal(self.handle as _, CString::new("package".to_string()).unwrap().as_ptr() as _);
-            lua_getfield(self.handle as _, -1, CString::new("loaded".to_string()).unwrap().as_ptr() as _);
+            lua_getglobal(self.handle as _, cstringptr!("package".to_string()));
+            lua_getfield(self.handle as _, -1, cstringptr!("loaded".to_string()));
 
             println!("Loading module: {}", module_name);
 
@@ -270,8 +299,7 @@ impl Lua {
             let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
             if result == LUA_OK {
                 if module_name != "debug" {
-                    let error_handler_function = CString::new("main_error_handler").unwrap();
-                    lua_getglobal(self.handle as _, error_handler_function.as_ptr() as _);
+                    lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));
                     lua_insert(self.handle as _, -2);
                 }
 
@@ -285,7 +313,7 @@ impl Lua {
 
                 //self.print_stack_dump();
                 
-                lua_setfield(self.handle as _, -2, CString::new(module_name.to_string()).unwrap().as_ptr() as _);
+                lua_setfield(self.handle as _, -2, cstringptr!(module_name.to_string()));
                 self.pop();
                 self.pop();
             } else {
@@ -331,16 +359,14 @@ impl Lua {
 
     pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         unsafe {
-            let name = CString::new(n).unwrap();
-            lua_getglobal(self.handle as _, name.as_ptr() as _);
+            lua_getglobal(self.handle as _, cstringptr!(n));
             self.call(args, n)
         }
     }
 
     pub fn get_field(&self, name: &str) -> Option<LuaType> {
-        let name_c = CString::new(name).unwrap();
         unsafe {
-            lua_getfield(self.handle as _, -1, name_c.as_ptr() as _);
+            lua_getfield(self.handle as _, -1, cstringptr!(name));
             let ret = Some(self.get_top_value(0));
             self.pop();
             ret
@@ -348,9 +374,8 @@ impl Lua {
     }
 
     pub fn get_global(&self, name: &str) -> Option<LuaType> {
-        let name_c = CString::new(name).unwrap();
         unsafe {
-            lua_getglobal(self.handle as _, name_c.as_ptr() as _);
+            lua_getglobal(self.handle as _, cstringptr!(name));
             let ret = Some(self.get_top_value(0));
             self.pop();
             ret
@@ -371,23 +396,7 @@ impl Lua {
     }
 
     fn push_value(&self, val: &LuaType) {
-        unsafe {
-            match val {
-                &LuaType::String(ref s) => {
-                    let c_str = CString::new(s.clone()).unwrap();
-                    lua_pushstring(self.handle as _, c_str.as_ptr() as _);
-                },
-                &LuaType::Number(n) => {
-                    lua_pushnumber(self.handle as _, n.0);
-                },
-                &LuaType::Bool(b) => {
-                    lua_pushboolean(self.handle as _, if b { 1 } else { 0 });
-                },
-                _ => {
-                    panic!("Unsupported argument type");
-                }
-            }
-        }
+        push_value(self.handle as _, val);
     }
 
     fn top_as_string(&self) -> LuaType {
