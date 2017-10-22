@@ -13,6 +13,7 @@ extern crate ordered_float as of;
 
 #[macro_use] mod scripting;
 mod project_format;
+mod sprite;
 mod scene;
 mod shader;
 mod mesh;
@@ -27,6 +28,7 @@ mod time;
 mod input;
 mod fps_counter;
 
+use sprite::*;
 use project_format::*;
 use shader::*;
 use drawing::*;
@@ -133,7 +135,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut game_state = GameState::new();
     
-    load_from_file(Path::new("scenes/scene1"));
+    let scene = load_from_file(Path::new("scenes/scene1"));
 
     game_state.new_entity("player");
     game_state.new_entity("camera");
