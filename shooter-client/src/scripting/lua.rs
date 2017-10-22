@@ -127,6 +127,60 @@ pub trait UserDataProvider {
     fn get_userdata() -> UserData;
 }
 
+
+ pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
+        unsafe {
+            println!("Creating userdata for {:?}", userdata.methods);
+
+            lua_newtable(L);
+            luaL_setfuncs(L, userdata.methods.as_ptr() as _, 0);
+            lua_setglobal(L, CString::new(userdata.name.clone()).unwrap().as_ptr() as _);
+        }
+    }
+
+    pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
+        unsafe {
+            lua_getglobal(L, CString::new(name.to_string()).unwrap().as_ptr() as _);
+            lua_getfield(L, -1, CString::new("instance".to_string()).unwrap().as_ptr() as _);
+            Box::new(lua_touserdata(L, -1) as *mut T)
+        }
+    }
+
+    pub fn print_stack_dump(L: *mut lua_State) {
+        unsafe {
+            let top = lua_gettop(L);
+            println!("StackSize: {}", top);
+            for i in 1 .. top + 1 {
+                let t = lua_type(L, i);
+                match t {
+                    LUA_TSTRING => {
+                        let lua_str = lua_tostring(L, i);
+                        let c_str = CStr::from_ptr(lua_str);
+                        /* strings */println!("\t{} => {}", i, c_str.to_str().unwrap());
+                    },
+                    LUA_TBOOLEAN => {
+                        /* booleans */
+                        println!("\t{} => {}", i, if lua_toboolean(L, i) == 1  { "true" } else { "false" });
+                    },
+                    LUA_TNUMBER => {
+                        /* numbers */
+                        println!("\t{} => {}", i, lua_tonumberx(L, i, null_mut()));
+                    },
+                    _ => {
+                        let lua_str = lua_typename(L, t);
+                        let c_str = CStr::from_ptr(lua_str);
+                        println!("\t{} => {}",i, c_str.to_str().unwrap());
+                    }   
+                }
+                println!("  ");  /* put a separator */
+            }
+            if (top > 0) {
+                println!("");  /* end the listing */
+            }
+        }
+        
+    }
+
 impl Lua {
     pub fn new() -> Lua {
         extern "C" fn alloc(_ud: *mut c_void,
@@ -154,58 +208,16 @@ impl Lua {
 
     }
 
-    pub fn new_userdata(&mut self, userdata: &UserData) {
-        unsafe {
-            println!("Creating userdata for {:?}", userdata.methods);
-
-            lua_newtable(self.handle as _);
-            luaL_setfuncs(self.handle as _, userdata.methods.as_ptr() as _, 0);
-            lua_setglobal(self.handle as _, CString::new(userdata.name.clone()).unwrap().as_ptr() as _);
-        }
-    }
+    pub fn new_userdata(&self, userdata: &UserData) { new_userdata(self.handle as _, userdata) }
 
     pub fn get_userdata<T: UserDataProvider>(&self, name: &str) -> Box<*mut T> {
-        unsafe {
-            lua_getglobal(self.handle as _, CString::new(name.to_string()).unwrap().as_ptr() as _);
-            lua_getfield(self.handle as _, -1, CString::new("instance".to_string()).unwrap().as_ptr() as _);
-            Box::new(lua_touserdata(self.handle as _, -1) as *mut T)
-        }
+        get_userdata(self.handle as _, name)
     }
-
+    
     pub fn print_stack_dump(&self) {
-        unsafe {
-            let top = lua_gettop(self.handle as _);
-            println!("StackSize: {}", top);
-            for i in 1 .. top + 1 {
-                let t = lua_type(self.handle as _, i);
-                match t {
-                    LUA_TSTRING => {
-                        let lua_str = lua_tostring(self.handle as _, i);
-                        let c_str = CStr::from_ptr(lua_str);
-                        /* strings */println!("\t{} => {}", i, c_str.to_str().unwrap());
-                    },
-                    LUA_TBOOLEAN => {
-                        /* booleans */
-                        println!("\t{} => {}", i, if lua_toboolean(self.handle as _, i) == 1  { "true" } else { "false" });
-                    },
-                    LUA_TNUMBER => {
-                        /* numbers */
-                        println!("\t{} => {}", i, lua_tonumberx(self.handle as _, i, null_mut()));
-                    },
-                    _ => {
-                        let lua_str = lua_typename(self.handle as _, t);
-                        let c_str = CStr::from_ptr(lua_str);
-                        println!("\t{} => {}",i, c_str.to_str().unwrap());
-                    }   
-                }
-                println!("  ");  /* put a separator */
-            }
-            if (top > 0) {
-                println!("");  /* end the listing */
-            }
-        }
-        
+        print_stack_dump(self.handle as _);
     }
+        
 
     pub fn load(&self, path: &Path) {
         let mut file = File::open(path).unwrap();
