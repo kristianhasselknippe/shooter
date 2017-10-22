@@ -10,6 +10,7 @@ use of::OrderedFloat;
 
 use super::entities::*;
 use super::camera::Camera;
+use super::game_state::GameState;
 
 #[macro_export]
 macro_rules! userdata {
@@ -40,6 +41,7 @@ macro_rules! luafunction {
     }
 }
 
+#[derive(Debug)]
 pub struct ScriptEngine {
     pub lua: Lua,
     script_watcher: ScriptWatcher, //TODO(Rename ScriptWatcher)
@@ -52,6 +54,7 @@ impl ScriptEngine {
 
         println!("Loading userdata libraries");
         lua.new_userdata(&Camera::get_userdata());
+        lua.new_userdata(&GameState::get_userdata());
         println!("Done loading userdata libraries");
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));

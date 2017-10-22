@@ -25,6 +25,7 @@ pub enum LuaType {
     Function,
     Thread,
     UserData,
+    LightUserData(*mut c_void),
     Null
 }
 
@@ -67,6 +68,8 @@ extern {
     //lua_Number luaL_checknumber (lua_State *L, int arg);
     pub fn luaL_checknumber(L: *mut lua_State, arg: c_int) -> lua_Number;
 
+    //const char *luaL_checklstring (lua_State *L, int arg, size_t *l);
+    pub fn luaL_checklstring(L: *mut lua_State, arg: c_int, l: *mut size_t) -> *const char;
 }
 
 impl LuaType {
@@ -116,6 +119,7 @@ impl LuaType {
     }
 }
 
+#[derive(Debug)]
 pub struct Lua {
     handle: *mut lua_State,
 }
@@ -135,7 +139,7 @@ pub trait UserDataProvider {
     fn get_userdata() -> UserData;
 }
 
-fn push_value(L: *mut lua_State, val: &LuaType) {
+pub fn push_value(L: *mut lua_State, val: &LuaType) {
     unsafe {
         match val {
             &LuaType::String(ref s) => {
@@ -146,6 +150,9 @@ fn push_value(L: *mut lua_State, val: &LuaType) {
             },
             &LuaType::Bool(b) => {
                 lua_pushboolean(L, if b { 1 } else { 0 });
+            },
+            &LuaType::LightUserData(p) => {
+                lua_pushlightuserdata(L, p);
             },
             _ => {
                 panic!("Unsupported argument type");
@@ -163,14 +170,6 @@ pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
         lua_setglobal(L, cstringptr!(userdata.name.clone()));
     }
 }
-
-/*pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
-    unsafe {
-        lua_getglobal(L, cstringptr!(name.to_string()));
-        lua_getfield(L, -1, cstringptr!("instance".to_string()));
-        Box::new(lua_touserdata(L, -1) as *mut T)
-    }
-}*/
 
 pub fn print_stack_dump(L: *mut lua_State) {
     unsafe {
@@ -214,13 +213,20 @@ pub fn set_global(L: *mut lua_State, name: &str, value: &LuaType) {
     let path: Vec<&str> = name.split(".").collect();
     println!("Path len: {}", path.len());
     unsafe {
-        lua_getglobal(L, cstringptr!(path[0]));
+        if path.len() > 1 {
+            lua_getglobal(L, cstringptr!(path[0]));
+        }
         for i in 1..(path.len() - 1) {
             lua_getfield(L, -1, cstringptr!(path[i]));
         }
+
         push_value(L, value);
-        lua_setfield(L, -2, cstringptr!(path[path.len() - 1]));
-        pop(L);
+        if path.len() == 1 {
+            lua_setglobal(L, cstringptr!(name));
+        } else {
+            lua_setfield(L, -2, cstringptr!(path[path.len() - 1]));
+            pop(L);
+        }
         print_stack_dump(L);
     }
 }
@@ -253,8 +259,6 @@ impl Lua {
     }
 
     pub fn new_userdata(&self, userdata: &UserData) { new_userdata(self.handle as _, userdata) }
-
-    
 
     pub fn set_global(&self, name: &str, value: &LuaType) {
         println!("Trying to set global");

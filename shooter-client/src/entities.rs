@@ -1,3 +1,6 @@
+extern crate copy_arena;
+
+use self::copy_arena::Arena;
 use na::{Vector2,Vector3,Matrix4,Unit};
 use super::scripting::*;
 use super::scripting::lua::LuaType;
@@ -36,10 +39,17 @@ impl Entity {
     }
 }
 
-pub struct Component {
-    
+#[derive(Debug)]
+pub struct EntityComponentStore {
+    pub entities: Vec<Entity>,
+    components_arena: Arena,
 }
 
-struct EntityComponentStore {
-    entities: Vec<Entity>,
+impl EntityComponentStore {
+    pub fn new() -> EntityComponentStore {
+        EntityComponentStore {
+            entities: Vec::new(),
+            components_arena: Arena::new(),
+        }
+    }
 }

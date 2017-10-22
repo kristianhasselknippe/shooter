@@ -46,3 +46,8 @@ function update_entities(dt)
    end
 end
 
+function test()
+   print("Ref: " .. tostring(GameStateRef))
+   local e = GameState.get_entity(GameStateRef, "player")
+   print("Entity " .. e);
+end

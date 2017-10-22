@@ -1,30 +1,33 @@
 use std;
-use libc::c_int;
+use libc::{c_int,c_void};
 use entities::*;
 use scripting::*;
 #[macro_use] use scripting::lua::*;
 use super::scripting::lua::lua52_sys::*;
 use input::*;
+use std::ptr::null_mut;
+use std::ffi::{CStr};
 
+#[derive(Debug)]
 pub struct GameState {
     pub script_engine: ScriptEngine,
-
-    entities: Vec<Entity>,
-    components: Vec<Component>,
+    pub ecs: EntityComponentStore,
+    name: String,
 }
 
 impl GameState {
-    pub fn new() -> GameState {
+    pub fn new(name: &str) -> GameState {
         let script_engine = ScriptEngine::new();
-
         GameState {
             script_engine: script_engine,
-            components: Vec::new(),
-            entities: Vec::new(),
+            ecs: EntityComponentStore::new(),
+            name: name.to_string(),
         }
     }
 
     pub fn new_entity(&mut self, name: &str) {
+        here we have to use the new rust side entity stuff
+            instead of the scripting side
         let id = self.script_engine.add_entity(name);
     }
 
@@ -54,11 +57,37 @@ impl GameState {
     }
 }
 
-type GameStatePtr = *mut GameState;
+macro_rules! c_void_to_ref {
+    ($to:ty, $e:expr) => {
+        std::mem::transmute::<_,&mut $to>($e)
+    }
+}
 
 luafunction!(get_entity, L, {
+    unsafe {
+        let ptr = lua_touserdata(L, 1);
+        println!("Got tr: {:?}", ptr);
+        let game_state_ptr = c_void_to_ref!(GameState, ptr);
 
-    //let game_state = lua_GameStatePtr
+        println!("Got gamestate: {:?}", game_state_ptr.name);
+        
+        let entity_name = luaL_checklstring(L, 2, null_mut());
+        let c_str = CStr::from_ptr(entity_name as _);
+        println!("Got arg: {:?}", c_str);
+        let mut got_entity = false;
+
+        for e in &game_state_ptr.ecs.entities {
+            if e.name == c_str.to_str().unwrap() {
+                println!("Pusing got value");
+                push_value(L, &LuaType::String("gotcha back :D, coulda been an entity".to_string()));
+                got_entity = true;
+            }
+        }
+        if !got_entity {
+            println!("Pushing didn't get value");
+            push_value(L, &LuaType::String("Didn't find the entity".to_string()));
+        }
+    }
     1
 });
 

@@ -37,9 +37,9 @@ fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     }
 }
 
-#[derive(Hash,Eq,PartialEq,Clone,Copy)]
+#[derive(Hash,Eq,PartialEq,Clone,Copy,Debug)]
 pub struct ScriptId(i32);
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Script {
     id: ScriptId,
     path: PathBuf,
@@ -61,6 +61,7 @@ impl Script {
     }
 }
 
+#[derive(Debug)]
 pub struct ScriptWatcher {
     script_id_counter: i32,
     script_paths: HashMap<ScriptId, Script>,
