@@ -11,6 +11,7 @@ extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
 
+#[macro_use] mod scripting;
 mod scene;
 mod shader;
 mod mesh;
@@ -23,7 +24,6 @@ mod entities;
 mod game_state;
 mod time;
 mod input;
-mod scripting;
 mod fps_counter;
 
 use shader::*;
@@ -90,7 +90,10 @@ fn main() {
         .build()
         .unwrap();
     
-
+    unsafe {
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+    };
 
     let mut draw_context = DrawContext::new(window_size.0, window_size.1);
 
@@ -133,13 +136,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     let text = Text::new("this is some text", &draw_context);
 
-
     //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
-
-    unsafe {
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-    };
     
     let mut fps_counter = FpsCounter::new();
     'running: loop {

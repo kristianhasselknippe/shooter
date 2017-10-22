@@ -1,5 +1,5 @@
 pub mod script;
-pub mod lua;
+#[macro_use] pub mod lua;
 pub mod userdata;
 
 use self::script::*;
@@ -11,6 +11,35 @@ use of::OrderedFloat;
 
 use super::entities::*;
 use super::camera::Camera;
+
+#[macro_export]
+macro_rules! userdata {
+    ($name:expr, $( $x:expr => $y:expr ),* ) => {
+        {
+            let library = {
+                let mut library = Vec::new();
+                $(
+                    library.push(luaL_Reg::new($x, $y));
+                )*
+                library.push(luaL_Reg::null());
+                library
+            };
+            UserData {
+                name: $name.to_string(),
+                methods: library,
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! luafunction {
+    ($name:ident, $lua:ident, $body:expr) => {
+        extern "C" fn $name($lua: *mut lua_State) -> c_int {
+            $body
+        }
+    }
+}
 
 pub struct ScriptEngine {
     pub lua: Lua,

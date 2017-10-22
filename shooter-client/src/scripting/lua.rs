@@ -31,8 +31,6 @@ pub struct luaL_Reg {
     func: Option<lua_CFunction>
 }
 
-unsafe impl Sync for luaL_Reg {}
-
 
 impl luaL_Reg {
     pub fn new(name: &str, func: lua_CFunction) -> luaL_Reg {
@@ -119,9 +117,9 @@ impl Drop for Lua {
     }
 }
 
+#[derive(Debug)]
 pub struct UserData {
     pub name: String,
-    pub size: i32,
     pub methods: Vec<luaL_Reg>,
 }
 
@@ -158,17 +156,11 @@ impl Lua {
 
     pub fn new_userdata(&mut self, userdata: &UserData) {
         unsafe {
-            println!("{:?}", userdata.methods);
+            println!("Creating userdata for {:?}", userdata.methods);
 
             lua_newtable(self.handle as _);
-            self.print_stack_dump();
             luaL_setfuncs(self.handle as _, userdata.methods.as_ptr() as _, 0);
-            self.print_stack_dump();
             lua_setglobal(self.handle as _, CString::new(userdata.name.clone()).unwrap().as_ptr() as _);
-            self.print_stack_dump();
-
-            let fo = self.get_global("Camera");
-            println!("{:?}", fo);
         }
     }
 

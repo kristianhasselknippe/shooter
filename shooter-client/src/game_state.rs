@@ -1,12 +1,13 @@
 use entities::*;
 use scripting::*;
-use scripting::lua::*;
+#[macro_use] use scripting::lua::*;
 use input::*;
 
 pub struct GameState {
     pub script_engine: ScriptEngine,
 
-    pub components: Vec<Component>
+    entities: Vec<Entity>,
+    components: Vec<Component>
 }
 
 impl GameState {
@@ -16,6 +17,7 @@ impl GameState {
         GameState {
             script_engine: script_engine,
             components: Vec::new(),
+            entities: Vec::new(),
         }
     }
 
@@ -48,3 +50,9 @@ impl GameState {
         ]).unwrap();
     }
 }
+
+/*impl UserDataProvider {
+    fn get_userdata(&self) -> UserData {
+        
+    }
+}*/

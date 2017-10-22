@@ -27,7 +27,7 @@ impl Camera {
 }
 
 
-extern "C" fn set_size(L: *mut lua_State) -> c_int {
+luafunction!(set_size, L, {
     unsafe {
         let mut camera = (lua_touserdata(L, 1)) as *mut Camera;
         let x = luaL_checknumber(L, 2);
@@ -41,9 +41,9 @@ extern "C" fn set_size(L: *mut lua_State) -> c_int {
     }
     
     1
-}
+});
 
-extern "C" fn new_camera(L: *mut lua_State) -> c_int {
+luafunction!(new_camera, L, {
     unsafe {
         let lua_camera = lua_newuserdata(L, size_of::<Camera>() as _) as *mut Camera;
         let x = luaL_checknumber(L, 1);
@@ -54,20 +54,17 @@ extern "C" fn new_camera(L: *mut lua_State) -> c_int {
         (*lua_camera).size = cam.size;
     }
     1
-}
+});
 
 impl UserDataProvider for Camera {
     fn get_userdata() -> UserData {       
-        let mut ret = Vec::new();
-        ret.push(luaL_Reg::new("set_size", set_size));
-        ret.push(luaL_Reg::new("new", new_camera));
-        ret.push(luaL_Reg::null());
-        
-        UserData {
-            name: "Camera".to_string(),
-            size: size_of::<*const Camera>() as i32,
-            methods: ret,
-        }
+        let userdata = userdata!(
+            "Camera",
+            "set_size" => set_size,
+            "new" => new_camera
+        );
+        println!("UD: {:?}", userdata);
+        userdata
     }
 }
 
