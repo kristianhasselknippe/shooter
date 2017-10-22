@@ -1,33 +1,62 @@
-extern crate combine;
-
-use combine::{many, Parser};
-use combine::char::letter;
+extern crate xml;
 
 use std;
 use std::io::prelude::*;
+use std::io::BufReader;
 
-#[derive(Deserialize,Debug)]
-struct Entity {
-    Name: String,
+
+use self::xml::reader::{EventReader, XmlEvent};
+
+#[derive(Debug)]
+enum AttributeValue {
+    String(String),
 }
 
-#[derive(Deserialize,Debug)]
-struct Scene {
-    #[serde(rename = "Entity", default)]
-    children: Vec<Entity>,
+#[derive(Debug)]
+struct Attribute {
+    name: String,
+    value: AttributeValue,
+}
+
+#[derive(Debug)]
+struct Node {
+    name: String,
+    attributes: Vec<Attribute>
 }
 
 pub fn load_from_file(path: &std::path::Path) {
     let mut file = std::fs::File::open(std::path::Path::new("scenes/scene1")).unwrap();
-    let mut xml = String::new();
-    file.read_to_string(&mut xml);
-    println!("XML: {}", xml);
+    let file = BufReader::new(file);
+    let parser = EventReader::new(file);
+    let mut depth = 0;
 
-    let result = many(letter()).parse("<Scene>");
-
-    println!("Res: {:?}", result);
+    let mut document = Vec::new();
     
-    //let scene: Scene = 
+    for e in parser {
+        
+        match e {
+            Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+                let mut n = Node { name: name.local_name, attributes: Vec::new() };
 
-    //println!("{:#?}", scene);
+                for a in attributes {
+                    n.attributes.push(Attribute {
+                        name: a.name.local_name,
+                        value: AttributeValue::String(a.value),
+                    });
+                }
+                document.push(n);
+            },
+            Ok(XmlEvent::EndElement { name }) => {
+                depth -= 1;
+            }
+            Err(e) => {
+                println!("Error: {}", e);
+                break;
+            }
+            _ => {}
+        }
+    }
 }
+
+
+
