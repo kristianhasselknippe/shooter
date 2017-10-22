@@ -43,7 +43,7 @@ luafunction!(set_size, L, {
     1
 });
 
-luafunction!(new_camera, L, {
+/*luafunction!(new_camera, L, {
     unsafe {
         let lua_camera = lua_newuserdata(L, size_of::<Camera>() as _) as *mut Camera;
         let x = luaL_checknumber(L, 1);
@@ -54,14 +54,14 @@ luafunction!(new_camera, L, {
         (*lua_camera).size = cam.size;
     }
     1
-});
+});*/
 
 impl UserDataProvider for Camera {
     fn get_userdata() -> UserData {       
         let userdata = userdata!(
             "Camera",
-            "set_size" => set_size,
-            "new" => new_camera
+            "set_size" => set_size
+            //"new" => new_camera
         );
         println!("UD: {:?}", userdata);
         userdata

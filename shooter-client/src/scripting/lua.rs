@@ -28,6 +28,10 @@ pub enum LuaType {
     Null
 }
 
+struct UserDataPtr<T> {
+    ptr: *mut T
+}
+
 #[no_mangle]
 #[derive(Debug)]
 pub struct luaL_Reg {
@@ -199,14 +203,25 @@ pub fn print_stack_dump(L: *mut lua_State) {
         if (top > 0) {
             println!("");  /* end the listing */
         }
-    }
-    
+    }    
 }
 
-pub fn set_field(L: *mut lua_State, name: &str, value: &LuaType) {
-    push_value(L, value);
+pub fn pop(L: *mut lua_State) {
+    unsafe { lua_pop(L, 1); }
+}
+
+pub fn set_global(L: *mut lua_State, name: &str, value: &LuaType) {
+    let path: Vec<&str> = name.split(".").collect();
+    println!("Path len: {}", path.len());
     unsafe {
-        lua_setfield(L, -2, cstringptr!(name));
+        lua_getglobal(L, cstringptr!(path[0]));
+        for i in 1..(path.len() - 1) {
+            lua_getfield(L, -1, cstringptr!(path[i]));
+        }
+        push_value(L, value);
+        lua_setfield(L, -2, cstringptr!(path[path.len() - 1]));
+        pop(L);
+        print_stack_dump(L);
     }
 }
 
@@ -242,97 +257,25 @@ impl Lua {
     pub fn get_userdata<T: UserDataProvider>(&self, name: &str) -> Box<*mut T> {
         get_userdata(self.handle as _, name)
     }
+
+    pub fn set_global(&self, name: &str, value: &LuaType) {
+        println!("Trying to set global");
+        set_global(self.handle as _, name, value);
+        println!("Done setting global");
+    }
     
     pub fn print_stack_dump(&self) {
         print_stack_dump(self.handle as _);
-    }
-        
-
-    pub fn load(&self, path: &Path) {
-        let mut file = File::open(path).unwrap();
-        let filename = path.file_stem().unwrap().to_str().unwrap().to_string();
-        self.execute_from_reader(&mut file, &filename);
-    }
-
-    pub fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
-        let mut code = Vec::new();
-        reader.read_to_end(&mut code).unwrap();
-        let len = code.len();
-
-        struct Buffer {
-            pos: i32,
-            buffer: Vec<u8>,
-            len: i32,
-        }
-
-        let mut buffer = Buffer {
-            pos: 0,
-            buffer: code,
-            len: len as i32,
-        };
-
-        extern "C" fn read(_: *mut lua_State, data: *mut c_void, size: *mut size_t) -> *const c_char {
-            unsafe {
-                let mut buffer: *mut Buffer = data as _;
-                
-
-                if (*buffer).pos == (*buffer).len {
-                    (*size) = 0;
-                    return 0 as *const c_char;
-                } else {
-                    (*buffer).pos += (*buffer).len;
-                    (*size) = (*buffer).len as size_t;
-                    return (*buffer).buffer.as_ptr() as *const c_char
-                }
-            }
-
-        }
-
-        unsafe {
-            lua_getglobal(self.handle as _, cstringptr!("package".to_string()));
-            lua_getfield(self.handle as _, -1, cstringptr!("loaded".to_string()));
-
-            println!("Loading module: {}", module_name);
-
-            let cn = format!("{}\0", module_name);
-            let chunk_name = cn.as_bytes();
-            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
-            if result == LUA_OK {
-                if module_name != "debug" {
-                    lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));
-                    lua_insert(self.handle as _, -2);
-                }
-
-                //self.print_stack_dump();
-                
-                lua_pcall(self.handle as _, 0, 1, -2); //should return a module
-
-                if module_name != "debug" {
-                    lua_remove(self.handle as _, -2); // remove the debug function
-                }
-
-                //self.print_stack_dump();
-                
-                lua_setfield(self.handle as _, -2, cstringptr!(module_name.to_string()));
-                self.pop();
-                self.pop();
-            } else {
-                panic!("Error loading script");
-            }
-        }
     }
 
     fn call(&self, args: &[LuaType], n: &str) -> Result<LuaType, ()> {
         unsafe {
 
-            let error_handler_function = CString::new("main_error_handler").unwrap();
-            lua_getglobal(self.handle as _, error_handler_function.as_ptr() as _);
+            lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));
             lua_insert(self.handle as _, -2);
             for a in args {
                 self.push_value(&a);
             }
-
-
 
             let msgh = -(args.len() as i32 + 2);
             let error_status = lua_pcall(self.handle as _, args.len() as i32, 1, msgh);
@@ -477,7 +420,82 @@ impl Lua {
     }
 
     fn pop(&self) {
-        unsafe { lua_pop(self.handle as _, 1); }
+        pop(self.handle as _);
+    }
+
+
+    pub fn load(&self, path: &Path) {
+        let mut file = File::open(path).unwrap();
+        let filename = path.file_stem().unwrap().to_str().unwrap().to_string();
+        self.execute_from_reader(&mut file, &filename);
+    }
+
+    pub fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
+        let mut code = Vec::new();
+        reader.read_to_end(&mut code).unwrap();
+        let len = code.len();
+
+        struct Buffer {
+            pos: i32,
+            buffer: Vec<u8>,
+            len: i32,
+        }
+
+        let mut buffer = Buffer {
+            pos: 0,
+            buffer: code,
+            len: len as i32,
+        };
+
+        extern "C" fn read(_: *mut lua_State, data: *mut c_void, size: *mut size_t) -> *const c_char {
+            unsafe {
+                let mut buffer: *mut Buffer = data as _;
+                
+
+                if (*buffer).pos == (*buffer).len {
+                    (*size) = 0;
+                    return 0 as *const c_char;
+                } else {
+                    (*buffer).pos += (*buffer).len;
+                    (*size) = (*buffer).len as size_t;
+                    return (*buffer).buffer.as_ptr() as *const c_char
+                }
+            }
+
+        }
+
+        unsafe {
+            lua_getglobal(self.handle as _, cstringptr!("package".to_string()));
+            lua_getfield(self.handle as _, -1, cstringptr!("loaded".to_string()));
+
+            println!("Loading module: {}", module_name);
+
+            let cn = format!("{}\0", module_name);
+            let chunk_name = cn.as_bytes();
+            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
+            if result == LUA_OK {
+                if module_name != "debug" {
+                    lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));
+                    lua_insert(self.handle as _, -2);
+                }
+
+                //self.print_stack_dump();
+                
+                lua_pcall(self.handle as _, 0, 1, -2); //should return a module
+
+                if module_name != "debug" {
+                    lua_remove(self.handle as _, -2); // remove the debug function
+                }
+
+                //self.print_stack_dump();
+                
+                lua_setfield(self.handle as _, -2, cstringptr!(module_name.to_string()));
+                self.pop();
+                self.pop();
+            } else {
+                panic!("Error loading script");
+            }
+        }
     }
 
 }

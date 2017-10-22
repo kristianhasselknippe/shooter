@@ -134,6 +134,10 @@ color = vec4(distance,distance,distance,1.0);");
     game_state.new_entity("player");
     game_state.new_entity("camera");
 
+    let camera = Camera::new_orthographic(60.0, 60.0);
+
+    game_state.script_engine.lua.set_global("Camera.instance", &LuaType::String("this is a camera".to_string()));
+
     let text = Text::new("this is some text", &draw_context);
 
     //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };

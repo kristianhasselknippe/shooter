@@ -14,11 +14,6 @@ end
 
 speed = 3.5
 function update_entities(dt)
-
-   if (Camera.instance == nil) then
-		 Camera.instance = Camera.new(60.0,60.0)
-   end
-   
    for name,e in pairs(entities) do
 	  if e.name == "player" then
 		 local vec = vec2.new(0,0)
@@ -33,11 +28,11 @@ function update_entities(dt)
 		 
 		 if input.up_down then
 			vec.y = vec.y + speed
-			Camera.set_size(Camera.instance, 0.1 * speed, 0.1 * speed);
+			--Camera.set_size(Camera.instance, 0.1 * speed, 0.1 * speed);
 		 end
 		 if input.down_down then
 			vec.y = vec.y - speed
-			Camera.set_size(Camera.instance, 0.1 * -speed, 0.1 * -speed);
+			--Camera.set_size(Camera.instance, 0.1 * -speed, 0.1 * -speed);
 		 end
 
 		 e.position = e.position + vec * dt * speed;
@@ -50,3 +45,4 @@ function update_entities(dt)
 	  end
    end
 end
+
