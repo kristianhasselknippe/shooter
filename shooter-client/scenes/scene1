@@ -1,0 +1,14 @@
+<Scene>
+	<Entity Name="camera">
+		<Camera />
+	</Entity>
+
+	<Entity Name="player">
+		<Sprite File="assets/mario.png" Size="5.0,5.0"/>
+	</Entity>
+
+	<Entity Name="background">
+		<Sprite File="assets/overworld.png" Size="25.0,25.0"/>
+	</Entity>
+</Scene>
+	
