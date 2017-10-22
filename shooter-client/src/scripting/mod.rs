@@ -4,7 +4,6 @@ pub mod userdata;
 
 use self::script::*;
 use self::lua::*;
-
 use super::na::Vector3;
 use std::path::Path;
 use of::OrderedFloat;

@@ -164,13 +164,13 @@ pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
     }
 }
 
-pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
+/*pub fn get_userdata<T: UserDataProvider>(L: *mut lua_State, name: &str) -> Box<*mut T> {
     unsafe {
         lua_getglobal(L, cstringptr!(name.to_string()));
         lua_getfield(L, -1, cstringptr!("instance".to_string()));
         Box::new(lua_touserdata(L, -1) as *mut T)
     }
-}
+}*/
 
 pub fn print_stack_dump(L: *mut lua_State) {
     unsafe {
@@ -254,9 +254,7 @@ impl Lua {
 
     pub fn new_userdata(&self, userdata: &UserData) { new_userdata(self.handle as _, userdata) }
 
-    pub fn get_userdata<T: UserDataProvider>(&self, name: &str) -> Box<*mut T> {
-        get_userdata(self.handle as _, name)
-    }
+    
 
     pub fn set_global(&self, name: &str, value: &LuaType) {
         println!("Trying to set global");

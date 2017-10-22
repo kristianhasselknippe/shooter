@@ -1,13 +1,16 @@
+use std;
+use libc::c_int;
 use entities::*;
 use scripting::*;
 #[macro_use] use scripting::lua::*;
+use super::scripting::lua::lua52_sys::*;
 use input::*;
 
 pub struct GameState {
     pub script_engine: ScriptEngine,
 
     entities: Vec<Entity>,
-    components: Vec<Component>
+    components: Vec<Component>,
 }
 
 impl GameState {
@@ -51,8 +54,19 @@ impl GameState {
     }
 }
 
-/*impl UserDataProvider {
-    fn get_userdata(&self) -> UserData {
-        
+type GameStatePtr = *mut GameState;
+
+luafunction!(get_entity, L, {
+
+    //let game_state = lua_GameStatePtr
+    1
+});
+
+impl UserDataProvider for GameState {
+   fn get_userdata() -> UserData {
+        userdata!(
+            "GameState",
+            "get_entity" => get_entity
+        )
     }
-}*/
+}
