@@ -4,6 +4,10 @@ use self::copy_arena::Arena;
 use na::{Vector2,Vector3,Matrix4,Unit};
 use super::scripting::*;
 use super::scripting::lua::LuaType;
+use std::collections::HashMap;
+
+#[derive(Hash,Eq,PartialEq,Debug,Clone)]
+pub struct EntityRef(u32);
 
 #[derive(Debug)]
 pub struct Entity {
@@ -26,9 +30,6 @@ impl Entity {
     }
 }
 
-#[derive(Hash,Clone,Copy,Eq,PartialEq, Debug)]
-pub struct EntityRef(u32);
-
 impl Entity {
     pub fn new(name: &str, pos: Vector2<f32>) -> Entity {
         Entity {
@@ -41,15 +42,29 @@ impl Entity {
 
 #[derive(Debug)]
 pub struct EntityComponentStore {
-    pub entities: Vec<Entity>,
+    pub entities: HashMap<EntityRef,Entity>,
     components_arena: Arena,
+
+    entity_id_counter: u32,
 }
 
 impl EntityComponentStore {
     pub fn new() -> EntityComponentStore {
         EntityComponentStore {
-            entities: Vec::new(),
+            entities: HashMap::new(),
             components_arena: Arena::new(),
+            entity_id_counter: 0,
         }
+    }
+
+    pub fn add_entity(&mut self, e: Entity) -> EntityRef {
+        let ret = EntityRef(self.entity_id_counter);
+        self.entity_id_counter += 1;
+        self.entities.insert(ret, e);
+        ret
+    }
+
+    pub fn get_entity(&self, e: &EntityRef) -> Option<&Entity> {
+        self.entities.get(e)
     }
 }

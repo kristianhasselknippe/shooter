@@ -7,6 +7,7 @@ use super::scripting::lua::lua52_sys::*;
 use input::*;
 use std::ptr::null_mut;
 use std::ffi::{CStr};
+use super::na::Vector2;
 
 #[derive(Debug)]
 pub struct GameState {
@@ -25,18 +26,12 @@ impl GameState {
         }
     }
 
-    pub fn new_entity(&mut self, name: &str) {
-        here we have to use the new rust side entity stuff
-            instead of the scripting side
-        let id = self.script_engine.add_entity(name);
+    pub fn new_entity(&mut self, name: &str) -> EntityRef {
+        self.ecs.add_entity(Entity::new(name, Vector2::new(0.0,0.0)))
     }
 
-    pub fn get_entities(&mut self) -> Vec<Entity> {
-        self.script_engine.get_entities()
-    }
-
-    pub fn get_entity(&self, name: &str) -> Option<Entity> {
-        self.script_engine.get_entity(name)
+    pub fn get_entity(&self, er: &EntityRef) -> Option<&Entity> {
+        self.ecs.get_entity(er)
     }
 
     pub fn pre_update(&mut self) {
@@ -76,7 +71,7 @@ luafunction!(get_entity, L, {
         println!("Got arg: {:?}", c_str);
         let mut got_entity = false;
 
-        for e in &game_state_ptr.ecs.entities {
+        for (_,e) in &game_state_ptr.ecs.entities {
             if e.name == c_str.to_str().unwrap() {
                 println!("Pusing got value");
                 push_value(L, &LuaType::String("gotcha back :D, coulda been an entity".to_string()));
