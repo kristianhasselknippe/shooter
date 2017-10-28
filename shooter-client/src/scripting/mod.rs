@@ -58,32 +58,22 @@ impl ScriptEngine {
         println!("Done loading userdata libraries");
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
-        sw.new_script_from_file(&Path::new("scripts/debug.lua")).load(&mut lua);
-
-        sw.new_script_from_file(&Path::new("scripts/math/vec3.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/vec2.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/constants.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/quat.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/utils.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/mat4.lua")).load(&mut lua);
-
-        sw.new_script_from_file(&Path::new("scripts/math/color.lua")).load(&mut lua);
-
-        sw.new_script_from_file(&Path::new("scripts/math/intersect.lua")).load(&mut lua);
-
-        sw.new_script_from_file(&Path::new("scripts/math/mesh.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/math/octree.lua")).load(&mut lua);
-
-        sw.new_script_from_file(&Path::new("scripts/math/simplex.lua")).load(&mut lua);
-
-
-        
-        sw.new_script_from_file(&Path::new("scripts/helpers.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/globals.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/scene.lua")).load(&mut lua);
-        sw.new_script_from_file(&Path::new("scripts/main.lua")).load(&mut lua);
-
-
+        sw.new_script_from_path(&Path::new("scripts/debug.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/vec3.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/vec2.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/constants.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/quat.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/utils.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/mat4.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/color.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/intersect.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/mesh.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/octree.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/math/simplex.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/helpers.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/globals.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/scene.lua"), &lua);
+        sw.new_script_from_path(&Path::new("scripts/main.lua"), &lua);
 
         println!("Done loading modules");
         lua.print_stack_dump();
@@ -93,6 +83,15 @@ impl ScriptEngine {
             lua: lua,
             script_watcher: sw,
         } 
+    }
+
+    pub fn add_script_from_path(&mut self, p: &Path, lua: &Lua) -> Script {
+        self.script_watcher.new_script_from_path(p, lua)
+    }
+
+    pub fn add_behavior_script_from_path(&mut self, name: &str, p: &Path, lua: &Lua) -> BehaviorScript {
+        let script = self.script_watcher.new_script_from_path(p, lua);
+        BehaviorScript::new(name, script)
     }
 
     pub fn pre_update(&mut self) {
@@ -116,35 +115,22 @@ impl ScriptEngine {
         ]).unwrap();
     }
 
-    pub fn get_entities(&mut self) -> Vec<Entity> {
-        let entities = self.lua.get_global("entities").unwrap();
+    pub fn update(&mut self, e: &EntityRef, script: &BehaviorScript) {
+        
+    }
+}
 
-        let mut ret = Vec::new();
-        if let Some(entities) = entities.unwrap_array() {
-            for entity in entities {
-                ret.push(Entity::from_lua_type(&entity));
-            }
+#[derive(Debug)]
+pub struct BehaviorScript {
+    name: String,
+    script: Script,
+}
+
+impl BehaviorScript {
+    pub fn new(name: &str, script: Script) -> BehaviorScript {
+        BehaviorScript {
+            name: name.to_string(),
+            script: script,
         }
-        ret
-    }
-
-    pub fn update_entities(&mut self, dt: f64) {
-        self.lua.call_global("update_entities", &[LuaType::Number(OrderedFloat(dt))]).unwrap();
-    }
-
-    pub fn get_entity(&self, name: &str) -> Option<Entity> {
-        let e = self.lua.call_global("get_entity", &[LuaType::String(name.to_string())]).unwrap();
-        match e {
-            LuaType::Table(_) => Some(Entity::from_lua_type(&e)),
-            _ => {
-                print!("Got null while tryingt og et entity {}", name);
-                None
-            },
-        }
-    }
-
-    pub fn add_entity(&mut self, name: &str) {
-        println!("Adding entity");
-        let r = self.lua.call_global("create_entity", &[LuaType::String(name.to_string())]);
     }
 }

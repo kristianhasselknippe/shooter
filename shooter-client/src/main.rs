@@ -142,10 +142,8 @@ color = vec4(distance,distance,distance,1.0);");
     
     let scene = load_from_file(Path::new("scenes/scene1"));
 
-    game_state.new_entity("player");
-    game_state.new_entity("camera");
-
-    game_state.script_engine.lua.call_global("test", &[]);
+    let player_ref = game_state.new_entity("player");
+    let camera_ref = game_state.new_entity("camera");
 
     let camera = Camera::new_orthographic(60.0, 60.0);
 
@@ -159,7 +157,6 @@ color = vec4(distance,distance,distance,1.0);");
     'running: loop {
         let dt = time.delta_time();
 
-        let entities = game_state.get_entities();
 
         let dt = dt as f32;
         game_state.pre_update();
@@ -175,14 +172,14 @@ color = vec4(distance,distance,distance,1.0);");
         game_state.update_entities(dt as f64);
 
         //update player sprite position since they are not yet connected
-        let p_entity = game_state.get_entity("player").unwrap();
+        let p_entity = game_state.get_entity(&player_ref).unwrap();
         player_sprite.pos.x = p_entity.pos.x;
         player_sprite.pos.y = p_entity.pos.y;
         player_sprite.rot = p_entity.rot;
 
         draw_context.clear((1.0,0.0,1.0,1.0));
 
-        let cam_entity = game_state.get_entity("camera").unwrap();
+        let cam_entity = game_state.get_entity(&camera_ref).unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
 
         let projection = camera.camera_matrix();

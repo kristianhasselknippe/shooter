@@ -3,31 +3,24 @@ extern crate copy_arena;
 use self::copy_arena::Arena;
 use na::{Vector2,Vector3,Matrix4,Unit};
 use super::scripting::*;
+use super::scripting::script::*;
 use super::scripting::lua::LuaType;
 use std::collections::HashMap;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]
 pub struct EntityRef(u32);
 
+impl EntityRef {
+    pub fn get_string_id(&self) -> String {
+        format!("__entity{}", self.0)
+    }
+}
+
 #[derive(Debug)]
 pub struct Entity {
     pub name: String,
     pub pos: Vector3<f32>,
     pub rot: f32,
-}
-
-impl Entity {
-    pub fn from_lua_type(t: &LuaType) -> Entity {
-        let pos = t.get("position").unwrap();
-        let x = pos.get("x").unwrap().unwrap_number();
-        let y = pos.get("y").unwrap().unwrap_number();
-        let rot = t.get("rotation").unwrap().unwrap_number();
-        Entity {
-            name: t.get("name").unwrap().unwrap_string().to_string(),
-            pos: Vector3::new(x as f32,y as f32,0.0),
-            rot: rot as f32,
-        }
-    }
 }
 
 impl Entity {
@@ -43,6 +36,7 @@ impl Entity {
 #[derive(Debug)]
 pub struct EntityComponentStore {
     pub entities: HashMap<EntityRef,Entity>,
+    pub scripts: HashMap<EntityRef, Vec<BehaviorScript>>,
     components_arena: Arena,
 
     entity_id_counter: u32,
@@ -53,6 +47,7 @@ impl EntityComponentStore {
         EntityComponentStore {
             entities: HashMap::new(),
             components_arena: Arena::new(),
+            scripts: HashMap::new(),
             entity_id_counter: 0,
         }
     }
@@ -60,8 +55,12 @@ impl EntityComponentStore {
     pub fn add_entity(&mut self, e: Entity) -> EntityRef {
         let ret = EntityRef(self.entity_id_counter);
         self.entity_id_counter += 1;
-        self.entities.insert(ret, e);
+        self.entities.insert(ret.clone(), e);
         ret
+    }
+
+    pub fn add_script(&mut self, e: &EntityRef, script: Script) {
+        
     }
 
     pub fn get_entity(&self, e: &EntityRef) -> Option<&Entity> {

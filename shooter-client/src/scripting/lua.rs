@@ -9,6 +9,8 @@ use libc::{c_void,size_t,c_char,c_int,free,realloc};
 use std::ffi::{CString,CStr};
 use of::OrderedFloat;
 
+use entities::*;
+
 macro_rules! cstringptr {
     ($name:expr) => {
         CString::new($name).unwrap().as_ptr() as _
@@ -426,13 +428,44 @@ impl Lua {
     }
 
 
-    pub fn load(&self, path: &Path) {
+    pub fn load_as_module(&self, path: &Path) {
         let mut file = File::open(path).unwrap();
         let filename = path.file_stem().unwrap().to_str().unwrap().to_string();
+
+        unsafe {
+            lua_getglobal(self.handle as _, cstringptr!("package".to_string()));
+            lua_getfield(self.handle as _, -1, cstringptr!("loaded".to_string()));
+        }
+
         self.execute_from_reader(&mut file, &filename);
+
+        unsafe {
+            lua_setfield(self.handle as _, -2, cstringptr!(filename));
+        }
+        
+        self.pop();
+        self.pop();
     }
 
-    pub fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
+    pub fn load_script(&self, path: &Path, name: &str) {
+        let mut file = File::open(path).unwrap();
+
+        let entity_id = entity_ref.get_string_id();
+        unsafe {
+            lua_getglobal(self.handle as _, cstringptr!("__entity_scripts".to_string()));
+        }
+
+        self.execute_from_reader(&mut file, &name);
+        
+        unsafe {
+            need to figure out how to store the scripts so the entities can find them
+            lua_setfield(self.handle as _, -2, cstringptr!(entity_id));
+        }
+        
+        self.pop();
+    }
+
+    fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
         let mut code = Vec::new();
         reader.read_to_end(&mut code).unwrap();
         let len = code.len();
@@ -467,10 +500,7 @@ impl Lua {
         }
 
         unsafe {
-            lua_getglobal(self.handle as _, cstringptr!("package".to_string()));
-            lua_getfield(self.handle as _, -1, cstringptr!("loaded".to_string()));
 
-            println!("Loading module: {}", module_name);
 
             let cn = format!("{}\0", module_name);
             let chunk_name = cn.as_bytes();
@@ -490,10 +520,6 @@ impl Lua {
                 }
 
                 //self.print_stack_dump();
-                
-                lua_setfield(self.handle as _, -2, cstringptr!(module_name.to_string()));
-                self.pop();
-                self.pop();
             } else {
                 panic!("Error loading script");
             }

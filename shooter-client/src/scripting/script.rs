@@ -46,18 +46,16 @@ pub struct Script {
 }
 
 impl Script {
-    pub fn new(id: ScriptId, path: &Path) -> Script {
+    fn new(id: ScriptId, path: &Path) -> Script {
         Script {
             id: id,
             path: path.to_path_buf(),
         }
     }
 
-    pub fn load(&self, lua: &Lua) {
+    fn load(&self, lua: &Lua) {
         println!("Loading script: {:?}", self.path.file_name().unwrap());
-        let mut file = File::open(&self.path).unwrap();
-        let filename = self.path.file_stem().unwrap().to_str().unwrap().to_string();
-        lua.execute_from_reader(&mut file, &filename);
+        lua.load_as_module(&self.path);
     }
 }
 
@@ -83,12 +81,13 @@ impl ScriptWatcher {
         }
     }
 
-    pub fn new_script_from_file(&mut self, path: &Path) -> Script {
+    pub fn new_script_from_path(&mut self, path: &Path, lua: &Lua) -> Script {
         let id = ScriptId(self.script_id_counter);
         self.script_id_counter += 1;
 
         let ret = Script::new(id,path);
         self.script_paths.insert(id, ret.clone());
+        ret.load(lua);
         ret
     }
 
