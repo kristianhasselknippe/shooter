@@ -143,6 +143,11 @@ color = vec4(distance,distance,distance,1.0);");
     let scene = load_from_file(Path::new("scenes/scene1"));
 
     let player_ref = game_state.new_entity("player");
+    let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
+    game_state.ecs.add_script(&player_ref, &player_script);
+        
+    game_state.script_engine.call("debug_scripts", &[]);
+    
     let camera_ref = game_state.new_entity("camera");
 
     let camera = Camera::new_orthographic(60.0, 60.0);
@@ -152,6 +157,8 @@ color = vec4(distance,distance,distance,1.0);");
     let text = Text::new("this is some text", &draw_context);
 
     //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
+
+    
     
     let mut fps_counter = FpsCounter::new();
     'running: loop {

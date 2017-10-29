@@ -53,9 +53,18 @@ impl Script {
         }
     }
 
-    fn load(&self, lua: &Lua) {
-        println!("Loading script: {:?}", self.path.file_name().unwrap());
+    pub fn get_string_id(&self) -> String {
+        format!("bs{}", self.id.0)
+    }
+
+    fn load_as_module(&self, lua: &Lua) {
+        println!("Loading module: {:?}", self.path.file_name().unwrap());
         lua.load_as_module(&self.path);
+    }
+
+    fn load_as_script(&self, id: &str, lua: &Lua) {
+        println!("Loading script: {:?}", self.path.file_name().unwrap());
+        lua.load_as_script(&self.path, id);
     }
 }
 
@@ -87,7 +96,17 @@ impl ScriptWatcher {
 
         let ret = Script::new(id,path);
         self.script_paths.insert(id, ret.clone());
-        ret.load(lua);
+        ret.load_as_module(lua);
+        ret
+    }
+
+    pub fn new_behavior_script_from_path(&mut self, path: &Path, lua: &Lua) -> Script {
+        let id = ScriptId(self.script_id_counter);
+        self.script_id_counter += 1;
+
+        let ret = Script::new(id,path);
+        ret.load_as_script(&ret.get_string_id(), lua);
+        self.script_paths.insert(id, ret.clone());
         ret
     }
 
@@ -105,7 +124,7 @@ impl ScriptWatcher {
                         Write(path) => {
                             for (_,p) in &self.script_paths {
                                 if path.ends_with(&p.path) {
-                                    p.load(lua);
+                                    p.load_as_module(lua);
                                 }
                             }
                         },

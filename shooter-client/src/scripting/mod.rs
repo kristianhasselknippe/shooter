@@ -85,12 +85,12 @@ impl ScriptEngine {
         } 
     }
 
-    pub fn add_script_from_path(&mut self, p: &Path, lua: &Lua) -> Script {
-        self.script_watcher.new_script_from_path(p, lua)
+    pub fn new_script_from_path(&mut self, p: &Path) -> Script {
+        self.script_watcher.new_script_from_path(p, &self.lua)
     }
 
-    pub fn add_behavior_script_from_path(&mut self, name: &str, p: &Path, lua: &Lua) -> BehaviorScript {
-        let script = self.script_watcher.new_script_from_path(p, lua);
+    pub fn new_behavior_script_from_path(&mut self, name: &str, p: &Path) -> BehaviorScript {
+        let script = self.script_watcher.new_behavior_script_from_path(p, &self.lua);
         BehaviorScript::new(name, script)
     }
 
@@ -99,11 +99,7 @@ impl ScriptEngine {
     }
 
     pub fn call(&mut self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
-        let lua_args: Vec<LuaType> = args.iter().map(|a| LuaType::from(a.clone())).collect();
-        let ret = self.lua.call_global(name, &lua_args).and_then(|r| {
-            Ok(LuaType::from(r))
-        });
-        ret
+        self.lua.call_global(name, args)
     }
 
     pub fn update_input(&mut self, left_down: bool,up_down: bool,right_down: bool,down_down: bool) {
@@ -116,14 +112,15 @@ impl ScriptEngine {
     }
 
     pub fn update(&mut self, e: &EntityRef, script: &BehaviorScript) {
-        
+        let script_id = script.script.get_string_id();
+        self.call(&format!("__entity_scripts.{}.update", script_id), &[]);
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct BehaviorScript {
     name: String,
-    script: Script,
+    pub script: Script,
 }
 
 impl BehaviorScript {

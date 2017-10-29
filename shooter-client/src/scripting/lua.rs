@@ -260,7 +260,9 @@ impl Lua {
 
     }
 
-    pub fn new_userdata(&self, userdata: &UserData) { new_userdata(self.handle as _, userdata) }
+    pub fn new_userdata(&self, userdata: &UserData) {
+        new_userdata(self.handle as _, userdata)
+    }
 
     pub fn set_global(&self, name: &str, value: &LuaType) {
         println!("Trying to set global");
@@ -272,7 +274,7 @@ impl Lua {
         print_stack_dump(self.handle as _);
     }
 
-    fn call(&self, args: &[LuaType], n: &str) -> Result<LuaType, ()> {
+    fn call(&self, args: &[LuaType], function_name_for_debugging: &str) -> Result<LuaType, ()> {
         unsafe {
 
             lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));
@@ -288,13 +290,13 @@ impl Lua {
                     let error_message = lua_tostring(self.handle as _, -1) as *mut i8;
                     let err_msg_c_str = CString::from_raw(error_message);
                     let error_message_s = err_msg_c_str.to_str().unwrap();
-                    panic!("Runtime error calling function {}: {}", n, error_message_s);
+                    panic!("Runtime error calling function {}: {}", function_name_for_debugging, error_message_s);
                 },
                 LUA_OK => { },
                 LUA_ERRMEM => { panic!("Memory error"); },
                 LUA_ERRERR => { panic!("Error running the error handler"); }
                 LUA_ERRGCMM => { panic!("Error running GC"); },
-                _ => { panic!("Unknown error calling function: {}", n); }
+                _ => { panic!("Unknown error calling function: {}", function_name_for_debugging); }
             }
             let result = self.get_top_value(0);
             self.pop();
@@ -305,18 +307,40 @@ impl Lua {
 
 
     pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
+        let path: Vec<&str> = n.split(".").collect();
+
+        unsafe { lua_getglobal(self.handle as _, cstringptr!(path[0])); }
+        for i in 1..path.len() {
+            self.push_field(path[i]);
+        }
+        
+        let ret = unsafe { self.call(args, n) };
+
+        for i in 0..path.len()-1 {
+            self.pop();
+        }
+
+        ret
+    }
+
+    pub fn push_field(&self, name: &str) {
         unsafe {
-            lua_getglobal(self.handle as _, cstringptr!(n));
-            self.call(args, n)
+            let ret = lua_getfield(self.handle as _, -1, cstringptr!(name));
         }
     }
 
     pub fn get_field(&self, name: &str) -> Option<LuaType> {
         unsafe {
-            lua_getfield(self.handle as _, -1, cstringptr!(name));
+            let ret = lua_getfield(self.handle as _, -1, cstringptr!(name));
             let ret = Some(self.get_top_value(0));
             self.pop();
             ret
+        }
+    }
+
+    pub fn push_global(&self, name: &str) {
+        unsafe {
+            lua_getglobal(self.handle as _, cstringptr!(name));
         }
     }
 
@@ -447,22 +471,20 @@ impl Lua {
         self.pop();
     }
 
-    pub fn load_script(&self, path: &Path, name: &str) {
+    pub fn load_as_script(&self, path: &Path, id: &str) {
         let mut file = File::open(path).unwrap();
 
-        let entity_id = entity_ref.get_string_id();
-        unsafe {
-            lua_getglobal(self.handle as _, cstringptr!("__entity_scripts".to_string()));
-        }
+        println!("Loading user script: {}", id);
 
-        self.execute_from_reader(&mut file, &name);
-        
-        unsafe {
-            need to figure out how to store the scripts so the entities can find them
-            lua_setfield(self.handle as _, -2, cstringptr!(entity_id));
-        }
-        
+        unsafe { lua_getglobal(self.handle as _, cstringptr!("__entity_scripts".to_string())); }
+        self.print_stack_dump();
+        self.execute_from_reader(&mut file, id);
+        self.print_stack_dump();
+        unsafe { lua_setfield(self.handle as _, -2, cstringptr!(id)); }
+        self.print_stack_dump();
         self.pop();
+        println!("Done loading scritp");
+        self.print_stack_dump();
     }
 
     fn execute_from_reader(&self, reader: &mut Read, module_name: &str) {
@@ -519,7 +541,6 @@ impl Lua {
                     lua_remove(self.handle as _, -2); // remove the debug function
                 }
 
-                //self.print_stack_dump();
             } else {
                 panic!("Error loading script");
             }

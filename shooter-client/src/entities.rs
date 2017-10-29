@@ -59,8 +59,12 @@ impl EntityComponentStore {
         ret
     }
 
-    pub fn add_script(&mut self, e: &EntityRef, script: Script) {
-        
+    pub fn add_script(&mut self, e: &EntityRef, script: &BehaviorScript) {
+        if !self.scripts.contains_key(e) {
+            self.scripts.insert(e.clone(), Vec::new());
+        }
+        let mut entity_scripts = self.scripts.get_mut(e).unwrap();
+        entity_scripts.push(script.clone());
     }
 
     pub fn get_entity(&self, e: &EntityRef) -> Option<&Entity> {
