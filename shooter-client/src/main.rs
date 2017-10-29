@@ -145,6 +145,11 @@ color = vec4(distance,distance,distance,1.0);");
     let player_ref = game_state.new_entity("player");
     let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
     game_state.ecs.add_script(&player_ref, &player_script);
+/*    for i in 0..100 {
+        let player_ref = game_state.new_entity_with_pos("player", Vector2::new(i as f32 * 2.0, i as f32 * 2.0));
+        let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
+        game_state.ecs.add_script(&player_ref, &player_script);
+    }*/
         
     game_state.script_engine.call("debug_scripts", &[]);
     
@@ -169,7 +174,6 @@ color = vec4(distance,distance,distance,1.0);");
         game_state.pre_update();
         {
             input.update_sdl_input();
-            game_state.update_input(&input);
         }
 
         if input.escape {

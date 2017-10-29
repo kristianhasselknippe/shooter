@@ -30,6 +30,10 @@ impl GameState {
         self.ecs.add_entity(Entity::new(name, Vector2::new(0.0,0.0)))
     }
 
+    pub fn new_entity_with_pos(&mut self, name: &str, pos: Vector2<f32>) -> EntityRef {
+        self.ecs.add_entity(Entity::new(name, pos))
+    }
+
     pub fn get_entity(&self, er: &EntityRef) -> Option<&Entity> {
         self.ecs.get_entity(er)
     }
@@ -44,15 +48,6 @@ impl GameState {
                 self.script_engine.update(er, s, self, dt);
             }
         }
-    }
-
-    pub fn update_input(&mut self, input: &Input) {
-        self.script_engine.call("update_input", &[
-            LuaType::Bool(input.left_down),
-            LuaType::Bool(input.up_down),
-            LuaType::Bool(input.right_down),
-            LuaType::Bool(input.down_down),
-        ]).unwrap();
     }
 }
 

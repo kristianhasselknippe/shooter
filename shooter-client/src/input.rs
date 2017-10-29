@@ -2,6 +2,9 @@ use sdl2::event::{Event};
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use na::Vector3;
+use super::scripting::lua::lua52_sys::*;
+use std::ptr::null_mut;
+use std::ffi::{CStr};
 
 pub struct Input {
     pub left_down: bool,
@@ -12,6 +15,16 @@ pub struct Input {
     event_pump: EventPump,
 
     pub escape: bool,
+}
+
+luafunction!(get_input, L, {
+    
+});
+
+impl NativeLuaLibrary for Input {
+    nativelualib!(
+        need to implement native lib for input
+        )
 }
 
 impl Input {

@@ -11,6 +11,7 @@ use super::scripting::lua::lua52_sys::*;
 use libc::{c_int,c_void};
 use super::game_state::GameState;
 use std::collections::HashMap;
+use of::OrderedFloat;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]
 pub struct EntityRef(pub u32);
@@ -41,11 +42,10 @@ impl Entity {
 luafunction!(get_pos, L, {
     unsafe {
         let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
-        lua_newtable(L);
-        lua_pushnumber(L, entity.pos.x as f64);
-        lua_setfield(L, -2, cstringptr!("x"));
-        lua_pushnumber(L, entity.pos.y as f64);
-        lua_setfield(L, -2, cstringptr!("y"));
+
+        new_table(L)
+            .set_value("x", &LuaType::Number(OrderedFloat(entity.pos.x as f64)))
+            .set_value("y", &LuaType::Number(OrderedFloat(entity.pos.x as f64)));
         1
     }
 });

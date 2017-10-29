@@ -13,6 +13,8 @@ function update(gs, dt, entity)
 
    local vec = vec2.new(p.x, p.y);
 
+   print("Vec: " .. tostring(vec.x) .. ", " .. tostring(vec.y));
+
    if input.left_down then
 	  vec.x = vec.x - speed
    end

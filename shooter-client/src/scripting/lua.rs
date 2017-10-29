@@ -161,6 +161,25 @@ pub fn push_value(L: *mut lua_State, val: &LuaType) {
     }
 }
 
+pub struct LuaTableBuilder {
+    lua: *mut lua_State
+}
+
+impl LuaTableBuilder {
+    pub fn set_value(&mut self, field: &str, v: &LuaType) -> &mut LuaTableBuilder {
+        unsafe {
+            push_value(self.lua, v);
+            lua_setfield(self.lua, -2, cstringptr!(field));
+        };
+        self
+    }
+}
+
+pub fn new_table(L: *mut lua_State) -> LuaTableBuilder {
+    unsafe { lua_newtable(L); };
+    LuaTableBuilder { lua: L }
+}
+
 pub fn new_native_library(L: *mut lua_State, native_library: &NativeLibrary) {
     unsafe {
         println!("Creating native library for {:?}", native_library.functions);
