@@ -111,9 +111,12 @@ impl ScriptEngine {
         ]).unwrap();
     }
 
-    pub fn update(&mut self, e: &EntityRef, script: &BehaviorScript) {
+    pub fn update(&mut self, e: &EntityRef, script: &BehaviorScript, dt: f64) {
         let script_id = script.script.get_string_id();
-        self.call(&format!("__entity_scripts.{}.update", script_id), &[]);
+        self.call(&format!("__entity_scripts.{}.update", script_id), &[
+            LuaType::Number(OrderedFloat(dt)),
+            LuaType::Number(OrderedFloat(e.0 as f64))
+        ]);
     }
 }
 

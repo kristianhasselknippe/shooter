@@ -1,7 +1,8 @@
 local player = {}
 
 function update(dt, entity)
-   print("Player was updated" .. tostring(dt))
+   print("Player was updated; dt" .. tostring(dt))
+   print("entity ref" .. tostring(entity))
 end
 
 player["update"] = update

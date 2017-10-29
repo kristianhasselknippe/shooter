@@ -41,7 +41,7 @@ impl GameState {
     pub fn update_entities(&mut self, dt: f64) {
         for (er, scripts) in &self.ecs.scripts {
             for s in scripts {
-                self.script_engine.update(er, s);
+                self.script_engine.update(er, s, dt);
             }
         }
     }

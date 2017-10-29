@@ -8,7 +8,7 @@ use super::scripting::lua::LuaType;
 use std::collections::HashMap;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]
-pub struct EntityRef(u32);
+pub struct EntityRef(pub u32);
 
 impl EntityRef {
     pub fn get_string_id(&self) -> String {
