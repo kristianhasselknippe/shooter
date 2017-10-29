@@ -56,29 +56,15 @@ impl GameState {
     }
 }
 
-macro_rules! c_void_to_ref {
-    ($to:ty, $e:expr) => {
-        std::mem::transmute::<_,&mut $to>($e)
-    }
-}
-
 luafunction!(get_entity, L, {
     unsafe {
         let ptr = lua_touserdata(L, 1);
-        println!("Got tr: {:?}", ptr);
         let game_state = c_void_to_ref!(GameState, ptr);
-
-        println!("Got gamestate with name: {:?}", game_state.name);
-        
         let entity_ref = EntityRef(lua_tonumberx(L, 2, std::ptr::null_mut()) as u32);
-        println!("Got arg: {:?}", entity_ref);
-
-        if let Some(e) = game_state.ecs.entities.get(&entity_ref) {
-            println!("Found entity: {:#?}", e);
-            push_value(L, &LuaType::String("gotcha back :D, coulda been an entity".to_string()));
+        if let Some(e) = game_state.ecs.entities.get_mut(&entity_ref) {
+            push_value(L, &LuaType::LightUserdata(e as *mut _ as *mut c_void));
         } else {
-            println!("Didn't find the entity");
-            push_value(L, &LuaType::String("Didn't find the entity".to_string()));
+            panic!("GameState(native): Could not find entity by ref: {:?}", entity_ref);
         }
     }
     1

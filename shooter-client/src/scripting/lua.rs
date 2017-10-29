@@ -11,6 +11,7 @@ use of::OrderedFloat;
 
 use entities::*;
 
+#[macro_export]
 macro_rules! cstringptr {
     ($name:expr) => {
         CString::new($name).unwrap().as_ptr() as _
@@ -226,7 +227,6 @@ pub fn set_global(L: *mut lua_State, name: &str, value: &LuaType) {
             lua_setfield(L, -2, cstringptr!(path[path.len() - 1]));
             pop(L);
         }
-        print_stack_dump(L);
     }
 }
 

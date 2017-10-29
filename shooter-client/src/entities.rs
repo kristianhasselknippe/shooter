@@ -1,10 +1,15 @@
 extern crate copy_arena;
 
+use std;
 use self::copy_arena::Arena;
 use na::{Vector2,Vector3,Matrix4,Unit};
+use std::ffi::CString;
 use super::scripting::*;
 use super::scripting::script::*;
-use super::scripting::lua::{LuaType,NativeLibraryProvider,NativeLibrary};
+use super::scripting::lua::*;
+use super::scripting::lua::lua52_sys::*;
+use libc::{c_int,c_void};
+use super::game_state::GameState;
 use std::collections::HashMap;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]
@@ -32,6 +37,39 @@ impl Entity {
         }
     }
 }
+
+luafunction!(get_pos, L, {
+    unsafe {
+        let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
+        lua_newtable(L);
+        lua_pushnumber(L, entity.pos.x as f64);
+        lua_setfield(L, -2, cstringptr!("x"));
+        lua_pushnumber(L, entity.pos.y as f64);
+        lua_setfield(L, -2, cstringptr!("y"));
+        1
+    }
+});
+
+luafunction!(set_pos, L, {
+    unsafe {
+        let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
+        let x = lua_tonumberx(L, 2, std::ptr::null_mut());
+        let y = lua_tonumberx(L, 3, std::ptr::null_mut());
+        (*entity).pos = Vector3::new(x as f32,y as f32, 0.0);
+        0
+    }
+});
+
+impl NativeLibraryProvider for Entity {
+   fn get_native_library() -> NativeLibrary {
+        nativelualib!(
+            "Entity",
+            "get_pos" => get_pos,
+            "set_pos" => set_pos
+        )
+    }
+}
+
 
 #[derive(Debug)]
 pub struct EntityComponentStore {

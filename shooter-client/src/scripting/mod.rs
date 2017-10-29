@@ -15,6 +15,13 @@ use super::camera::Camera;
 use super::game_state::GameState;
 
 #[macro_export]
+macro_rules! c_void_to_ref {
+    ($to:ty, $e:expr) => {
+        std::mem::transmute::<_,&mut $to>($e)
+    }
+}
+
+#[macro_export]
 macro_rules! nativelualib {
     ($name:expr, $( $x:expr => $y:expr ),* ) => {
         {
@@ -57,6 +64,7 @@ impl ScriptEngine {
         println!("Loading userdata libraries");
         lua.new_native_library(&Camera::get_native_library());
         lua.new_native_library(&GameState::get_native_library());
+        lua.new_native_library(&Entity::get_native_library());
         println!("Done loading userdata libraries");
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
