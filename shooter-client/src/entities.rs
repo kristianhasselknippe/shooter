@@ -43,18 +43,20 @@ luafunction!(get_pos, L, {
     unsafe {
         let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
 
-        new_table(L)
-            .set_value("x", &LuaType::Number(OrderedFloat(entity.pos.x as f64)))
-            .set_value("y", &LuaType::Number(OrderedFloat(entity.pos.x as f64)));
+        push_new_table(L)
+            .with_value("x", &LuaType::Number(OrderedFloat(entity.pos.x as f64)))
+            .with_value("y", &LuaType::Number(OrderedFloat(entity.pos.y as f64)));
         1
     }
 });
 
 luafunction!(set_pos, L, {
     unsafe {
+        print_stack_dump(L);
         let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
         let x = lua_tonumberx(L, 2, std::ptr::null_mut());
         let y = lua_tonumberx(L, 3, std::ptr::null_mut());
+        println!("Pos: {},{}", x, y);
         (*entity).pos = Vector3::new(x as f32,y as f32, 0.0);
         0
     }

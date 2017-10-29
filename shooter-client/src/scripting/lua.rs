@@ -166,7 +166,7 @@ pub struct LuaTableBuilder {
 }
 
 impl LuaTableBuilder {
-    pub fn set_value(&mut self, field: &str, v: &LuaType) -> &mut LuaTableBuilder {
+    pub fn with_value(&mut self, field: &str, v: &LuaType) -> &mut LuaTableBuilder {
         unsafe {
             push_value(self.lua, v);
             lua_setfield(self.lua, -2, cstringptr!(field));
@@ -175,7 +175,7 @@ impl LuaTableBuilder {
     }
 }
 
-pub fn new_table(L: *mut lua_State) -> LuaTableBuilder {
+pub fn push_new_table(L: *mut lua_State) -> LuaTableBuilder {
     unsafe { lua_newtable(L); };
     LuaTableBuilder { lua: L }
 }

@@ -41,6 +41,8 @@ use input::*;
 use fps_counter::*;
 use game_state::*;
 
+use libc::c_void;
+
 use scripting::lua::LuaType;
 
 use std::path::Path;
@@ -131,14 +133,9 @@ color = vec4(distance,distance,distance,1.0);");
 
     let events = sdl_context.event_pump().unwrap();
 
-    let mut input = Input::new(events);
-
     let mut game_state = GameState::new("this is the one i made");
-    let game_state_ref = &mut game_state as *mut GameState;
-    println!("Gamestateref: {:?}", game_state_ref);
-    let game_state_ref = unsafe { std::mem::transmute::<_,usize>(game_state_ref) };
-    println!("Gamestateref: {:?}", game_state_ref);
-    game_state.script_engine.lua.set_global("GameStateRef", &LuaType::LightUserdata(game_state_ref as _));
+    let mut input = Input::new(events);
+    game_state.script_engine.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
     
     let scene = load_from_file(Path::new("scenes/scene1"));
 

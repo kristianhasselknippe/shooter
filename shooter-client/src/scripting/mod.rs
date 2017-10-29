@@ -13,11 +13,19 @@ use libc::c_void;
 use super::entities::*;
 use super::camera::Camera;
 use super::game_state::GameState;
+use super::input::Input;
 
 #[macro_export]
 macro_rules! c_void_to_ref {
     ($to:ty, $e:expr) => {
         std::mem::transmute::<_,&mut $to>($e)
+    }
+}
+
+#[macro_export]
+macro_rules! c_ref_to_void {
+    ($e:expr) => {
+        std::mem::transmute::<_,*mut c_void>($e)
     }
 }
 
@@ -65,6 +73,7 @@ impl ScriptEngine {
         lua.new_native_library(&Camera::get_native_library());
         lua.new_native_library(&GameState::get_native_library());
         lua.new_native_library(&Entity::get_native_library());
+        lua.new_native_library(&Input::get_native_library());
         println!("Done loading userdata libraries");
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
@@ -93,6 +102,10 @@ impl ScriptEngine {
             lua: lua,
             script_watcher: sw,
         } 
+    }
+
+    pub fn register_global_pointer(&self, name: &str, ptr: *mut c_void) {
+        self.lua.set_global(name, &LuaType::LightUserdata(ptr));
     }
 
     pub fn new_script_from_path(&mut self, p: &Path) -> Script {

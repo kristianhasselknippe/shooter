@@ -5,6 +5,10 @@ use na::Vector3;
 use super::scripting::lua::lua52_sys::*;
 use std::ptr::null_mut;
 use std::ffi::{CStr};
+use libc::{c_void, c_int};
+use super::scripting::lua::*;
+use super::scripting::*;
+use std;
 
 pub struct Input {
     pub left_down: bool,
@@ -18,13 +22,24 @@ pub struct Input {
 }
 
 luafunction!(get_input, L, {
-    
+    unsafe {
+        let input = c_void_to_ref!(Input, lua_touserdata(L, 1));
+        push_new_table(L)
+            .with_value("left_down", &LuaType::Bool(input.left_down))
+            .with_value("up_down", &LuaType::Bool(input.up_down))
+            .with_value("right_down", &LuaType::Bool(input.right_down))
+            .with_value("down_down", &LuaType::Bool(input.down_down));
+        1
+    }
 });
 
-impl NativeLuaLibrary for Input {
-    nativelualib!(
-        need to implement native lib for input
+impl NativeLibraryProvider for Input {
+    fn get_native_library() -> NativeLibrary {
+        nativelualib!(
+            "Input",
+            "get_input" => get_input
         )
+    }
 }
 
 impl Input {

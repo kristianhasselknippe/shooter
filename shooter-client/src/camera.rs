@@ -29,7 +29,7 @@ impl Camera {
 
 luafunction!(set_size, L, {
     unsafe {
-        let mut camera = (lua_touserdata(L, 1)) as *mut Camera;
+        let mut camera = lua_touserdata(L, 1) as *mut Camera;
         let x = luaL_checknumber(L, 2);
         let y = luaL_checknumber(L, 3);
 

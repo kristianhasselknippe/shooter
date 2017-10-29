@@ -9,23 +9,24 @@ function update(gs, dt, entity)
    local e = GameState.get_entity(gs, entity)
 
    local p = Entity.get_pos(e);
-   helpers.tprint(p);
-
+   local input = Input.get_input(InputRef);
    local vec = vec2.new(p.x, p.y);
 
-   print("Vec: " .. tostring(vec.x) .. ", " .. tostring(vec.y));
-
    if input.left_down then
+	  print("Left");
 	  vec.x = vec.x - speed
    end
    if input.right_down then
+	  print("Right");
 	  vec.x = vec.x + speed
    end
    
    if input.up_down then
+	  print("Up");
 	  vec.y = vec.y + speed
    end
    if input.down_down then
+	  print("Down");
 	  vec.y = vec.y - speed
    end
 
