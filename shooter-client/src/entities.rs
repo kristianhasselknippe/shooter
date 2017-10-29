@@ -4,7 +4,7 @@ use self::copy_arena::Arena;
 use na::{Vector2,Vector3,Matrix4,Unit};
 use super::scripting::*;
 use super::scripting::script::*;
-use super::scripting::lua::LuaType;
+use super::scripting::lua::{LuaType,NativeLibraryProvider,NativeLibrary};
 use std::collections::HashMap;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]

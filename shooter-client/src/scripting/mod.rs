@@ -2,18 +2,20 @@ pub mod script;
 #[macro_use] pub mod lua;
 pub mod userdata;
 
+use std;
 use self::script::*;
 use self::lua::*;
 use super::na::Vector3;
 use std::path::Path;
 use of::OrderedFloat;
+use libc::c_void;
 
 use super::entities::*;
 use super::camera::Camera;
 use super::game_state::GameState;
 
 #[macro_export]
-macro_rules! userdata {
+macro_rules! nativelualib {
     ($name:expr, $( $x:expr => $y:expr ),* ) => {
         {
             let library = {
@@ -24,9 +26,9 @@ macro_rules! userdata {
                 library.push(luaL_Reg::null());
                 library
             };
-            UserData {
+            NativeLibrary {
                 name: $name.to_string(),
-                methods: library,
+                functions: library,
             }
         }
     };
@@ -53,8 +55,8 @@ impl ScriptEngine {
         lua.open_libs();
 
         println!("Loading userdata libraries");
-        lua.new_userdata(&Camera::get_userdata());
-        lua.new_userdata(&GameState::get_userdata());
+        lua.new_native_library(&Camera::get_native_library());
+        lua.new_native_library(&GameState::get_native_library());
         println!("Done loading userdata libraries");
 
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
@@ -98,7 +100,7 @@ impl ScriptEngine {
         self.script_watcher.tick(&mut self.lua);
     }
 
-    pub fn call(&mut self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
+    pub fn call(&self, name: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         self.lua.call_global(name, args)
     }
 
@@ -111,9 +113,11 @@ impl ScriptEngine {
         ]).unwrap();
     }
 
-    pub fn update(&mut self, e: &EntityRef, script: &BehaviorScript, dt: f64) {
+    pub fn update(&self, e: &EntityRef, script: &BehaviorScript, gs: &GameState, dt: f64) {
         let script_id = script.script.get_string_id();
+       
         self.call(&format!("__entity_scripts.{}.update", script_id), &[
+            LuaType::LightUserdata(unsafe {std::mem::transmute::<_,*mut c_void>(gs)}),
             LuaType::Number(OrderedFloat(dt)),
             LuaType::Number(OrderedFloat(e.0 as f64))
         ]);

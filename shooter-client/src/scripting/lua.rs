@@ -27,13 +27,10 @@ pub enum LuaType {
     Function,
     Thread,
     UserData,
-    LightUserData(*mut c_void),
+    LightUserdata(*mut c_void),
     Null
 }
 
-struct UserDataPtr<T> {
-    ptr: *mut T
-}
 
 #[no_mangle]
 #[derive(Debug)]
@@ -132,13 +129,13 @@ impl Drop for Lua {
 }
 
 #[derive(Debug)]
-pub struct UserData {
+pub struct NativeLibrary {
     pub name: String,
-    pub methods: Vec<luaL_Reg>,
+    pub functions: Vec<luaL_Reg>,
 }
 
-pub trait UserDataProvider {
-    fn get_userdata() -> UserData;
+pub trait NativeLibraryProvider {
+    fn get_native_library() -> NativeLibrary;
 }
 
 pub fn push_value(L: *mut lua_State, val: &LuaType) {
@@ -153,7 +150,7 @@ pub fn push_value(L: *mut lua_State, val: &LuaType) {
             &LuaType::Bool(b) => {
                 lua_pushboolean(L, if b { 1 } else { 0 });
             },
-            &LuaType::LightUserData(p) => {
+            &LuaType::LightUserdata(p) => {
                 lua_pushlightuserdata(L, p);
             },
             _ => {
@@ -163,13 +160,13 @@ pub fn push_value(L: *mut lua_State, val: &LuaType) {
     }
 }
 
-pub fn new_userdata(L: *mut lua_State, userdata: &UserData) {
+pub fn new_native_library(L: *mut lua_State, native_library: &NativeLibrary) {
     unsafe {
-        println!("Creating userdata for {:?}", userdata.methods);
+        println!("Creating native library for {:?}", native_library.functions);
 
         lua_newtable(L);
-        luaL_setfuncs(L, userdata.methods.as_ptr() as _, 0);
-        lua_setglobal(L, cstringptr!(userdata.name.clone()));
+        luaL_setfuncs(L, native_library.functions.as_ptr() as _, 0);
+        lua_setglobal(L, cstringptr!(native_library.name.clone()));
     }
 }
 
@@ -260,8 +257,8 @@ impl Lua {
 
     }
 
-    pub fn new_userdata(&self, userdata: &UserData) {
-        new_userdata(self.handle as _, userdata)
+    pub fn new_native_library(&mut self, userdata: &NativeLibrary) {
+        new_native_library(self.handle as _, userdata)
     }
 
     pub fn set_global(&self, name: &str, value: &LuaType) {

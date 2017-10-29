@@ -138,7 +138,7 @@ color = vec4(distance,distance,distance,1.0);");
     println!("Gamestateref: {:?}", game_state_ref);
     let game_state_ref = unsafe { std::mem::transmute::<_,usize>(game_state_ref) };
     println!("Gamestateref: {:?}", game_state_ref);
-    game_state.script_engine.lua.set_global("GameStateRef", &LuaType::LightUserData(game_state_ref as _));
+    game_state.script_engine.lua.set_global("GameStateRef", &LuaType::LightUserdata(game_state_ref as _));
     
     let scene = load_from_file(Path::new("scenes/scene1"));
 

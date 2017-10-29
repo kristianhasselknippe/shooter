@@ -41,7 +41,7 @@ impl GameState {
     pub fn update_entities(&mut self, dt: f64) {
         for (er, scripts) in &self.ecs.scripts {
             for s in scripts {
-                self.script_engine.update(er, s, dt);
+                self.script_engine.update(er, s, self, dt);
             }
         }
     }
@@ -66,33 +66,27 @@ luafunction!(get_entity, L, {
     unsafe {
         let ptr = lua_touserdata(L, 1);
         println!("Got tr: {:?}", ptr);
-        let game_state_ptr = c_void_to_ref!(GameState, ptr);
+        let game_state = c_void_to_ref!(GameState, ptr);
 
-        println!("Got gamestate: {:?}", game_state_ptr.name);
+        println!("Got gamestate with name: {:?}", game_state.name);
         
-        let entity_name = luaL_checklstring(L, 2, null_mut());
-        let c_str = CStr::from_ptr(entity_name as _);
-        println!("Got arg: {:?}", c_str);
-        let mut got_entity = false;
+        let entity_ref = EntityRef(lua_tonumberx(L, 2, std::ptr::null_mut()) as u32);
+        println!("Got arg: {:?}", entity_ref);
 
-        for (_,e) in &game_state_ptr.ecs.entities {
-            if e.name == c_str.to_str().unwrap() {
-                println!("Pusing got value");
-                push_value(L, &LuaType::String("gotcha back :D, coulda been an entity".to_string()));
-                got_entity = true;
-            }
-        }
-        if !got_entity {
-            println!("Pushing didn't get value");
+        if let Some(e) = game_state.ecs.entities.get(&entity_ref) {
+            println!("Found entity: {:#?}", e);
+            push_value(L, &LuaType::String("gotcha back :D, coulda been an entity".to_string()));
+        } else {
+            println!("Didn't find the entity");
             push_value(L, &LuaType::String("Didn't find the entity".to_string()));
         }
     }
     1
 });
 
-impl UserDataProvider for GameState {
-   fn get_userdata() -> UserData {
-        userdata!(
+impl NativeLibraryProvider for GameState {
+   fn get_native_library() -> NativeLibrary {
+        nativelualib!(
             "GameState",
             "get_entity" => get_entity
         )
