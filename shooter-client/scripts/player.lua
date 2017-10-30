@@ -13,20 +13,16 @@ function update(gs, dt, entity)
    local vec = vec2.new(p.x, p.y);
 
    if input.left_down then
-	  print("Left");
 	  vec.x = vec.x - speed
    end
    if input.right_down then
-	  print("Right");
 	  vec.x = vec.x + speed
    end
    
    if input.up_down then
-	  print("Up");
 	  vec.y = vec.y + speed
    end
    if input.down_down then
-	  print("Down");
 	  vec.y = vec.y - speed
    end
 
