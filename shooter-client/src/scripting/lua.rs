@@ -321,7 +321,6 @@ impl Lua {
         }
     }
 
-
     pub fn call_global(&self, n: &str, args: &[LuaType]) -> Result<LuaType, ()> {
         let path: Vec<&str> = n.split(".").collect();
 
