@@ -10,6 +10,8 @@ use std::collections::HashMap;
 use std::sync::mpsc::{Receiver,Sender,channel};
 use std::fs::File;
 
+use std::rc::Rc;
+
 fn script_watcher(scripts_path: &Path, sender: Sender<DebouncedEvent>) {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
@@ -43,13 +45,15 @@ pub struct ScriptId(i32);
 pub struct Script {
     id: ScriptId,
     path: PathBuf,
+    lua: Rc<Lua>,
 }
 
 impl Script {
-    fn new(id: ScriptId, path: &Path) -> Script {
+    fn new(id: ScriptId, path: &Path, lua: &Rc<Lua>) -> Script {
         Script {
             id: id,
             path: path.to_path_buf(),
+            lua: lua.clone(),
         }
     }
 
@@ -57,18 +61,18 @@ impl Script {
         format!("bs{}", self.id.0)
     }
 
-    pub fn set_field(&self, lua: &Lua, name: &str, val: &LuaType) {
-        lua.set_global(&format!("__entity_scripts.{}.{}", self.get_string_id(), name), val);
+    pub fn set_field(&self, name: &str, val: &LuaType) {
+        self.lua.set_global(&format!("__entity_scripts.{}.{}", self.get_string_id(), name), val);
     }
 
-    fn load_as_module(&self, lua: &Lua) {
+    fn load_as_module(&self) {
         println!("Loading module: {:?}", self.path.file_name().unwrap());
-        lua.load_as_module(&self.path);
+        self.lua.load_as_module(&self.path);
     }
 
-    fn load_as_script(&self, id: &str, lua: &Lua) {
+    fn load_as_script(&self, id: &str) {
         println!("Loading script: {:?}", self.path.file_name().unwrap());
-        lua.load_as_script(&self.path, id);
+        self.lua.load_as_script(&self.path, id);
     }
 }
 
@@ -94,27 +98,26 @@ impl ScriptWatcher {
         }
     }
 
-    pub fn new_script_from_path(&mut self, path: &Path, lua: &Lua) -> Script {
+    pub fn new_module(&mut self, path: &Path, lua: &Rc<Lua>) {
         let id = ScriptId(self.script_id_counter);
         self.script_id_counter += 1;
 
-        let ret = Script::new(id,path);
+        let ret = Script::new(id,path, lua);
         self.script_paths.insert(id, ret.clone());
-        ret.load_as_module(lua);
-        ret
+        ret.load_as_module();
     }
 
-    pub fn new_behavior_script_from_path(&mut self, path: &Path, lua: &Lua) -> Script {
+    pub fn new_script(&mut self, path: &Path, lua: &Rc<Lua>) -> Script {
         let id = ScriptId(self.script_id_counter);
         self.script_id_counter += 1;
 
-        let ret = Script::new(id,path);
-        ret.load_as_script(&ret.get_string_id(), lua);
+        let ret = Script::new(id,path, lua);
+        ret.load_as_script(&ret.get_string_id());
         self.script_paths.insert(id, ret.clone());
         ret
     }
 
-    pub fn tick(&mut self, lua: &mut Lua) {
+    pub fn tick(&self) {
         loop {
             match self.rx.try_recv() {
                 Ok(event) => {
@@ -128,7 +131,7 @@ impl ScriptWatcher {
                         Write(path) => {
                             for (_,p) in &self.script_paths {
                                 if path.ends_with(&p.path) {
-                                    p.load_as_module(lua);
+                                    p.load_as_module();
                                 }
                             }
                         },

@@ -276,7 +276,7 @@ impl Lua {
 
     }
 
-    pub fn new_native_library(&mut self, userdata: &NativeLibrary) {
+    pub fn new_native_library(&self, userdata: &NativeLibrary) {
         new_native_library(self.handle as _, userdata)
     }
 

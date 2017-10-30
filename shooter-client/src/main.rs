@@ -135,32 +135,28 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut game_state = GameState::new("this is the one i made");
     let mut input = Input::new(events);
-    game_state.script_engine.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
+    game_state.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
     
     let scene = load_from_file(Path::new("scenes/scene1"));
 
     let player_ref = game_state.new_entity("player");
-    let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
-    game_state.ecs.add_script(&player_ref, &player_script);
+    let player_script = game_state.register_script(Path::new("scripts/player.lua"), &player_ref);
 
     //performance testing
-    for i in 0..100 {
+    /*for i in 0..100 {
         let player_ref = game_state.new_entity_with_pos("player", Vector2::new(i as f32 * 2.0, i as f32 * 2.0));
         let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
         game_state.ecs.add_script(&player_ref, &player_script);
-    }
+    }*/
         
-    game_state.script_engine.call("debug_scripts", &[]);
+    game_state.call_script_function("debug_scripts", &[]);
     
     let camera_ref = game_state.new_entity("camera");
-    let camera_script = game_state.script_engine.new_behavior_script_from_path("camera", Path::new("scripts/camera.lua"));
-    game_state.ecs.add_script(&camera_ref, &camera_script);
-    camera_script.set_field(&game_state.script_engine.lua, "player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
+    let camera_script = game_state.register_script(Path::new("scripts/camera.lua"), &camera_ref);
+    camera_script.set_field("player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
     
     
     let camera = Camera::new_orthographic(60.0, 60.0);
-
-    game_state.script_engine.lua.set_global("Camera.instance", &LuaType::String("this is a camera".to_string()));
 
     let text = Text::new("this is some text", &draw_context);
 

@@ -75,7 +75,7 @@ impl NativeLibraryProvider for Entity {
 #[derive(Debug)]
 pub struct EntityComponentStore {
     pub entities: HashMap<EntityRef,Entity>,
-    pub scripts: HashMap<EntityRef, Vec<BehaviorScript>>,
+    pub scripts: HashMap<EntityRef, Vec<Script>>,
     components_arena: Arena,
 
     entity_id_counter: u32,
@@ -98,7 +98,7 @@ impl EntityComponentStore {
         ret
     }
 
-    pub fn add_script(&mut self, e: &EntityRef, script: &BehaviorScript) {
+    pub fn add_script(&mut self, e: &EntityRef, script: &Script) {
         if !self.scripts.contains_key(e) {
             self.scripts.insert(e.clone(), Vec::new());
         }

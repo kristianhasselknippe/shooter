@@ -8,11 +8,13 @@ use input::*;
 use std::ptr::null_mut;
 use std::ffi::{CStr};
 use super::na::Vector2;
+use std::path::Path;
+use scripting::script::*;
 
 #[derive(Debug)]
 pub struct GameState {
-    pub script_engine: ScriptEngine,
-    pub ecs: EntityComponentStore,
+    script_engine: ScriptEngine,
+    ecs: EntityComponentStore,
     name: String,
 }
 
@@ -42,12 +44,26 @@ impl GameState {
         self.script_engine.pre_update();
     }
 
+    pub fn call_script_function(&self, name: &str, val: &[LuaType]) -> Result<LuaType,()> {
+        self.script_engine.call(name, val)
+    }
+
     pub fn update_entities(&mut self, dt: f64) {
         for (er, scripts) in &self.ecs.scripts {
             for s in scripts {
                 self.script_engine.update(er, s, self, dt);
             }
         }
+    }
+
+    pub fn register_script(&mut self, path: &Path, entity: &EntityRef) -> Script {
+        let script = self.script_engine.new_script(path);
+        self.ecs.add_script(entity, &script);
+        script
+    }
+
+    pub fn register_global_pointer(&mut self, name: &str, ptr: *mut c_void) {
+        self.script_engine.register_global_pointer(name, ptr);
     }
 }
 
