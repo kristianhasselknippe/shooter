@@ -158,4 +158,9 @@ impl BehaviorScript {
             script: script,
         }
     }
+
+    pub fn set_field(&self, lua: &Lua, name: &str, val: &LuaType) {
+        self.script.set_field(lua, name, val);
+    }
+    
 }

@@ -57,6 +57,10 @@ impl Script {
         format!("bs{}", self.id.0)
     }
 
+    pub fn set_field(&self, lua: &Lua, name: &str, val: &LuaType) {
+        lua.set_global(&format!("__entity_scripts.{}.{}", self.get_string_id(), name), val);
+    }
+
     fn load_as_module(&self, lua: &Lua) {
         println!("Loading module: {:?}", self.path.file_name().unwrap());
         lua.load_as_module(&self.path);
