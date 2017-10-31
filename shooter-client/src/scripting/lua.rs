@@ -32,38 +32,10 @@ pub enum LuaType {
     Null
 }
 
-
-#[no_mangle]
-#[derive(Debug)]
-pub struct luaL_Reg {
-    name: *const c_char,
-    func: Option<lua_CFunction>
-}
-
-
-impl luaL_Reg {
-    pub fn new(name: &str, func: lua_CFunction) -> luaL_Reg {
-        let name = format!("{}\0", name);
-        luaL_Reg {
-            name: name.as_bytes().as_ptr() as _,
-            func: Some(func),
-        }
-     }
-
-    pub fn null() -> luaL_Reg {
-        luaL_Reg {
-            name: null(),
-            func: None,
-        }
-    }
-}
-
 extern {
     //void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
     pub fn luaL_traceback(L: *mut lua_State, L1: *mut lua_State, msg: *const c_char, level: c_int);
 
-    //void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup);
-    pub fn luaL_setfuncs(L: *mut lua_State, l: *const luaL_Reg, nup: c_int);
 
     //lua_Number luaL_checknumber (lua_State *L, int arg);
     pub fn luaL_checknumber(L: *mut lua_State, arg: c_int) -> lua_Number;
@@ -132,7 +104,7 @@ impl Drop for Lua {
 #[derive(Debug)]
 pub struct NativeLibrary {
     pub name: String,
-    pub functions: Vec<luaL_Reg>,
+    pub functions: Vec<(String,lua_CFunction)>,
 }
 
 pub trait NativeLibraryProvider {
@@ -183,9 +155,13 @@ pub fn push_new_table(L: *mut lua_State) -> LuaTableBuilder {
 pub fn new_native_library(L: *mut lua_State, native_library: &NativeLibrary) {
     unsafe {
         println!("Creating native library for {:?}", native_library.functions);
-
         lua_newtable(L);
-        luaL_setfuncs(L, native_library.functions.as_ptr() as _, 0);
+        for &(ref n,ref f) in &native_library.functions {
+            //void lua_pushcfunction (lua_State *L, lua_CFunction f);
+            lua_pushcfunction(L, *f);
+            lua_setfield(L, -2, cstringptr!(n.clone()));
+        }
+        //luaL_setfuncs(L, native_library.functions.as_ptr() as _, 0);
         lua_setglobal(L, cstringptr!(native_library.name.clone()));
     }
 }
@@ -488,12 +464,13 @@ impl Lua {
 
     pub fn load_as_script(&self, path: &Path, id: &str) {
         let mut file = File::open(path).unwrap();
-
+        let file_name = path.file_stem().unwrap().to_str().unwrap();
+         
         println!("Loading user script: {}", id);
 
         unsafe { lua_getglobal(self.handle as _, cstringptr!("__entity_scripts".to_string())); }
         self.print_stack_dump();
-        self.execute_from_reader(&mut file, id);
+        self.execute_from_reader(&mut file, &format!("{}{}", id, file_name));
         self.print_stack_dump();
         unsafe { lua_setfield(self.handle as _, -2, cstringptr!(id)); }
         self.print_stack_dump();
@@ -533,15 +510,12 @@ impl Lua {
                     return (*buffer).buffer.as_ptr() as *const c_char
                 }
             }
-
         }
 
         unsafe {
-
-
             let cn = format!("{}\0", module_name);
             let chunk_name = cn.as_bytes();
-            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void,  chunk_name.as_ptr() as *const _, null());
+            let result = lua_load(self.handle, read, &mut buffer as *mut _ as *mut c_void, chunk_name.as_ptr() as *const _, null());
             if result == LUA_OK {
                 if module_name != "debug" {
                     lua_getglobal(self.handle as _, cstringptr!("main_error_handler"));

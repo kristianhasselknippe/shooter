@@ -1,6 +1,3 @@
-use sdl2::event::{Event};
-use sdl2::EventPump;
-use sdl2::keyboard::Keycode;
 use na::Vector3;
 use super::scripting::lua::lua52_sys::*;
 use std::ptr::null_mut;
@@ -16,7 +13,7 @@ pub struct Input {
     pub up_down: bool,
     pub down_down: bool,
 
-    event_pump: EventPump,
+    //event_pump: EventPump,
 
     pub escape: bool,
 }
@@ -35,22 +32,22 @@ luafunction!(get_input, L, {
 
 impl NativeLibraryProvider for Input {
     fn get_native_library() -> NativeLibrary {
-        nativelualib!(
-            "Input",
-            "get_input" => get_input
-        )
+        NativeLibrary {
+            name: "Input".to_string(),
+            functions: vec![("get_input".to_string(), get_input)],
+        }
     }
 }
 
 impl Input {
-    pub fn new(event_pump: EventPump) -> Input {
+    pub fn new() -> Input {
         Input {
             left_down: false,
             right_down: false,
             up_down: false,
             down_down: false,
 
-            event_pump: event_pump,
+            //event_pump: event_pump,
 
             escape: false,
         }
@@ -71,7 +68,7 @@ impl Input {
         ret
     }
 
-    pub fn update_sdl_input(&mut self) {
+    /*pub fn update_sdl_input(&mut self) {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::KeyDown { keycode: Some(Keycode::W), .. } => { self.up_down = true; },
@@ -88,5 +85,5 @@ impl Input {
                 _ => {}
             }
         }
-    }
+    }*/
 }

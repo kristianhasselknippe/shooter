@@ -38,11 +38,11 @@ macro_rules! nativelualib {
             let library = {
                 let mut library = Vec::new();
                 $(
-                    library.push(luaL_Reg::new($x, $y));
+                    library.push(($x.to_string(), $y));
                 )*
-                library.push(luaL_Reg::null());
                 library
             };
+            
             NativeLibrary {
                 name: $name.to_string(),
                 functions: library,

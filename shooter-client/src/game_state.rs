@@ -48,7 +48,7 @@ impl GameState {
     }
 
     pub fn pre_update(&mut self) {
-        self.script_engine.pre_update();
+        //self.script_engine.pre_update();
     }
 
     pub fn call_script_function(&self, name: &str, val: &[LuaType]) -> Result<LuaType,()> {
@@ -89,10 +89,10 @@ luafunction!(get_entity, L, {
 });
 
 impl NativeLibraryProvider for GameState {
-   fn get_native_library() -> NativeLibrary {
-        nativelualib!(
-            "GameState",
-            "get_entity" => get_entity
-        )
+   fn get_native_library() -> NativeLibrary {           
+       NativeLibrary {
+           name: "GameState".to_string(),
+           functions: vec![("get_entity".to_string(), get_entity)],
+       }
     }
 }

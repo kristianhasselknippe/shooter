@@ -63,11 +63,13 @@ luafunction!(set_pos, L, {
 
 impl NativeLibraryProvider for Entity {
    fn get_native_library() -> NativeLibrary {
-        nativelualib!(
-            "Entity",
-            "get_pos" => get_pos,
-            "set_pos" => set_pos
-        )
+       NativeLibrary {
+           name: "Entity".to_string(),
+           functions: vec![
+               ("set_pos".to_string(), set_pos),
+               ("get_pos".to_string(), get_pos)
+           ],
+       }
     }
 }
 

@@ -1,5 +1,5 @@
 use super::na::*;
-use super::scripting::lua::{NativeLibrary, NativeLibraryProvider, luaL_Reg, luaL_checknumber};
+use super::scripting::lua::{NativeLibrary, NativeLibraryProvider, luaL_checknumber};
 use super::scripting::lua::lua52_sys::*;
 use std::mem::{size_of,transmute};
 use libc::{c_int};
@@ -58,13 +58,10 @@ luafunction!(set_size, L, {
 
 impl NativeLibraryProvider for Camera {
     fn get_native_library() -> NativeLibrary {       
-        let native_lib = nativelualib!(
-            "Camera",
-            "set_size" => set_size
-            //"new" => new_camera
-        );
-        println!("Native lib: {:?}", native_lib);
-        native_lib
+        NativeLibrary {
+            name: "Camera".to_string(),
+            functions: vec![("set_size".to_string(), set_size)],
+        }
     }
 }
 

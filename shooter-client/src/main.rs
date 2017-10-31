@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 extern crate shooter_common;
-extern crate sdl2;
+extern crate glutin;
 extern crate gl;
 extern crate nalgebra as na;
 extern crate alga;
@@ -28,6 +28,7 @@ mod time;
 mod input;
 mod fps_counter;
 
+use glutin::GlContext;
 use sprite::*;
 use project_format::*;
 use shader::*;
@@ -49,53 +50,25 @@ use scripting::lua::LuaType;
 use std::path::Path;
 use na::*;
 
-fn find_sdl_gl_driver() -> Option<u32> {
-    for (index, item) in sdl2::render::drivers().enumerate() {
-        if item.name == "opengl" {
-            return Some(index as u32);
-        }
-    }
-    None
-}
-
 fn main() {
 
     let window_size = (800,600);
 
 
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+    let mut events_loop = glutin::EventsLoop::new();
+    let window = glutin::WindowBuilder::new()
+        .with_title("Hello, world!")
+        .with_dimensions(1024, 768);
+    let context = glutin::ContextBuilder::new()
+        .with_vsync(true);
+    let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
 
-    let swap_interval = video_subsystem.gl_get_swap_interval();
-    println!("Swap interval: {}", swap_interval);
-    
+    unsafe {
+        gl_window.make_current().unwrap();
 
-    let gl_attr = video_subsystem.gl_attr();
-    
-    gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
-    gl_attr.set_context_flags().debug().set();
-    gl_attr.set_context_major_version(3);
-    gl_attr.set_context_minor_version(3);
-
-    let window = video_subsystem.window("Shooter", window_size.0, window_size.1)
-        .opengl()
-        .resizable()
-        .build()
-        .unwrap();
-
-    let major = window.subsystem().gl_attr().context_major_version();
-    let minor = window.subsystem().gl_attr().context_minor_version();
-    println!("Major {}, Minor {}", major, minor);
-    
-    let gl_context = window.gl_create_context().unwrap();
-    window.gl_make_current(&gl_context).unwrap();
-    
-    gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
-    
-    let mut canvas = window.into_canvas()
-        .index(find_sdl_gl_driver().unwrap())
-        .build()
-        .unwrap();
+        gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
+        gl::ClearColor(0.0, 1.0, 0.0, 1.0);
+    }
     
     unsafe {
         gl::Enable(gl::BLEND);
@@ -132,8 +105,6 @@ color = vec4(distance,distance,distance,1.0);");
 
     let mut time = Time::new(60);
 
-    let events = sdl_context.event_pump().unwrap();
-
     let mut game_state = GameState::new("this is the one i made");
     println!("Loading userdata libraries");
     game_state.register_native_library(&Camera::get_native_library());
@@ -160,7 +131,7 @@ color = vec4(distance,distance,distance,1.0);");
     
 
     
-    let mut input = Input::new(events);
+    let mut input = Input::new();
     game_state.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
     
     let scene = load_from_file(Path::new("scenes/scene1"));
@@ -187,18 +158,30 @@ color = vec4(distance,distance,distance,1.0);");
     let text = Text::new("this is some text", &draw_context);
 
     //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
-
-    
+  
     
     let mut fps_counter = FpsCounter::new();
-    'running: loop {
+    let mut running = true;
+
+    
+    'running: while running {
         let dt = time.delta_time();
-
-
         let dt = dt as f32;
+        
+        events_loop.poll_events(|event| {
+            match event {
+                glutin::Event::WindowEvent{ event, .. } => match event {
+                    glutin::WindowEvent::Closed => { running = false; },
+                    glutin::WindowEvent::Resized(w, h) => gl_window.resize(w, h),
+                    _ => ()
+                },
+                _ => ()
+            }
+        });
+        
         game_state.pre_update();
         {
-            input.update_sdl_input();
+            //input.update_sdl_input();
         }
 
         if input.escape {
@@ -251,7 +234,9 @@ color = vec4(distance,distance,distance,1.0);");
 
 
         //window.gl_swap_window();
-        canvas.present();
+        //canvas.present();
+        gl_window.swap_buffers().unwrap();
+        
         
 
         time.wait_until_frame_target();

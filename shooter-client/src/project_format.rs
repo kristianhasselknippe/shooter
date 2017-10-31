@@ -103,7 +103,7 @@ pub fn load_from_file(path: &std::path::Path) -> Result<Node,()> {
     }
 
     if let Some(scene) = scene {
-        println!("Scene: {:#?}", scene);
+        //println!("Scene: {:#?}", scene);
         Ok(scene)
     } else {
         Err(())
