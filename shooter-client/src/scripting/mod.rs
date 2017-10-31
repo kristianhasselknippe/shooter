@@ -70,40 +70,17 @@ impl ScriptEngine {
     pub fn new() -> ScriptEngine {
         let mut lua = Rc::new(Lua::new());
         lua.open_libs();
-
-        println!("Loading userdata libraries");
-        lua.new_native_library(&Camera::get_native_library());
-        lua.new_native_library(&GameState::get_native_library());
-        lua.new_native_library(&Entity::get_native_library());
-        lua.new_native_library(&Input::get_native_library());
-        println!("Done loading userdata libraries");
-
+        //TODO: This should be extendable (script as a path)
         let mut sw = ScriptWatcher::new(&Path::new("scripts"));
-        sw.new_module(&Path::new("scripts/debug.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/vec3.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/vec2.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/constants.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/quat.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/utils.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/mat4.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/color.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/intersect.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/mesh.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/octree.lua"), &lua);
-        sw.new_module(&Path::new("scripts/math/simplex.lua"), &lua);
-        sw.new_module(&Path::new("scripts/helpers.lua"), &lua);
-        sw.new_module(&Path::new("scripts/globals.lua"), &lua);
-        sw.new_module(&Path::new("scripts/scene.lua"), &lua);
-        sw.new_module(&Path::new("scripts/main.lua"), &lua);
-
-        println!("Done loading modules");
-        lua.print_stack_dump();
-        println!("Done loading scripts");
 
         ScriptEngine {
             lua: lua,
             script_watcher: sw,
         } 
+    }
+
+    pub fn register_native_library(&mut self, lib: &NativeLibrary) {
+        self.lua.new_native_library(lib);
     }
 
     pub fn register_global_pointer(&self, name: &str, ptr: *mut c_void) {

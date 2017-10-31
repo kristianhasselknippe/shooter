@@ -40,6 +40,7 @@ use time::*;
 use input::*;
 use fps_counter::*;
 use game_state::*;
+use scripting::lua::NativeLibraryProvider;
 
 use libc::c_void;
 
@@ -134,6 +135,31 @@ color = vec4(distance,distance,distance,1.0);");
     let events = sdl_context.event_pump().unwrap();
 
     let mut game_state = GameState::new("this is the one i made");
+    println!("Loading userdata libraries");
+    game_state.register_native_library(&Camera::get_native_library());
+    game_state.register_native_library(&GameState::get_native_library());
+    game_state.register_native_library(&Entity::get_native_library());
+    game_state.register_native_library(&Input::get_native_library());
+    println!("Done loading userdata libraries");
+    game_state.new_module(&Path::new("scripts/debug.lua"));
+    game_state.new_module(&Path::new("scripts/math/vec3.lua"));
+    game_state.new_module(&Path::new("scripts/math/vec2.lua"));
+    game_state.new_module(&Path::new("scripts/math/constants.lua"));
+    game_state.new_module(&Path::new("scripts/math/quat.lua"));
+    game_state.new_module(&Path::new("scripts/math/utils.lua"));
+    game_state.new_module(&Path::new("scripts/math/mat4.lua"));
+    game_state.new_module(&Path::new("scripts/math/color.lua"));
+    game_state.new_module(&Path::new("scripts/math/intersect.lua"));
+    game_state.new_module(&Path::new("scripts/math/mesh.lua"));
+    game_state.new_module(&Path::new("scripts/math/octree.lua"));
+    game_state.new_module(&Path::new("scripts/math/simplex.lua"));
+    game_state.new_module(&Path::new("scripts/helpers.lua"));
+    game_state.new_module(&Path::new("scripts/globals.lua"));
+    game_state.new_module(&Path::new("scripts/scene.lua"));
+    game_state.new_module(&Path::new("scripts/main.lua"));
+    
+
+    
     let mut input = Input::new(events);
     game_state.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
     

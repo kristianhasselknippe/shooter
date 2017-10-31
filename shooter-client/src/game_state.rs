@@ -20,12 +20,19 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(name: &str) -> GameState {
-        let script_engine = ScriptEngine::new();
         GameState {
-            script_engine: script_engine,
+            script_engine: ScriptEngine::new(),
             ecs: EntityComponentStore::new(),
             name: name.to_string(),
         }
+    }
+
+    pub fn register_native_library(&mut self, lib: &NativeLibrary) {
+        self.script_engine.register_native_library(lib);
+    }
+
+    pub fn new_module(&mut self, p: &Path) {
+        self.script_engine.new_module(p);
     }
 
     pub fn new_entity(&mut self, name: &str) -> EntityRef {
