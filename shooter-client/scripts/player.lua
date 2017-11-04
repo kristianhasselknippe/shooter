@@ -6,11 +6,12 @@ local player = {}
 local speed = 10.3
 
 function update(gs, dt, entity)
-   print(helpers.tprint(GameState));
-   print(helpers.tprint(Entity));
-   print("Player script running");
+   --print(helpers.tprint(GameState));
+   --print(helpers.tprint(Entity));
+   --print("Player script running");
    local e = GameState.get_entity(gs, entity)
    local input = Input.get_input(InputRef);
+   --print(helpers.tprint(input));
 
    local p = Entity.get_pos(e);
    local vec = vec2.new(p.x, p.y);

@@ -8,11 +8,11 @@ local camera = {
 local camera_speed = 3.3
 
 function camera.update(gs, dt, entity)
-   print(helpers.tprint(GameState));
-   print(helpers.tprint(Entity));
-   print("Camera script running");
+   --print(helpers.tprint(GameState));
+   --print(helpers.tprint(Entity));
+   --print("Camera script running");
    local player_entity = GameState.get_entity(gs, camera.player)
-   print("GameState worked");
+   --print("GameState worked");
    
    local pp = Entity.get_pos(player_entity);
 

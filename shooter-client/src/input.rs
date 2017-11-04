@@ -6,7 +6,9 @@ use libc::{c_void, c_int};
 use super::scripting::lua::*;
 use super::scripting::*;
 use std;
+use glutin;
 
+#[derive(Debug)]
 pub struct Input {
     pub left_down: bool,
     pub right_down: bool,
@@ -66,6 +68,35 @@ impl Input {
         let mut ret = v.normalize();
         ret.z = 0.0;
         ret
+    }
+
+    pub fn update_glutin_input(&mut self, input: &glutin::KeyboardInput) {
+        if let Some(vk) = input.virtual_keycode {
+            match input.state {
+                glutin::ElementState::Pressed => {
+                    match vk {
+                        glutin::VirtualKeyCode::W => { self.up_down = true; },
+                        glutin::VirtualKeyCode::A => { self.left_down = true; },
+                        glutin::VirtualKeyCode::S => { self.down_down = true; },
+                        glutin::VirtualKeyCode::D => { self.right_down = true; },
+                        _ => (),
+                    }
+                },
+                glutin::ElementState::Released => {
+                    match vk {
+                        glutin::VirtualKeyCode::W => { self.up_down = false; },
+                        glutin::VirtualKeyCode::A => { self.left_down = false; },
+                        glutin::VirtualKeyCode::S => { self.down_down = false; },
+                        glutin::VirtualKeyCode::D => { self.right_down = false; },
+                        _ => (),
+                    }
+                },
+
+                //Event::KeyDown { keycode: Some(Keycode::Escape), .. } |
+                //Event::Quit { .. } => self.escape = true,
+            }
+        }
+        println!("Input: {:#?}", self);
     }
 
     /*pub fn update_sdl_input(&mut self) {

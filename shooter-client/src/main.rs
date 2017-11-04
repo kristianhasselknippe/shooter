@@ -170,11 +170,24 @@ color = vec4(distance,distance,distance,1.0);");
         
         events_loop.poll_events(|event| {
             match event {
-                glutin::Event::WindowEvent{ event, .. } => match event {
+                glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::Closed => { running = false; },
                     glutin::WindowEvent::Resized(w, h) => gl_window.resize(w, h),
-                    _ => ()
+                    glutin::WindowEvent::KeyboardInput { input: i, .. } => {
+                            println!("Key evetn");
+                            input.update_glutin_input(&i);
+                        },
+                    _ => (),
                 },
+                /*glutin::Event::DeviceEvent { event, .. } => {
+                    match event {
+                        glutin::DeviceEvent::Key(key_input) => {
+                            println!("Key evetn");
+                            input.update_glutin_input(&key_input);
+                        },
+                        _ => (),  
+                    }
+                },*/
                 _ => ()
             }
         });
