@@ -58,7 +58,7 @@ fn main() {
     let mut events_loop = glutin::EventsLoop::new();
     let window = glutin::WindowBuilder::new()
         .with_title("Hello, world!")
-        .with_dimensions(1024, 768);
+        .with_dimensions(window_size.0, window_size.1);
     let context = glutin::ContextBuilder::new()
         .with_vsync(true);
     let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
@@ -157,7 +157,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     let text = Text::new("this is some text", &draw_context);
 
-    //unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
+    unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
   
     
     let mut fps_counter = FpsCounter::new();
@@ -172,7 +172,10 @@ color = vec4(distance,distance,distance,1.0);");
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::Closed => { running = false; },
-                    glutin::WindowEvent::Resized(w, h) => gl_window.resize(w, h),
+                    glutin::WindowEvent::Resized(w, h) => {
+                        gl_window.resize(w, h);
+                        unsafe { gl::Viewport(0, 0, w as i32, h as i32) };  
+                    },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                             println!("Key evetn");
                             input.update_glutin_input(&i);
@@ -209,7 +212,7 @@ color = vec4(distance,distance,distance,1.0);");
         player_sprite.pos.y = p_entity.pos.y;
         player_sprite.rot = p_entity.rot;
 
-        draw_context.clear((1.0,0.0,1.0,1.0));
+        draw_context.clear((0.5,0.0,1.0,1.0));
 
         let cam_entity = game_state.get_entity(&camera_ref).unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
@@ -243,11 +246,6 @@ color = vec4(distance,distance,distance,1.0);");
         background_sprite.draw(&camera_matrix);
         player_sprite.draw(&camera_matrix);
 
-
-
-
-        //window.gl_swap_window();
-        //canvas.present();
         gl_window.swap_buffers().unwrap();
         
         
