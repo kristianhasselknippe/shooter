@@ -166,7 +166,6 @@ color = vec4(distance,distance,distance,1.0);");
     
     'running: while running {
         let dt = time.delta_time();
-        let dt = dt as f32;
         
         events_loop.poll_events(|event| {
             match event {
@@ -182,23 +181,11 @@ color = vec4(distance,distance,distance,1.0);");
                         },
                     _ => (),
                 },
-                /*glutin::Event::DeviceEvent { event, .. } => {
-                    match event {
-                        glutin::DeviceEvent::Key(key_input) => {
-                            println!("Key evetn");
-                            input.update_glutin_input(&key_input);
-                        },
-                        _ => (),  
-                    }
-                },*/
                 _ => ()
             }
         });
         
         game_state.pre_update();
-        {
-            //input.update_sdl_input();
-        }
 
         if input.escape {
             break 'running;
@@ -251,6 +238,6 @@ color = vec4(distance,distance,distance,1.0);");
         
 
         time.wait_until_frame_target();
-        fps_counter.update(dt);
+        fps_counter.update(dt as f32);
     }
 }
