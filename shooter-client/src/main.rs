@@ -27,7 +27,9 @@ mod game_state;
 mod time;
 mod input;
 mod fps_counter;
+mod gui;
 
+use gui::*;
 use glutin::GlContext;
 use sprite::*;
 use project_format::*;
@@ -128,9 +130,7 @@ color = vec4(distance,distance,distance,1.0);");
     game_state.new_module(&Path::new("scripts/globals.lua"));
     game_state.new_module(&Path::new("scripts/scene.lua"));
     game_state.new_module(&Path::new("scripts/main.lua"));
-    
-
-    
+   
     let mut input = Input::new();
     game_state.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
     
@@ -151,18 +151,15 @@ color = vec4(distance,distance,distance,1.0);");
     let camera_ref = game_state.new_entity("camera");
     let camera_script = game_state.register_script(Path::new("scripts/camera.lua"), &camera_ref);
     camera_script.set_field("player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
-    
-    
+        
     let camera = Camera::new_orthographic(60.0, 60.0);
 
     let text = Text::new("this is some text", &draw_context);
 
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
-  
-    
+      
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
-
     
     'running: while running {
         let dt = time.delta_time();
@@ -176,7 +173,6 @@ color = vec4(distance,distance,distance,1.0);");
                         unsafe { gl::Viewport(0, 0, w as i32, h as i32) };  
                     },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
-                            println!("Key evetn");
                             input.update_glutin_input(&i);
                         },
                     _ => (),
@@ -207,11 +203,7 @@ color = vec4(distance,distance,distance,1.0);");
         let projection = camera.camera_matrix();
         let camera_matrix = projection * view;
 
-
         //Drawing
-
-        
-
         /*for y in 0..10 {
             for x in 0..10 {
                 let w = 1.0;

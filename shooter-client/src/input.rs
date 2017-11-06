@@ -96,7 +96,6 @@ impl Input {
                 //Event::Quit { .. } => self.escape = true,
             }
         }
-        println!("Input: {:#?}", self);
     }
 
     /*pub fn update_sdl_input(&mut self) {
