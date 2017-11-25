@@ -163,11 +163,11 @@ color = vec4(distance,distance,distance,1.0);");
     let text = Text::new("this is some text", &draw_context);
 
 
-    let gui1 = Shape::new(Vector4::new(1.0,0.0,0.0,1.0), Vector2::new(0.0, 0.0), Vector2::new(300.0, 150.0));
-    let gui2 = Shape::new(Vector4::new(1.0,1.0,0.0,1.0), Vector2::new(300.0, 150.0), Vector2::new(300.0, 150.0));
-    let gui3 = Shape::new(Vector4::new(1.0,0.0,1.0,1.0), Vector2::new(600.0, 300.0), Vector2::new(300.0, 150.0));
+    let mut gui = Panel::new(Vector2::new(100.0,100.0), Vector2::new(100.0,50.0));
+    gui.add_drawable(Box::new(Shape::new_with_color(Vector4::new(1.0,0.0,0.0,1.0))));
+    gui.add_drawable(Box::new(Shape::new_with_color(Vector4::new(1.0,1.0,0.0,1.0))));
+        
 
-    //todo: need to make sure the y direction goes downwards (currently need to use negative y dir
 
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
       
@@ -239,9 +239,7 @@ color = vec4(distance,distance,distance,1.0);");
         background_sprite.draw(&draw_context);
         player_sprite.draw(&draw_context);
 
-        gui1.draw(&draw_context);
-        gui2.draw(&draw_context);
-        gui3.draw(&draw_context);
+        gui.draw(&draw_context);
 
         gl_window.swap_buffers().unwrap();
         

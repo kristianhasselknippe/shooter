@@ -5,8 +5,20 @@ use mesh::*;
 use drawing::*;
 
 trait Layout {
-    fn measure(&self) -> Vector2<f64>;
-    fn arrange(&self, children: Vec<Box<Layout>>);
+    fn measure(&self, gui_data: &mut GuiElementData) -> Vector2<f64>;
+    
+    fn arrange(&self, gui_data: &mut GuiElementData);
+}
+
+struct DefaultLayout {}
+impl Layout for DefaultLayout {
+    fn measure(&self, gui_data: &mut GuiElementData) -> Vector2<f64> {
+        
+    }
+    
+    fn arrange(&self, gui_data: &mut GuiElementData) {
+        
+    }
 }
 
 enum VerticalAlignment {
@@ -26,6 +38,7 @@ enum HorizontalAlignment {
 struct GuiElementData {
     pos: Option<Vector2<f64>>,
     size: Option<Vector2<f64>>,
+    margin: Option<Vector4<f64>>,
 }
 
 impl GuiElementData {
@@ -33,6 +46,7 @@ impl GuiElementData {
         GuiElementData {
             pos: None,
             size: None,
+            margin: None,
         }
     }
 
@@ -40,11 +54,17 @@ impl GuiElementData {
         GuiElementData {
             pos: Some(pos),
             size: Some(size),
+            margin: None,
         }
+    }
+
+    pub fn with_margin(&mut self, margin: Vector4<f64>) -> &mut Self {
+        self.margin = Some(margin);
+        self
     }
 }
 
-struct Panel {
+pub struct Panel {
     //layout: Rc<Layout>,
     
     children: Vec<Panel>,
@@ -54,6 +74,36 @@ struct Panel {
     
     vertical_alignment: VerticalAlignment,
     horizontal_alignment: HorizontalAlignment,
+}
+
+
+impl Panel {
+    pub fn new(pos: Vector2<f64>, size: Vector2<f64>) -> Panel {
+        Panel {
+            children: Vec::new(),
+            drawables: Vec::new(),
+
+            gui_data: GuiElementData::new(pos, size),
+            
+            vertical_alignment: VerticalAlignment::Stretch,
+            horizontal_alignment: HorizontalAlignment::Stretch,
+        }
+    }
+
+    pub fn add_drawable(&mut self, d: Box<Drawable>) {
+        self.drawables.push(d);
+    }
+}
+
+impl Drawable for Panel {
+    fn draw(&self, dc: &DrawContext) {
+        for d in &self.drawables {
+            d.draw(dc);
+        }
+        for c in &self.children {
+            c.draw(dc);
+        }
+    }
 }
 
 struct TextElement {
@@ -74,18 +124,18 @@ impl Shape {
             color: color,
         }
     }
-}
 
-impl Panel {
-    pub fn new(pos: Vector2<f64>, size: Vector2<f64>) -> Panel {
-        Panel {
-            children: Vec::new(),
-            drawables: Vec::new(),
+    pub fn new_with_data(color: Vector4<f64>, data: GuiElementData) -> Shape {
+        Shape {
+            gui_data: data,
+            color: color,
+        }
+    }
 
-            gui_data: GuiElementData::new(pos, size),
-            
-            vertical_alignment: VerticalAlignment::Stretch,
-            horizontal_alignment: HorizontalAlignment::Stretch,
+    pub fn new_with_color(color: Vector4<f64>) -> Shape {
+        Shape {
+            gui_data: GuiElementData::identity(),
+            color: color,
         }
     }
 }
