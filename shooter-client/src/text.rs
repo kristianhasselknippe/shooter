@@ -213,7 +213,7 @@ impl Text {
 
 
 impl Drawable for Text {
-    fn draw(&self) {
+    fn draw(&self, dc: &DrawContext) {
         self.texture.bind(TextureUnit::Unit0);
         self.shader.use_program();
 

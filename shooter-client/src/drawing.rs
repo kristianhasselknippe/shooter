@@ -4,27 +4,52 @@ use super::gl::types::*;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
+use shader::*;
+use std::collections::HashMap;
+use super::na::Matrix4;
 
 pub trait Drawable {
-    fn draw(&self);
+    fn draw(&self, dc: &DrawContext);
 }
 
 pub struct DrawContext {
+    camera_matrix: Matrix4<f32>,
+    shader_cache: HashMap<String, ShaderProgram>,
     vertex_array: VertexArray,
     pub width: u32,
     pub height: u32,
 }
 
 impl DrawContext {
-    pub fn new(width: u32, height: u32) -> DrawContext {
+    pub fn new(width: u32, height: u32, camera_matrix: Matrix4<f32>) -> DrawContext {
 
         let vertex_array = VertexArray::new();
 
         DrawContext {
+            camera_matrix: camera_matrix,
+            shader_cache: HashMap::new(),
             vertex_array: vertex_array,
             width: width,
             height: height,
         }
+    }
+
+    pub fn set_camera_matrix(&mut self, camera_matrix: Matrix4<f32>) {
+        self.camera_matrix = camera_matrix;
+    }
+
+    pub fn camera_matrix(&self) -> Matrix4<f32> {
+        self.camera_matrix
+    }
+
+    pub fn add_shader_program(&mut self, name: &str, shader: ShaderProgram) {
+        self.shader_cache.insert(name.to_string(), shader);
+    }
+
+    pub fn use_shader_program(&self, name: &str) -> &ShaderProgram {
+        let ret = self.shader_cache.get(name).unwrap();
+        ret.use_program();
+        ret
     }
 
     pub fn bind(&mut self) {
@@ -177,7 +202,7 @@ impl Batch {
 }
 
 impl Drawable for Batch {
-    fn draw(&self) {
+    fn draw(&self, dc: &DrawContext) {
         draw_elements(self.indices.len() as i32);
     }
 }

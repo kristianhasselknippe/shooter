@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+
 extern crate shooter_common;
 extern crate glutin;
 extern crate gl;
@@ -77,8 +78,9 @@ fn main() {
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     };
 
-    let mut draw_context = DrawContext::new(window_size.0, window_size.1);
+    let camera = Camera::new_orthographic(60.0, 60.0);
 
+    let mut draw_context = DrawContext::new(window_size.0, window_size.1, camera.camera_matrix());
     draw_context.bind();
 
     let mut texture_atlas = TextureAtlas::new();
@@ -93,7 +95,13 @@ fn main() {
                                                  gl_Position = vec4(position.x, position.y, position.z, 1.0);",
 "float distance = 1.0 - distance(vec2(0.0,0.0), TexCoord * 2.0 - 1.0);
 color = vec4(distance,distance,distance,1.0);");
-    program.use_program();
+
+    draw_context.add_shader_program("some_program", program);
+    draw_context.add_shader_program("sprite", ShaderProgram::create_program("sprite"));
+    
+    draw_context.use_shader_program("some_program");
+
+
 
     texture_atlas.bind();
 
@@ -151,9 +159,7 @@ color = vec4(distance,distance,distance,1.0);");
     let camera_ref = game_state.new_entity("camera");
     let camera_script = game_state.register_script(Path::new("scripts/camera.lua"), &camera_ref);
     camera_script.set_field("player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
-        
-    let camera = Camera::new_orthographic(60.0, 60.0);
-
+    
     let text = Text::new("this is some text", &draw_context);
 
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
@@ -202,6 +208,7 @@ color = vec4(distance,distance,distance,1.0);");
 
         let projection = camera.camera_matrix();
         let camera_matrix = projection * view;
+        draw_context.set_camera_matrix(camera_matrix);
 
         //Drawing
         /*for y in 0..10 {
@@ -222,8 +229,8 @@ color = vec4(distance,distance,distance,1.0);");
         //batch.update_data();
         //batch.draw();
 
-        background_sprite.draw(&camera_matrix);
-        player_sprite.draw(&camera_matrix);
+        background_sprite.draw(&draw_context);
+        player_sprite.draw(&draw_context);
 
         gl_window.swap_buffers().unwrap();
         
