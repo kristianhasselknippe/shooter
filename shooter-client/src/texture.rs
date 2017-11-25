@@ -11,6 +11,7 @@ use super::shader::*;
 use std::os::raw::c_void;
 use std::ptr;
 use std::collections::HashMap;
+use drawing::*;
 
 #[derive(Debug)]
 pub enum ImageFormat {
@@ -233,11 +234,11 @@ impl MemoryTexture {
         MemoryTexture::new(&img.data, img.dim.0, img.dim.1, img.image_format)
     }
 
-    pub fn draw(&self, pos: (f32,f32), size: (f32,f32)) {
+    pub fn draw(&self, dc: &DrawContext, pos: (f32,f32), size: (f32,f32)) {
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
         let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
-        quad.draw_now();
+        quad.draw(dc);
     }
 }
 
@@ -320,7 +321,7 @@ impl TextureAtlas {
             });
 
 
-            tex.draw(pos, size);
+            tex.draw(dc, pos, size);
         }
 
         let pixel_data = unsafe {

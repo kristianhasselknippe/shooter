@@ -47,6 +47,6 @@ impl Drawable for Sprite {
         shader_ref.set_mat4("mvp", mvp);
         shader_ref.set_float("rotation", self.rot);
 
-        self.mesh.draw_now();
+        self.mesh.draw(dc);
     }
 }

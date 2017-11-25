@@ -98,7 +98,7 @@ color = vec4(distance,distance,distance,1.0);");
 
     draw_context.add_shader_program("some_program", program);
     draw_context.add_shader_program("sprite", ShaderProgram::create_program("sprite"));
-    
+    draw_context.add_shader_program("solid_color", ShaderProgram::create_program_from_vert_frag("screen_space", "solid_color"));
     draw_context.use_shader_program("some_program");
 
 
@@ -161,6 +161,10 @@ color = vec4(distance,distance,distance,1.0);");
     camera_script.set_field("player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
     
     let text = Text::new("this is some text", &draw_context);
+
+
+    let gui = Shape::new(Vector4::new(1.0,0.0,0.0,1.0), Panel::new(250.0,100.0));
+    
 
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
       
@@ -231,6 +235,8 @@ color = vec4(distance,distance,distance,1.0);");
 
         background_sprite.draw(&draw_context);
         player_sprite.draw(&draw_context);
+
+        gui.draw(&draw_context);
 
         gl_window.swap_buffers().unwrap();
         

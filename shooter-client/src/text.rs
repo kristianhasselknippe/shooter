@@ -217,6 +217,6 @@ impl Drawable for Text {
         self.texture.bind(TextureUnit::Unit0);
         self.shader.use_program();
 
-        self.mesh.draw_now();
+        self.mesh.draw(dc);
     }
 }

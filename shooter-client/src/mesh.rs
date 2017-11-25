@@ -80,9 +80,10 @@ impl Mesh {
     pub fn create_quad() -> Mesh {
         Self::create_rect(1.0,1.0)
     }
+}
 
-
-    pub fn draw_now(&self) {
+impl Drawable for Mesh {
+    fn draw(&self, dc: &DrawContext) {
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);

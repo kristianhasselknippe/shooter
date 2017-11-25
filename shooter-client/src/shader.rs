@@ -179,6 +179,12 @@ impl ShaderProgram {
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 
+    pub fn create_program_from_vert_frag(vert: &str, frag: &str) -> ShaderProgram {
+        let vertex_shader = Shader::create_vertex_shader_from_path(Path::new(&format!("src/shaders/{}.vs",vert)));
+        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!("src/shaders/{}.fs",frag)));
+        ShaderProgram::new(&vertex_shader, &fragment_shader)
+    }
+
     pub fn set_bool(&self, name: &str, val: bool) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
@@ -199,11 +205,25 @@ impl ShaderProgram {
             gl::Uniform1f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val);
         }
     }
+    
+    pub fn set_float2(&self, name: &str, val: (f32,f32)) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform2f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val.0, val.1);
+        }
+    }
 
     pub fn set_float3(&self, name: &str, val: (f32,f32,f32)) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
             gl::Uniform3f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val.0, val.1, val.2);
+        }
+    }
+
+    pub fn set_float4(&self, name: &str, val: (f32,f32,f32,f32)) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::Uniform4f(gl::GetUniformLocation(self.handle, c_name.as_ptr()), val.0, val.1, val.2, val.3);
         }
     }
 
