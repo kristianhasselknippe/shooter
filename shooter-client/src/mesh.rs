@@ -3,6 +3,7 @@ use super::gl;
 use super::gl::types::*;
 use std::mem;
 use std::ptr;
+use super::na::Vector2;
 
 pub struct Mesh {
     vbo: GLuint,
@@ -75,6 +76,12 @@ impl Mesh {
         ];
 
         Mesh::new(vertices, indices)
+    }
+
+    pub fn create_from_pos_size(pos: Vector2<f64>, size: Vector2<f64>) -> Mesh {
+        let top_left = (pos.x as f32, pos.y as f32);
+        let bottom_right = (pos.x as f32 + size.x as f32, pos.y as f32 + size.y as f32);
+        Mesh::create_from_topleft_bottomright(top_left, bottom_right)
     }
 
     pub fn create_quad() -> Mesh {

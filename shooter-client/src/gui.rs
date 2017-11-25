@@ -23,58 +23,90 @@ enum HorizontalAlignment {
     Right
 }
 
-pub struct Panel {
+struct GuiElementData {
+    pos: Option<Vector2<f64>>,
+    size: Option<Vector2<f64>>,
+}
+
+impl GuiElementData {
+    pub fn identity() -> GuiElementData {
+        GuiElementData {
+            pos: None,
+            size: None,
+        }
+    }
+
+    pub fn new(pos: Vector2<f64>, size: Vector2<f64>) -> GuiElementData {
+        GuiElementData {
+            pos: Some(pos),
+            size: Some(size),
+        }
+    }
+}
+
+struct Panel {
     //layout: Rc<Layout>,
+    
+    children: Vec<Panel>,
+    drawables: Vec<Box<Drawable>>,
+
+    gui_data: GuiElementData,
+    
     vertical_alignment: VerticalAlignment,
     horizontal_alignment: HorizontalAlignment,
-    width: f64,
-    height: f64,
+}
+
+struct TextElement {
+    gui_data: GuiElementData,
+    font_size: f32,
+    value: String,
+}
+
+pub struct Shape {
+    gui_data: GuiElementData,
+    color: Vector4<f64>,
+}
+
+impl Shape {
+    pub fn new(color: Vector4<f64>, pos: Vector2<f64>, size: Vector2<f64>) -> Shape {
+        Shape {
+            gui_data: GuiElementData::new(pos, size),
+            color: color,
+        }
+    }
 }
 
 impl Panel {
-    pub fn new(width: f64, height: f64) -> Panel {
+    pub fn new(pos: Vector2<f64>, size: Vector2<f64>) -> Panel {
         Panel {
-            width: width,
-            height: height,
+            children: Vec::new(),
+            drawables: Vec::new(),
+
+            gui_data: GuiElementData::new(pos, size),
+            
             vertical_alignment: VerticalAlignment::Stretch,
             horizontal_alignment: HorizontalAlignment::Stretch,
         }
     }
 }
 
-pub struct TextElement {
-    font_size: f32,
-    value: String,
-}
-
-pub struct Shape {
-    panel: Panel,
-    color: Vector4<f64>,
-}
-
-impl Shape {
-    pub fn new(color: Vector4<f64>, panel: Panel) -> Shape {
-        Shape {
-            panel: panel,
-            color: color,
-        }
-    }
-}
-
-
 impl Drawable for Shape {
     fn draw(&self, dc: &DrawContext) {
-        let mesh = Mesh::create_rect(self.panel.width as _, self.panel.height as _);
+        if let (Some(pos), Some(size)) = (self.gui_data.pos, self.gui_data.size) {
+            let mesh = Mesh::create_from_pos_size(pos, size);
+            let program_ref = dc.use_shader_program("solid_color");
+            program_ref.set_float4("solid_color",
+                                   (self.color.x as _,
+                                    self.color.y as _,
+                                    self.color.z as _,
+                                    self.color.w as _));
 
-        let program_ref = dc.use_shader_program("solid_color");
-        program_ref.set_float4("solid_color",
-                               (self.color.x as _,
-                                self.color.y as _,
-                                self.color.z as _,
-                                self.color.w as _));
+            program_ref.set_float2("screen_size", (dc.width as _, dc.height as _));
+            program_ref.set_float2("shape_size", (size.x as _, size.y as _));
 
-        program_ref.set_float2("screen_size", (dc.width as _, dc.height as _));
+            mesh.draw(dc);
+        }
 
-        mesh.draw(dc);
+        
     }
 }
