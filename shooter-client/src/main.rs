@@ -164,10 +164,10 @@ color = vec4(distance,distance,distance,1.0);");
 
 
     let gui1 = Shape::new(Vector4::new(1.0,0.0,0.0,1.0), Vector2::new(0.0, 0.0), Vector2::new(300.0, 150.0));
-    let gui2 = Shape::new(Vector4::new(1.0,1.0,0.0,1.0), Vector2::new(300.0, -150.0), Vector2::new(300.0, 150.0));
-    let gui3 = Shape::new(Vector4::new(1.0,0.0,1.0,1.0), Vector2::new(600.0, -300.0), Vector2::new(300.0, 150.0));
+    let gui2 = Shape::new(Vector4::new(1.0,1.0,0.0,1.0), Vector2::new(300.0, 150.0), Vector2::new(300.0, 150.0));
+    let gui3 = Shape::new(Vector4::new(1.0,0.0,1.0,1.0), Vector2::new(600.0, 300.0), Vector2::new(300.0, 150.0));
 
-    todo: need to make sure the y direction goes downwards (currently need to use negative y dir
+    //todo: need to make sure the y direction goes downwards (currently need to use negative y dir
 
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
       

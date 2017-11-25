@@ -16,7 +16,8 @@ void main()
 
     x -= 1.0;
     y += 1.0;
-    y -=  (shape_size.y / screen_size.y);
+    //y = (shape_size.y / screen_size.y);
+	y = 2.0 - y;
     
     gl_Position = vec4(x, y, position.z, 1.0);
 }
