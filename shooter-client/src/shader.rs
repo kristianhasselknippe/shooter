@@ -220,7 +220,7 @@ impl ShaderProgram {
         }
     }
 
-    pub fn set_mat4(&self, name: &str, val: Matrix4<f32>) {
+    pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
             gl::UniformMatrix4fv(gl::GetUniformLocation(self.handle, c_name.as_ptr()), 1, gl::FALSE, val.as_slice().as_ptr());

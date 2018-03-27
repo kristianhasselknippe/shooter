@@ -68,11 +68,10 @@ pub fn clear(r: f32, g: f32, b: f32, a: f32) {
     }
 }
 
-
-
 impl Buffer {
     pub fn upload_data(&mut self, data: *const u8, len: isize) {
         assert!(self.data.is_bound, "Attempted to upload data to unbound buffer");
+        println!("Uploading data of len: {:?}", len);
         unsafe {
             gl::BufferData(self.data.target, len as isize, data as *const GLvoid, gl::STATIC_DRAW);
         }
@@ -111,7 +110,7 @@ impl Buffer {
                 gl::VertexAttribPointer(attrib.location,
                                         attrib.num_comps,
                                         attrib.data_type,
-                                        gl::TRUE, //TODO: Don't normalize by default
+                                        gl::FALSE,
                                         stride,
                                         offset as *const GLvoid)
 

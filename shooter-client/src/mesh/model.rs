@@ -18,7 +18,7 @@ pub struct Geometry {
 
 pub struct Model {
     name: String,
-    vertices: Vec<Vertex<f64>>,
+    vertices: Vec<Vertex<f32>>,
     geometry: Vec<Geometry>,
 }
 
@@ -30,7 +30,7 @@ impl Model {
             let ret = obj.objects.iter().map(|o| {
                 Model {
                     name: o.name.to_string(),
-                    vertices: o.vertices.iter().map(|v| Vertex::new(v.x, v.y, v.z)).collect(),
+                    vertices: o.vertices.iter().map(|v| Vertex::new(v.x as f32, v.y as f32, v.z as f32)).collect(),
                     geometry: o.geometry.iter().map(|g| Geometry {
                         shapes: g.shapes.iter().map(|s| {
                             match s.primitive {
@@ -60,8 +60,10 @@ impl Model {
         vbo.bind();
         ebo.bind();
 
-        let vertices_bytes_len = self.vertices.len() * ::std::mem::size_of::<f64>();
+        let vertices_bytes_len = self.vertices.len() * ::std::mem::size_of::<f32>() * 3;
         let vertices = self.get_vertices_byte_ptr();
+
+        
         vbo.upload_data(vertices, vertices_bytes_len as _);
         //ebo.upload_data();
 
@@ -82,7 +84,8 @@ impl Model {
                 }
             }
         }
-        ebo.upload_data(indices.as_ptr() as _, num_indices);
+
+        ebo.upload_data(indices.as_ptr() as _, num_indices * 4);
         draw_triangles(num_indices as _, gl::UNSIGNED_INT);
 
         /*gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * self.vertices.len()) as isize,

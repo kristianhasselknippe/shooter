@@ -65,7 +65,17 @@ fn main() {
 
     let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
 
-    program.use_program();
+    // Our object is translated along the x axis.
+    let model = na::Isometry3::new(na::Vector3::new(0.0,0.0,-5.0), na::zero());
+    
+    let eye    = na::Point3::new(0.0, 0.0, 1.0);
+    let target = na::Point3::new(0.0, 0.0, 0.0);
+    let view   = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
+
+    // A perspective projection.
+    let projection = na::Perspective3::new(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
+
+    let model_view_projection = projection.unwrap() * (view * model).to_homogeneous();
 
     let mut time = Time::new(60);
    
@@ -102,13 +112,8 @@ fn main() {
 
         clear(0.5,0.0,1.0,1.0);
 
-        /*let cam_entity = game_state.get_entity(&camera_ref).unwrap();
-        let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
-
-        let projection = camera.camera_matrix();
-        let camera_matrix = projection * view;*/
-        
-        //draw_context.set_camera_matrix(camera_matrix);
+        program.use_program();
+        program.set_mat4("mvp", &model_view_projection);
 
         for mut m in &mut models {
             m.draw();
