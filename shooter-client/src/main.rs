@@ -17,6 +17,7 @@ mod scene;
 mod shader;
 mod mesh;
 mod transform;
+mod drawing;
 //mod text;
 mod camera;
 mod entities;
@@ -33,6 +34,7 @@ use time::*;
 use input::*;
 use fps_counter::*;
 use utils::gl::*;
+use drawing::DrawContext;
 
 fn main() {
 
@@ -58,6 +60,8 @@ fn main() {
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         gl::Enable(gl::CULL_FACE);
     };
+
+    let dc = DrawContext::new(window_size.0, window_size.1);
 
     let camera = Camera::new_orthographic(60.0, 60.0);
 
@@ -108,8 +112,7 @@ fn main() {
         let target = camera_pos + na::Vector3::new(0.0, 0.0, -1.0);
         let view   = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
 
-        // A perspective projection.
-        let projection = na::Perspective3::new(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
+        let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
 
         let model_view_projection = projection.unwrap() * (view * model).to_homogeneous();
         

@@ -2,8 +2,7 @@ use super::na::*;
 
 #[derive(Debug)]
 pub struct Camera {
-    pub projection: Matrix4<f32>,
-    pub size: (f32,f32)
+    projection: Matrix4<f32>,
 }
 
 impl Camera {
@@ -13,7 +12,12 @@ impl Camera {
         let proj = Matrix4::new_orthographic(-w, w, -h, h,0.0,1000.0);
         Camera {
             projection: proj,
-            size: (width,height),
+        }
+    }
+
+    pub fn new_perspective(aspect: f32, near: f32, far: f32) -> Camera {
+        Camera {
+            projection: na::Perspective3::new(aspect, near, far),
         }
     }
 
