@@ -1,6 +1,4 @@
-use drawing::*;
-use gl;
-use gl::types::*;
+/*use utils::gl::*;
 use na::Vector2;
 use super::Vertex;
 
@@ -15,15 +13,13 @@ pub struct GlMesh {
 
 impl GlMesh {
     pub fn new(vertices: Vec<GLfloat>, indices: Vec<GLuint>) -> GlMesh {
-        let mut vbo = 0;
-        let mut ebo = 0;
+        let vbo = gen_buffers(1);
+        let ebo = gen_buffers(1);
 
-        unsafe {
-            gl::GenBuffers(1, &mut vbo);
-            gl::GenBuffers(1, &mut ebo);
-            /*gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+       
+        /*gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);*/
-        }
+        
 
         GlMesh {
             vbo: vbo,
@@ -75,27 +71,11 @@ impl GlMesh {
     pub fn create_quad() -> GlMesh {
         Self::create_rect(1.0,1.0)
     }
-}
 
-impl Drawable for GlMesh {
-    fn draw(&self, dc: &DrawContext) {
+    fn draw(&self) {
         unsafe {
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ebo);
 
-            let mut positions = VertexAttribute::new(0, GLDataType::Float, 3);
-            positions.enable(0,5);
-
-            let mut ux_coords = VertexAttribute::new(1, GLDataType::Float, 2);
-            ux_coords.enable(3,5);
-
-            /*gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * self.vertices.len()) as isize,
-                           mem::transmute(self.vertices.first().unwrap()), gl::STATIC_DRAW);
-
-            gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * self.indices.len()) as GLsizeiptr,
-                           mem::transmute(self.indices.first().unwrap()), gl::STATIC_DRAW);
-
-            gl::DrawElements(gl::TRIANGLES, self.n_elements as i32, gl::UNSIGNED_INT, ptr::null());*/
         }
     }
 }
+*/

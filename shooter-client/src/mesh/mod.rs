@@ -1,9 +1,22 @@
 pub mod model;
 pub mod mesh;
 
-use na::core::Vector3;
+#[repr(C)]
+pub struct Vertex<T> {
+    x: T,
+    y: T,
+    z: T,
+}
 
-pub type Vertex<T> = Vector3<T>;
+impl<T> Vertex<T> {
+    fn new(x: T, y: T, z: T) -> Vertex<T> {
+        Vertex {
+            x: x,
+            y: y,
+            z: z,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Face(i32,i32,i32);

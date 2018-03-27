@@ -69,33 +69,6 @@ impl DrawContext {
 }
 
 
-pub struct VertexArray {
-    handle: GLuint
-}
-
-impl VertexArray {
-    pub fn new() -> VertexArray {
-        let mut vao = 0;
-        unsafe {
-            gl::GenVertexArrays(1, &mut vao);
-        };
-        VertexArray {
-            handle: vao,
-        }
-    }
-
-    pub fn bind(&mut self) {
-        unsafe {
-            gl::BindVertexArray(self.handle);
-        }
-    }
-
-    pub fn unbind(&mut self) {
-        unsafe {
-            gl::BindVertexArray(0);
-        }
-    }
-}
 
 
 pub enum GLDataType {
@@ -200,3 +173,4 @@ fn draw_elements(n_elements: i32) {
         gl::DrawElements(gl::TRIANGLES, n_elements as i32, gl::UNSIGNED_INT, ptr::null());
     }
 }
+
