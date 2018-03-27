@@ -56,6 +56,7 @@ fn main() {
     unsafe {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+        gl::Enable(gl::CULL_FACE);
     };
 
     let camera = Camera::new_orthographic(60.0, 60.0);
@@ -65,18 +66,6 @@ fn main() {
 
     let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
 
-    // Our object is translated along the x axis.
-    let model = na::Isometry3::new(na::Vector3::new(0.0,0.0,-5.0), na::zero());
-    
-    let eye    = na::Point3::new(0.0, 0.0, 1.0);
-    let target = na::Point3::new(0.0, 0.0, 0.0);
-    let view   = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
-
-    // A perspective projection.
-    let projection = na::Perspective3::new(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
-
-    let model_view_projection = projection.unwrap() * (view * model).to_homogeneous();
-
     let mut time = Time::new(60);
    
     let mut input = Input::new();
@@ -85,9 +74,11 @@ fn main() {
       
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
+
+    let mut camera_pos = na::Point3::<f32>::new(0.0,0.0,1.0);
     
     'running: while running {
-        let dt = time.delta_time();
+        let dt = time.delta_time() as f32;
         
         events_loop.poll_events(|event| {
             match event {
@@ -105,6 +96,22 @@ fn main() {
                 _ => ()
             }
         });
+
+        let input_vector = input.normalized_input_vector();
+
+        camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
+
+        // Our object is translated along the x axis.
+        let model = na::Isometry3::new(na::Vector3::new(0.0,0.0,-5.0), na::zero());
+        
+        let eye    = camera_pos;
+        let target = camera_pos + na::Vector3::new(0.0, 0.0, -1.0);
+        let view   = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
+
+        // A perspective projection.
+        let projection = na::Perspective3::new(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
+
+        let model_view_projection = projection.unwrap() * (view * model).to_homogeneous();
         
         if input.escape {
             break 'running;
