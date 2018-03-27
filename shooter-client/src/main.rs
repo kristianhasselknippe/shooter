@@ -10,6 +10,7 @@ extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
 
+mod utils;
 mod sprite;
 mod scene;
 mod shader;

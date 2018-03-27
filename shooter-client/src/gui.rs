@@ -1,5 +1,5 @@
 use na::{Vector2,Vector4};
-use mesh::*;
+use mesh::mesh::*;
 use drawing::*;
 
 trait Layout {
@@ -141,7 +141,7 @@ impl Shape {
 impl Drawable for Shape {
     fn draw(&self, dc: &DrawContext) {
         if let (Some(pos), Some(size)) = (self.gui_data.pos, self.gui_data.size) {
-            let mesh = Mesh::create_from_pos_size(pos, size);
+            let mesh = GlMesh::create_from_pos_size(pos, size);
             let program_ref = dc.use_shader_program("solid_color");
             program_ref.set_float4("solid_color",
                                    (self.color.x as _,

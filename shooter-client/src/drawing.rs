@@ -1,4 +1,3 @@
-use super::mesh::*;
 use super::gl;
 use super::gl::types::*;
 use std::ptr;
@@ -171,17 +170,6 @@ impl Batch {
     pub fn clear(&mut self) {
         self.vertices.clear();
         self.indices.clear();
-    }
-
-    pub fn write_mesh(&mut self, mesh: &Mesh) {
-        let element_offset = self.vertices.len() as u32 / 5; //TODO: This is not correct!
-        for i in &mesh.indices {
-            let e = i + element_offset;
-            self.indices.push(e);
-        }
-        for v in &mesh.vertices {
-            self.vertices.push(v.clone());
-        }
     }
 
     pub fn update_data(&mut self) {

@@ -1,11 +1,10 @@
 use std::path::Path;
-use std::fs::File;
 use std::ffi::CString;
 use super::gl;
 use super::gl::types::*;
 use std::ptr;
 use std::str;
-use std::io::Read;
+use utils::file::read_file;
 
 use na::Matrix4;
 
@@ -78,12 +77,12 @@ impl Shader {
     }
 
     pub fn create_fragment_shader_from_path(path: &Path) -> Shader {
-        let fs = read_file(path);
+        let fs = read_file(path).unwrap();
         Shader::create_fragment_shader(&fs)
     }
 
     pub fn create_vertex_shader_from_path(path: &Path) -> Shader {
-        let vs = read_file(path);
+        let vs = read_file(path).unwrap();
         Shader::create_vertex_shader(&vs)
     }
 }
@@ -98,16 +97,6 @@ impl Drop for ShaderProgram {
             gl::DeleteProgram(self.handle);
         }
     }
-}
-
-fn read_file(path: &Path) -> String {
-    let mut f = File::open(path).unwrap();
-    let mut s = String::new();
-    let bytes_read = f.read_to_string(&mut s).unwrap();
-    if bytes_read == 0 {
-        println!("Read 0 bytes from file. This is probably not right");
-    }
-    s
 }
 
 impl ShaderProgram {

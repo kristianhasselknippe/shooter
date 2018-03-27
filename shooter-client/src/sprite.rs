@@ -1,6 +1,6 @@
 use na::{Vector3,Matrix4,Unit};
 use texture::{Texture,TextureUnit};
-use mesh::{Mesh};
+use mesh::mesh::{GlMesh};
 use std::path::{Path};
 use drawing::*;
 
@@ -11,7 +11,7 @@ pub struct Sprite {
 
     texture: Texture,
 
-    mesh: Mesh,
+    mesh: GlMesh,
 }
 
 impl Sprite {
@@ -25,7 +25,7 @@ impl Sprite {
             texture: t,
             rot: 0.0,
 
-            mesh: Mesh::create_quad(),
+            mesh: GlMesh::create_quad(),
         }
     }
 }

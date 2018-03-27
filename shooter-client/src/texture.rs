@@ -6,7 +6,7 @@ use super::image::{DecodingResult,ColorType,ImageDecoder};
 use super::gl;
 use super::gl::types::*;
 use super::drawing::DrawContext;
-use super::mesh::*;
+use mesh::mesh::{GlMesh};
 use super::shader::*;
 use std::os::raw::c_void;
 use std::ptr;
@@ -237,7 +237,7 @@ impl MemoryTexture {
     pub fn draw(&self, dc: &DrawContext, pos: (f32,f32), size: (f32,f32)) {
         let texture = Texture::from_data_u8((self.size.0 as i32, self.size.1 as i32), &self.data, &self.format);
         texture.bind(TextureUnit::Unit0);
-        let quad = Mesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
+        let quad = GlMesh::create_from_topleft_bottomright(pos, (pos.0 + size.0, pos.1 + size.1));
         quad.draw(dc);
     }
 }
