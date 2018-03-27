@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-
-extern crate shooter_common;
 extern crate glutin;
 extern crate gl;
 extern crate nalgebra as na;

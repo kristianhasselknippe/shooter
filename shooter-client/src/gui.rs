@@ -11,7 +11,7 @@ trait Layout {
 }
 
 struct DefaultLayout {}
-impl Layout for DefaultLayout {
+/*impl Layout for DefaultLayout {
     fn measure(&self, gui_data: &mut GuiElementData) -> Vector2<f64> {
         
     }
@@ -19,7 +19,7 @@ impl Layout for DefaultLayout {
     fn arrange(&self, gui_data: &mut GuiElementData) {
         
     }
-}
+}*/
 
 enum VerticalAlignment {
     Stretch,
@@ -35,7 +35,7 @@ enum HorizontalAlignment {
     Right
 }
 
-struct GuiElementData {
+pub struct GuiElementData {
     pos: Option<Vector2<f64>>,
     size: Option<Vector2<f64>>,
     margin: Option<Vector4<f64>>,
