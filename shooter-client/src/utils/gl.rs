@@ -61,6 +61,13 @@ pub fn gen_element_array_buffer() -> Buffer {
     }
 }
 
+pub fn clear(r: f32, g: f32, b: f32, a: f32) {
+    unsafe {
+        gl::ClearColor(r,g,b,a);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+    }
+}
+
 
 
 impl Buffer {
@@ -87,7 +94,7 @@ impl Buffer {
         self.data.is_bound = false;
     }
 
-    pub fn enable_vertex_attrib<T>(&mut self, attribs: &[VertexAttribute]) {
+    pub fn enable_vertex_attrib(&mut self, attribs: &[VertexAttribute]) {
         assert!(self.data.is_bound, "Attempted to enable vertex attribute on unbound vertex buffer");
 
         let mut stride = 0;
@@ -104,7 +111,7 @@ impl Buffer {
                 gl::VertexAttribPointer(attrib.location,
                                         attrib.num_comps,
                                         attrib.data_type,
-                                        gl::FALSE,
+                                        gl::TRUE, //TODO: Don't normalize by default
                                         stride,
                                         offset as *const GLvoid)
 
@@ -114,10 +121,23 @@ impl Buffer {
     }
 }
 
+pub fn draw_triangles(num_indices: GLsizei, element_type: GLenum) { unsafe {
+    gl::DrawElements(gl::TRIANGLES, num_indices, element_type, 0 as _) } }
+
 pub struct VertexAttribute {
     location: GLuint,
     data_type: GLenum,
     num_comps: GLsizei,
+}
+
+impl VertexAttribute {
+    pub fn new(location: GLuint, data_type: GLenum, num_comps: GLsizei) -> VertexAttribute {
+        VertexAttribute {
+            location: location,
+            data_type: data_type,
+            num_comps: num_comps,
+        }
+    }
 }
 
 pub struct VertexArray {

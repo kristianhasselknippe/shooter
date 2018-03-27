@@ -32,7 +32,7 @@ use camera::*;
 use time::*;
 use input::*;
 use fps_counter::*;
-use na::*;
+use utils::gl::*;
 
 fn main() {
 
@@ -61,14 +61,11 @@ fn main() {
     let camera = Camera::new_orthographic(60.0, 60.0);
 
     //let program = ShaderProgram::create_program("default");
-    let program = ShaderProgram::from_fragments("TexCoord = tex_coord;\n
-                                                 gl_Position = vec4(position.x, position.y, position.z, 1.0);",
-"float distance = 1.0 - distance(vec2(0.0,0.0), TexCoord * 2.0 - 1.0);
-color = vec4(distance,distance,distance,1.0);");
+    let program = ShaderProgram::create_program("default");
 
+    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
 
-    /*let model = Model::load_from_wavefron_file("al.obj");
-    assert!(mesh.is_ok());*/
+    program.use_program();
 
     let mut time = Time::new(60);
    
@@ -103,7 +100,7 @@ color = vec4(distance,distance,distance,1.0);");
             break 'running;
         }
 
-        //draw_context.clear((0.5,0.0,1.0,1.0));
+        clear(0.5,0.0,1.0,1.0);
 
         /*let cam_entity = game_state.get_entity(&camera_ref).unwrap();
         let view = Matrix4::new_translation(&Vector3::new(-cam_entity.pos.x,-cam_entity.pos.y,cam_entity.pos.z));
@@ -113,7 +110,10 @@ color = vec4(distance,distance,distance,1.0);");
         
         //draw_context.set_camera_matrix(camera_matrix);
 
-        
+        for mut m in &mut models {
+            m.draw();
+        }
+
 
         gl_window.swap_buffers().unwrap();
         

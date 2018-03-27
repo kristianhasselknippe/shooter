@@ -1,8 +1,10 @@
 extern crate wavefront_obj;
 
-use utils::gl::*;
+use gl;
+use gl::types::*;
 use self::wavefront_obj::obj;
 use utils::file::read_asset;
+use utils::gl::*;
 use super::{Vertex,Face};
 
 #[derive(Debug)]
@@ -48,12 +50,10 @@ impl Model {
     }
 
     fn get_vertices_byte_ptr(&self) -> *const u8 {
-        unsafe {
-            self.vertices.as_ptr() as *const u8
-        }
+        self.vertices.as_ptr() as *const u8
     }
 
-    pub fn upload(&mut self) {
+    pub fn draw(&mut self) {
         let mut vbo = gen_vertex_array_buffer();
         let mut ebo = gen_element_array_buffer();
 
@@ -65,12 +65,25 @@ impl Model {
         vbo.upload_data(vertices, vertices_bytes_len as _);
         //ebo.upload_data();
 
-        //vbo.enable_vertex_attrib(VertexAttribute::new(0, GLDataType::Float, 3));
+        vbo.enable_vertex_attrib(&[VertexAttribute::new(0, gl::FLOAT, 3)]);
         //vbo.enable_vertex_attrib(VertexAttribute::new(1, GLDataType::Float, 2));
-            
-        /*let mut positions = 
-        positions.enable(0,5);
-        ux_coords.enable(3,5);*/
+
+        let mut num_indices = 0;
+        let mut indices: Vec<u32> = Vec::new();
+        for g in &self.geometry {
+            for s in &g.shapes {
+                match s {
+                    &Shape::Triangle(ref f) => {
+                        indices.push(f.0);
+                        indices.push(f.1);
+                        indices.push(f.2);
+                        num_indices += 3;
+                    }
+                }
+            }
+        }
+        ebo.upload_data(indices.as_ptr() as _, num_indices);
+        draw_triangles(num_indices as _, gl::UNSIGNED_INT);
 
         /*gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * self.vertices.len()) as isize,
         mem::transmute(self.vertices.first().unwrap()), gl::STATIC_DRAW);

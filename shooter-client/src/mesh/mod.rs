@@ -19,4 +19,4 @@ impl<T> Vertex<T> {
 }
 
 #[derive(Debug)]
-pub struct Face(i32,i32,i32);
+pub struct Face(u32,u32,u32);
