@@ -1,17 +1,8 @@
 extern crate copy_arena;
 
-use std;
 use self::copy_arena::Arena;
-use na::{Vector2,Vector3,Matrix4,Unit};
-use std::ffi::CString;
-use super::scripting::*;
-use super::scripting::script::*;
-use super::scripting::lua::*;
-use super::scripting::lua::lua52_sys::*;
-use libc::{c_int,c_void};
-use super::game_state::GameState;
+use na::{Vector2,Vector3};
 use std::collections::HashMap;
-use of::OrderedFloat;
 
 #[derive(Hash,Eq,PartialEq,Debug,Clone)]
 pub struct EntityRef(pub u32);
@@ -39,45 +30,10 @@ impl Entity {
     }
 }
 
-luafunction!(get_pos, L, {
-    unsafe {
-        let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
-
-        push_new_table(L)
-            .with_value("x", &LuaType::Number(OrderedFloat(entity.pos.x as f64)))
-            .with_value("y", &LuaType::Number(OrderedFloat(entity.pos.y as f64)));
-        1
-    }
-});
-
-luafunction!(set_pos, L, {
-    unsafe {
-
-        let entity = c_void_to_ref!(Entity, lua_touserdata(L, 1));
-        let x = lua_tonumberx(L, 2, std::ptr::null_mut());
-        let y = lua_tonumberx(L, 3, std::ptr::null_mut());
-        (*entity).pos = Vector3::new(x as f32,y as f32, 0.0);
-        0
-    }
-});
-
-impl NativeLibraryProvider for Entity {
-   fn get_native_library() -> NativeLibrary {
-       NativeLibrary {
-           name: "Entity".to_string(),
-           functions: vec![
-               ("set_pos".to_string(), set_pos),
-               ("get_pos".to_string(), get_pos)
-           ],
-       }
-    }
-}
-
 
 #[derive(Debug)]
 pub struct EntityComponentStore {
     pub entities: HashMap<EntityRef,Entity>,
-    pub scripts: HashMap<EntityRef, Vec<Script>>,
     components_arena: Arena,
 
     entity_id_counter: u32,
@@ -88,7 +44,6 @@ impl EntityComponentStore {
         EntityComponentStore {
             entities: HashMap::new(),
             components_arena: Arena::new(),
-            scripts: HashMap::new(),
             entity_id_counter: 0,
         }
     }
@@ -98,14 +53,6 @@ impl EntityComponentStore {
         self.entity_id_counter += 1;
         self.entities.insert(ret.clone(), e);
         ret
-    }
-
-    pub fn add_script(&mut self, e: &EntityRef, script: &Script) {
-        if !self.scripts.contains_key(e) {
-            self.scripts.insert(e.clone(), Vec::new());
-        }
-        let mut entity_scripts = self.scripts.get_mut(e).unwrap();
-        entity_scripts.push(script.clone());
     }
 
     pub fn get_entity(&self, e: &EntityRef) -> Option<&Entity> {

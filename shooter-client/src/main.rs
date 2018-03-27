@@ -10,8 +10,6 @@ extern crate time as t;
 extern crate libc;
 extern crate ordered_float as of;
 
-#[macro_use] mod scripting;
-mod project_format;
 mod sprite;
 mod scene;
 mod shader;
@@ -19,7 +17,7 @@ mod mesh;
 mod drawing;
 mod transform;
 mod texture;
-mod text;
+//mod text;
 mod camera;
 mod entities;
 mod game_state;
@@ -31,22 +29,15 @@ mod gui;
 use gui::*;
 use glutin::GlContext;
 use sprite::*;
-use project_format::*;
 use shader::*;
 use drawing::*;
 use texture::*;
-use entities::*;
-use text::*;
+//use text::*;
 use camera::*;
 use time::*;
 use input::*;
 use fps_counter::*;
 use game_state::*;
-use scripting::lua::NativeLibraryProvider;
-
-use libc::c_void;
-
-use scripting::lua::LuaType;
 
 use std::path::Path;
 use na::*;
@@ -114,59 +105,19 @@ color = vec4(distance,distance,distance,1.0);");
     let mut time = Time::new(60);
 
     let mut game_state = GameState::new("this is the one i made");
-    println!("Loading userdata libraries");
-    game_state.register_native_library(&Camera::get_native_library());
-    game_state.register_native_library(&GameState::get_native_library());
-    game_state.register_native_library(&Entity::get_native_library());
-    game_state.register_native_library(&Input::get_native_library());
-    println!("Done loading userdata libraries");
-    game_state.new_module(&Path::new("scripts/debug.lua"));
-    game_state.new_module(&Path::new("scripts/math/vec3.lua"));
-    game_state.new_module(&Path::new("scripts/math/vec2.lua"));
-    game_state.new_module(&Path::new("scripts/math/constants.lua"));
-    game_state.new_module(&Path::new("scripts/math/quat.lua"));
-    game_state.new_module(&Path::new("scripts/math/utils.lua"));
-    game_state.new_module(&Path::new("scripts/math/mat4.lua"));
-    game_state.new_module(&Path::new("scripts/math/color.lua"));
-    game_state.new_module(&Path::new("scripts/math/intersect.lua"));
-    game_state.new_module(&Path::new("scripts/math/mesh.lua"));
-    game_state.new_module(&Path::new("scripts/math/octree.lua"));
-    game_state.new_module(&Path::new("scripts/math/simplex.lua"));
-    game_state.new_module(&Path::new("scripts/helpers.lua"));
-    game_state.new_module(&Path::new("scripts/globals.lua"));
-    game_state.new_module(&Path::new("scripts/scene.lua"));
-    game_state.new_module(&Path::new("scripts/main.lua"));
    
     let mut input = Input::new();
-    game_state.register_global_pointer("InputRef", unsafe { c_ref_to_void!(&input) });
-    
-    let scene = load_from_file(Path::new("scenes/scene1"));
 
     let player_ref = game_state.new_entity("player");
-    let player_script = game_state.register_script(Path::new("scripts/player.lua"), &player_ref);
-
-    //performance testing
-    /*for i in 0..100 {
-        let player_ref = game_state.new_entity_with_pos("player", Vector2::new(i as f32 * 2.0, i as f32 * 2.0));
-        let player_script = game_state.script_engine.new_behavior_script_from_path("player", Path::new("scripts/player.lua"));
-        game_state.ecs.add_script(&player_ref, &player_script);
-    }*/
-        
-    game_state.call_script_function("debug_scripts", &[]);
     
     let camera_ref = game_state.new_entity("camera");
-    let camera_script = game_state.register_script(Path::new("scripts/camera.lua"), &camera_ref);
-    camera_script.set_field("player", &LuaType::LightUserdata(unsafe {c_ref_to_void!(&camera_ref) }));
-    
-    let text = Text::new("this is some text", &draw_context);
 
+    //let text = Text::new("this is some text", &draw_context);
 
     let mut gui = Panel::new(Vector2::new(100.0,100.0), Vector2::new(100.0,50.0));
     gui.add_drawable(Box::new(Shape::new_with_color(Vector4::new(1.0,0.0,0.0,1.0))));
     gui.add_drawable(Box::new(Shape::new_with_color(Vector4::new(1.0,1.0,0.0,1.0))));
         
-
-
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
       
     let mut fps_counter = FpsCounter::new();
@@ -192,14 +143,10 @@ color = vec4(distance,distance,distance,1.0);");
             }
         });
         
-        game_state.pre_update();
-
         if input.escape {
             break 'running;
         }
-
-        game_state.update_entities(dt as f64);
-
+        
         //update player sprite position since they are not yet connected
         let p_entity = game_state.get_entity(&player_ref).unwrap();
         player_sprite.pos.x = p_entity.pos.x;

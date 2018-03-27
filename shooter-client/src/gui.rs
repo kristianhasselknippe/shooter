@@ -1,5 +1,3 @@
-use std;
-use std::rc::Rc;
 use na::{Vector2,Vector4};
 use mesh::*;
 use drawing::*;

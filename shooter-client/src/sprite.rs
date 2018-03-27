@@ -1,8 +1,7 @@
-use na::{Vector2,Vector3,Matrix4,Unit};
+use na::{Vector3,Matrix4,Unit};
 use texture::{Texture,TextureUnit};
 use mesh::{Mesh};
 use std::path::{Path};
-use shader::ShaderProgram;
 use drawing::*;
 
 pub struct Sprite {
