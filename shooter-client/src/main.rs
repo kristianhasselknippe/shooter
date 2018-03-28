@@ -74,6 +74,15 @@ fn main() {
     let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
     println!("Model: {:?}", models);
 
+    let mut draw_call = DrawCall::new(
+        program,
+        models.remove(1), //NONO
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3)
+        ]
+    );
+    
+
     let mut time = Time::new(60);
 
     let mut input = Input::new();
@@ -86,29 +95,22 @@ fn main() {
     let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
     let mut camera_pos = na::Point3::<f32>::new(0.0, 0.0, 1.0);
 
-    println!("Num models: {}", models.len());
-    let mut draw_call = DrawCall::new(
-        program,
-        models.remove(1), //NONO
-        vec![
-            VertexAttribute::new(0, gl::FLOAT, 3)
-        ]
-    );
+    let eye = camera_pos;
+    let target = na::Point3::new(0.0, 0.0, -1.0);
+    let view = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
 
-    clear(0.3, 0.0, 0.5, 1.0);
-    dc.draw(&mut draw_call);
-
-    // program.set_mat4("mvp", &model_view_projection);
+    
 
     println!("Swapping \n\n");
 
     viewport(window_size.0 as i32, window_size.1 as i32);
 
-    gl_window.swap_buffers().unwrap();
+    let mut accum = 0.0;
 
     'running: while running {
         let dt = time.delta_time() as f32;
-
+        accum += dt;
+        
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => {
@@ -130,37 +132,23 @@ fn main() {
             }
         });
 
-/*        let input_vector = input.normalized_input_vector();
-
-        // camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
-
-        // Our object is translated along the x axis.
-        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, 0.0), na::zero());
-
-        let eye = camera_pos;
-        let target = na::Point3::new(0.0, 0.0, -1.0);
-        let view = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
-
-        let model_view_projection = camera.projection * (view * model).to_homogeneous();
+        let input_vector = input.normalized_input_vector();
 
         if input.escape {
             break 'running;
         }
 
+        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -4.0), na::Vector3::new(0.0,accum.cos(),0.0));
+
+        let model_view_projection = camera.projection * (view * model).to_homogeneous();
+
+        println!("Num models: {}", models.len());
+
+        draw_call.set_mat4("mvp", &model_view_projection);    
+
         clear(0.3, 0.0, 0.5, 1.0);
-
-        program.use_program();
-        program.set_mat4("mvp", &model_view_projection);
-
-        println!("Models length: {}", models.len());
-        for mut m in &mut models {
-            m.draw();
-        }
-
-        println!("Swapping \n\n");*/
-
-        
-        //gl_window.swap_buffers().unwrap();
+        dc.draw(&mut draw_call);
+        gl_window.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
         fps_counter.update(dt as f32);

@@ -75,4 +75,8 @@ impl DrawCall {
     pub fn unbind(&mut self) {
         self.vao.unbind();
     }
+
+    pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
+        self.program.set_mat4(name, val);
+    }   
 }
