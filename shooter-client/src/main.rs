@@ -59,7 +59,7 @@ fn main() {
     unsafe {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Enable(gl::CULL_FACE);
+        // gl::Enable(gl::CULL_FACE);
     };
 
     let camera = Camera::new_orthographic(60.0, 60.0);
@@ -108,10 +108,10 @@ fn main() {
 
         let input_vector = input.normalized_input_vector();
 
-        camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
+        // camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
 
         // Our object is translated along the x axis.
-        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -5.0), na::zero());
+        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, 5.0), na::zero());
 
         let eye = camera_pos;
         let target = camera_pos + na::Vector3::new(0.0, 0.0, -1.0);
@@ -123,12 +123,15 @@ fn main() {
             break 'running;
         }
 
-        clear(0.5, 0.0, 1.0, 1.0);
+        clear(0.5, 5.0, 1.0, 1.0);
 
         program.use_program();
         program.set_mat4("mvp", &model_view_projection);
 
+        let mut i = 0;
         for mut m in &mut models {
+            println!("Drawing model: {}", i);
+            i += 1;
             m.draw();
         }
 

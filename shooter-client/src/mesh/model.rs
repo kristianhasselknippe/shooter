@@ -95,16 +95,10 @@ impl Model {
             }
         }
 
-        ebo.upload_data(indices.as_ptr() as _, num_indices * 4);
-        draw_triangles(num_indices as _, gl::UNSIGNED_INT);
+        let num_indices_bytes = num_indices * 4;
 
-        // gl::BufferData(gl::ARRAY_BUFFER, (mem::size_of::<GLfloat>() * self.vertices.len()) as isize,
-        // mem::transmute(self.vertices.first().unwrap()), gl::STATIC_DRAW);
-        //
-        // gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (mem::size_of::<GLuint>() * self.indices.len()) as GLsizeiptr,
-        // mem::transmute(self.indices.first().unwrap()), gl::STATIC_DRAW);
-        //
-        // gl::DrawElements(gl::TRIANGLES, self.n_elements as i32, gl::UNSIGNED_INT, ptr::null());
+        ebo.upload_data(indices.as_ptr() as _, num_indices_bytes);
+        draw_triangles(num_indices as _, gl::UNSIGNED_INT);
     }
 }
 
