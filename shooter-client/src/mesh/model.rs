@@ -30,7 +30,7 @@ impl Model {
                         vertices.push(v.y as GLfloat);
                         vertices.push(v.z as GLfloat);
                     }
-                    println!("Vertices: {:?}", vertices);
+                    // println!("Vertices: {:?}", vertices);
 
                     let mut vbo = gen_vertex_array_buffer();
                     vbo.bind();
@@ -80,8 +80,8 @@ impl Model {
         self.vbo.bind();
         println!("Drawing num indices: {}", self.num_indices);
         unsafe {
-            gl::VertexAttribPointer(0, //position
-                                    3, //num components
+            gl::VertexAttribPointer(0, // position
+                                    3, // num components
                                     gl::FLOAT,
                                     gl::FALSE,
                                     3 * ::std::mem::size_of::<GLfloat>() as GLsizei, // Tightly packed atm

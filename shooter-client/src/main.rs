@@ -79,8 +79,6 @@ fn main() {
     let mut input = Input::new();
 
     println!("Window size: {},{}", window_size.0, window_size.1);
-    viewport(window_size.0 as i32, window_size.1 as i32);
-    
 
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
@@ -93,7 +91,7 @@ fn main() {
     clear(0.3, 0.0, 0.5, 1.0);
 
     program.use_program();
-    //program.set_mat4("mvp", &model_view_projection);
+    // program.set_mat4("mvp", &model_view_projection);
 
     println!("Models length: {}", models.len());
     for mut m in &mut models {
@@ -101,6 +99,8 @@ fn main() {
     }
 
     println!("Swapping \n\n");
+
+    viewport(window_size.0 as i32, window_size.1 as i32);
 
     gl_window.swap_buffers().unwrap();
 
