@@ -36,7 +36,7 @@ use time::*;
 use input::*;
 use fps_counter::*;
 use utils::gl::*;
-use drawing::DrawContext;
+use drawing::{DrawContext,DrawCall};
 
 fn main() {
 
@@ -86,17 +86,19 @@ fn main() {
     let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
     let mut camera_pos = na::Point3::<f32>::new(0.0, 0.0, 1.0);
 
-    dc.bind();
+    println!("Num models: {}", models.len());
+    let mut draw_call = DrawCall::new(
+        program,
+        models.remove(1), //NONO
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3)
+        ]
+    );
 
     clear(0.3, 0.0, 0.5, 1.0);
+    dc.draw(&mut draw_call);
 
-    program.use_program();
     // program.set_mat4("mvp", &model_view_projection);
-
-    println!("Models length: {}", models.len());
-    for mut m in &mut models {
-        m.draw();
-    }
 
     println!("Swapping \n\n");
 

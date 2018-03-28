@@ -17,7 +17,6 @@ type BufferHandle = GLuint;
 #[derive(Debug)]
 struct BufferData {
     target: GLenum,
-    is_bound: bool,
 }
 
 #[derive(Debug)]
@@ -54,7 +53,6 @@ pub fn gen_vertex_array_buffer() -> Buffer {
         handle: gen_buffer(),
         data: BufferData {
             target: gl::ARRAY_BUFFER,
-            is_bound: false,
         },
     }
 }
@@ -65,7 +63,6 @@ pub fn gen_element_array_buffer() -> Buffer {
         handle: gen_buffer(),
         data: BufferData {
             target: gl::ELEMENT_ARRAY_BUFFER,
-            is_bound: false,
         },
     }
 }
@@ -81,8 +78,6 @@ pub fn clear(r: f32, g: f32, b: f32, a: f32) {
 
 impl Buffer {
     pub fn upload_data(&mut self, data: *const u8, len: isize) {
-        assert!(self.data.is_bound,
-                "Attempted to upload data to unbound buffer");
         println!("Uploading data of len: {:?}, to target: {}", len, self.data.target);
         unsafe {
             gl::BufferData(self.data.target, len, data as *const GLvoid, gl::STATIC_DRAW);
@@ -91,54 +86,46 @@ impl Buffer {
     }
 
     pub fn bind(&mut self) {
-        assert!(!self.data.is_bound,
-                "Attempted to rebind an already bound vertex buffer");
         unsafe {
             gl::BindBuffer(self.data.target, self.handle);
         }
         gl_print_error("BindBuffer");
-        self.data.is_bound = true;
     }
 
     pub fn unbind(&mut self) {
-        assert!(self.data.is_bound,
-                "Attempted to unbind an already unbound vertex buffer");
         unsafe { gl::BindBuffer(self.data.target, 0) }
         gl_print_error("UnbindBuffer");
-        self.data.is_bound = false;
+    }
+}
+
+pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
+    let mut stride = 0;
+    for a in attribs {
+        stride += a.num_comps * GL_TYPE_TO_SIZE[&a.data_type]
     }
 
-    pub fn enable_vertex_attrib(&mut self, attribs: &[VertexAttribute]) {
-        assert!(self.data.is_bound,
-                "Attempted to enable vertex attribute on unbound vertex buffer");
+    println!("Stride: {}", stride);
+    
+    let mut offset = 0;
+    for attrib in attribs {
+        unsafe {
+            println!("VertexAttribPointer: {},{},{},{}",
+                     attrib.location,
+                     attrib.num_comps,
+                     attrib.data_type,
+                     stride);
+            gl::VertexAttribPointer(attrib.location,
+                                    attrib.num_comps,
+                                    attrib.data_type,
+                                    gl::FALSE,
+                                    stride, // Tightly packed atm
+                                    offset as *const GLvoid);
+            gl_print_error("VertexAttribPointer");
+            gl::EnableVertexAttribArray(attrib.location);
+            gl_print_error("EnableVertexAttribArray");
 
-        let mut stride = 0;
-        for a in attribs {
-            stride += a.num_comps * GL_TYPE_TO_SIZE[&a.data_type]
         }
-
-        let mut offset = 0;
-        for attrib in attribs {
-            unsafe {
-                println!("VertexAttribPointer: {},{},{},{},{}",
-                         attrib.location,
-                         attrib.num_comps,
-                         attrib.data_type,
-                         gl::FALSE,
-                         0);
-                gl::VertexAttribPointer(attrib.location,
-                                        attrib.num_comps,
-                                        attrib.data_type,
-                                        gl::FALSE,
-                                        0, // Tightly packed atm
-                                        0 as *const GLvoid);
-                gl_print_error("VertexAttribPointer");
-                gl::EnableVertexAttribArray(attrib.location);
-                gl_print_error("EnableVertexAttribArray");
-
-            }
-            offset += attrib.num_comps * GL_TYPE_TO_SIZE[&attrib.data_type]
-        }
+        offset += attrib.num_comps * GL_TYPE_TO_SIZE[&attrib.data_type]
     }
 }
 
@@ -166,7 +153,6 @@ impl VertexAttribute {
 
 pub struct VertexArray {
     handle: GLuint,
-    is_bound: bool,
 }
 
 pub fn gen_vertex_array() -> VertexArray {
@@ -176,7 +162,6 @@ pub fn gen_vertex_array() -> VertexArray {
         gl_print_error(&format!("GenVertexArrays {}", vao));
         assert!(vao != 0);
         VertexArray {
-            is_bound: false,
             handle: vao,
         }
     }
@@ -184,22 +169,17 @@ pub fn gen_vertex_array() -> VertexArray {
 
 impl VertexArray {
     pub fn bind(&mut self) {
-        assert!(!self.is_bound,
-                "Attempted to rebind an already bound vertex array");
         unsafe {
             gl::BindVertexArray(self.handle);
             gl_print_error("BindVertexArray");
         }
-        self.is_bound = true;
     }
 
     pub fn unbind(&mut self) {
-        assert!(self.is_bound, "Attempted to unbind an unbound vertex array");
         unsafe {
             gl::BindVertexArray(0);
             gl_print_error("UnbindVertexArray0");
         }
-        self.is_bound = false;
     }
 }
 

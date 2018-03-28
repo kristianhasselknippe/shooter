@@ -9,9 +9,10 @@ use super::{Vertex, Face};
 
 #[derive(Debug)]
 pub struct Model {
-    name: String,
+    pub name: String,
 
-    num_indices: i32,
+    pub num_indices: i32,
+    pub index_type: GLenum,
     vbo: Buffer,
     ebo: Buffer,
 }
@@ -64,6 +65,7 @@ impl Model {
                     Model {
                         name: o.name.to_string(),
                         num_indices: indices.len() as i32,
+                        index_type: gl::UNSIGNED_INT,
                         vbo: vbo,
                         ebo: ebo,
                     }
@@ -75,20 +77,12 @@ impl Model {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn bind(&mut self) {
         self.ebo.bind();
         self.vbo.bind();
-        println!("Drawing num indices: {}", self.num_indices);
-        unsafe {
-            gl::VertexAttribPointer(0, // position
-                                    3, // num components
-                                    gl::FLOAT,
-                                    gl::FALSE,
-                                    3 * ::std::mem::size_of::<GLfloat>() as GLsizei, // Tightly packed atm
-                                    0 as *const GLvoid);
-            gl::EnableVertexAttribArray(0);
-        }
-        draw_triangles(self.num_indices as _, gl::UNSIGNED_INT);
+    }
+
+    pub fn unbind(&mut self) {
         self.ebo.unbind();
         self.vbo.unbind();
     }
