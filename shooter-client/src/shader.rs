@@ -32,6 +32,8 @@ impl Shader {
             let mut status = gl::FALSE as GLint;
             gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut status);
 
+            println!("Vertex Shader status: {}", status);
+
             if status != (gl::TRUE as GLint) {
                 let mut len = 0;
                 gl::GetShaderiv(vertex_shader, gl::INFO_LOG_LENGTH, &mut len);
@@ -62,6 +64,8 @@ impl Shader {
 
             let mut status = gl::FALSE as GLint;
             gl::GetShaderiv(fragment_shader, gl::COMPILE_STATUS, &mut status);
+
+            println!("Fragment Shader status: {}", status);
 
             if status != (gl::TRUE as GLint) {
                 // println!("Status: {:?}", status);

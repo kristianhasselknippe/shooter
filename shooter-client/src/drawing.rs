@@ -16,6 +16,7 @@ pub struct DrawContext {
 
 impl DrawContext {
     pub fn new(width: u32, height: u32, camera: Camera) -> DrawContext {
+        println!("Creating draw context");
         DrawContext {
             camera: camera,
             width: width,
@@ -31,9 +32,11 @@ impl DrawContext {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn bind(&mut self) {
         self.vao.bind();
+    }
 
+    pub fn unbind(&mut self) {
         self.vao.unbind();
     }
 }

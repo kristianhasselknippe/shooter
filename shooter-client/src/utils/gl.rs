@@ -30,10 +30,16 @@ pub struct Buffer {
     data: BufferData,
 }
 
+fn gl_print_error(msg: &str) {
+    print!("{} - ", msg);
+    check_gl_errors();
+}
+
 fn gen_buffer() -> BufferHandle {
     unsafe {
         let mut out = 0;
         gl::GenBuffers(1, &mut out);
+        gl_print_error("GenBuffers");
         assert!(out != 0);
         out
     }
@@ -64,7 +70,9 @@ pub fn gen_element_array_buffer() -> Buffer {
 pub fn clear(r: f32, g: f32, b: f32, a: f32) {
     unsafe {
         gl::ClearColor(r, g, b, a);
+        gl_print_error("ClearColor");
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        gl_print_error("Clear");
     }
 }
 
@@ -78,6 +86,7 @@ impl Buffer {
                            len as isize,
                            data as *const GLvoid,
                            gl::STATIC_DRAW);
+            gl_print_error("BufferData");
         }
     }
 
@@ -87,6 +96,7 @@ impl Buffer {
         unsafe {
             gl::BindBuffer(self.data.target, self.handle);
         }
+        gl_print_error("BindBuffer");
         self.data.is_bound = true;
     }
 
@@ -94,6 +104,7 @@ impl Buffer {
         assert!(self.data.is_bound,
                 "Attempted to unbind an already unbound vertex buffer");
         unsafe { gl::BindBuffer(self.data.target, 0) }
+        gl_print_error("UnbindBuffer");
         self.data.is_bound = false;
     }
 
@@ -109,15 +120,21 @@ impl Buffer {
         let mut offset = 0;
         for attrib in attribs {
             unsafe {
-                // Enable the attribute array for location
-                gl::EnableVertexAttribArray(attrib.location);
-                // Define the shape of the data for this attribute
+                println!("VertexAttribPointer: {},{},{},{},{}",
+                         attrib.location,
+                         attrib.num_comps,
+                         attrib.data_type,
+                         gl::FALSE,
+                         0);
                 gl::VertexAttribPointer(attrib.location,
                                         attrib.num_comps,
                                         attrib.data_type,
                                         gl::FALSE,
-                                        stride,
-                                        offset as *const GLvoid)
+                                        0, // Tightly packed atm
+                                        0 as *const GLvoid);
+                gl_print_error("VertexAttribPointer");
+                gl::EnableVertexAttribArray(attrib.location);
+                gl_print_error("EnableVertexAttribArray");
 
             }
             offset += attrib.num_comps * GL_TYPE_TO_SIZE[&attrib.data_type]
@@ -126,7 +143,9 @@ impl Buffer {
 }
 
 pub fn draw_triangles(num_indices: GLsizei, element_type: GLenum) {
-    unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, element_type, 0 as _) }
+    println!("Drawing triangles: num: {}", num_indices);
+    unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, gl::UNSIGNED_INT, 0 as _) }
+    gl_print_error("DrawElements");
 }
 
 pub struct VertexAttribute {
@@ -154,6 +173,7 @@ pub fn gen_vertex_array() -> VertexArray {
     unsafe {
         let mut vao = 0;
         gl::GenVertexArrays(1, &mut vao);
+        gl_print_error(&format!("GenVertexArrays {}", vao));
         assert!(vao != 0);
         VertexArray {
             is_bound: false,
@@ -168,6 +188,7 @@ impl VertexArray {
                 "Attempted to rebind an already bound vertex array");
         unsafe {
             gl::BindVertexArray(self.handle);
+            gl_print_error("BindVertexArray");
         }
         self.is_bound = true;
     }
@@ -176,7 +197,54 @@ impl VertexArray {
         assert!(self.is_bound, "Attempted to unbind an unbound vertex array");
         unsafe {
             gl::BindVertexArray(0);
+            gl_print_error("UnbindVertexArray0");
         }
         self.is_bound = false;
+    }
+}
+
+pub fn check_gl_errors() {
+    unsafe {
+        let error = gl::GetError();
+        match error {
+            gl::NO_ERROR => {
+                println!("No GL error");
+            }
+            gl::INVALID_ENUM => {
+                println!("GL: Invalid enum error");
+            }
+            gl::INVALID_VALUE => {
+                println!("GL: Invalid value");
+            }
+            gl::INVALID_OPERATION => {
+                println!("GL: Invalid operation");
+            }
+            gl::INVALID_FRAMEBUFFER_OPERATION => {
+                println!("GL: Invalid framebuffer operation");
+            }
+            gl::OUT_OF_MEMORY => {
+                println!("GL: Out of memory");
+            }
+            _ => {
+                println!("GL: Unknown error code");
+            }
+        }
+    }
+}
+
+fn gl_get_string<'a>(name: GLenum) -> Result<&'a str, ::std::str::Utf8Error> {
+    unsafe {
+        let str = gl::GetString(name);
+        gl_print_error("GetString");
+        let cstr = ::std::ffi::CStr::from_ptr(str as *const i8);
+        cstr.to_str()
+    }
+}
+
+pub fn get_gl_version() -> String {
+    if let Ok(ret) = gl_get_string(gl::VERSION) {
+        ret.to_string()
+    } else {
+        panic!("Unable to get GL VERSION string");
     }
 }

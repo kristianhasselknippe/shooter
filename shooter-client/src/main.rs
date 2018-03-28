@@ -56,24 +56,28 @@ fn main() {
         gl::ClearColor(0.0, 1.0, 0.0, 1.0);
     }
 
+    println!("GL version: {}", get_gl_version());
+
     unsafe {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+        gl::Disable(gl::DEPTH_TEST);
         // gl::Enable(gl::CULL_FACE);
     };
 
     let camera = Camera::new_orthographic(60.0, 60.0);
-    let dc = DrawContext::new(window_size.0, window_size.1, camera);
+    let mut dc = DrawContext::new(window_size.0, window_size.1, camera);
 
     // let program = ShaderProgram::create_program("default");
     let program = ShaderProgram::create_program("default");
 
-    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
+    let mut models = Model::load_from_wavefront_file("quad.obj").unwrap();
 
     let mut time = Time::new(60);
 
     let mut input = Input::new();
 
+    println!("Window size: {},{}", window_size.0, window_size.1);
     unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
 
     let mut fps_counter = FpsCounter::new();
@@ -81,6 +85,9 @@ fn main() {
 
     let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
     let mut camera_pos = na::Point3::<f32>::new(0.0, 0.0, 1.0);
+
+
+    dc.bind();
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -111,10 +118,10 @@ fn main() {
         // camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
 
         // Our object is translated along the x axis.
-        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, 5.0), na::zero());
+        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, 0.0), na::zero());
 
         let eye = camera_pos;
-        let target = camera_pos + na::Vector3::new(0.0, 0.0, -1.0);
+        let target = na::Point3::new(0.0, 0.0, -1.0);
         let view = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
 
         let model_view_projection = camera.projection * (view * model).to_homogeneous();
@@ -123,18 +130,17 @@ fn main() {
             break 'running;
         }
 
-        clear(0.5, 5.0, 1.0, 1.0);
+        clear(0.3, 0.0, 0.5, 1.0);
 
         program.use_program();
         program.set_mat4("mvp", &model_view_projection);
 
-        let mut i = 0;
+        println!("Models length: {}", models.len());
         for mut m in &mut models {
-            println!("Drawing model: {}", i);
-            i += 1;
             m.draw();
         }
 
+        println!("Swapping \n\n");
 
         gl_window.swap_buffers().unwrap();
 

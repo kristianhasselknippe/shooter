@@ -18,8 +18,10 @@ pub struct Geometry {
 
 pub struct Model {
     name: String,
-    vertices: Vec<Vertex<f32>>,
-    geometry: Vec<Geometry>,
+
+    num_indices: i32,
+    vbo: Buffer,
+    ebo: Buffer,
 }
 
 impl Model {
@@ -30,27 +32,47 @@ impl Model {
             let ret = obj.objects
                 .iter()
                 .map(|o| {
+                    let mut vertices = Vec::new();
+                    for v in &o.vertices {
+                        vertices.push(v.x as GLfloat);
+                        vertices.push(v.y as GLfloat);
+                        vertices.push(v.z as GLfloat);
+                    }
+
+                    let mut vbo = gen_vertex_array_buffer();
+                    vbo.bind();
+                    vbo.upload_data(vertices.as_ptr() as _,
+                                    (vertices.len() * ::std::mem::size_of::<GLfloat>()) as _);
+                    vbo.unbind();
+
+                    let mut indices = Vec::new();
+                    for g in &o.geometry {
+                        for s in &g.shapes {
+                            match s.primitive {
+                                wavefront_obj::obj::Primitive::Triangle(a, b, c) => {
+                                    indices.push(a.0 as GLuint);
+                                    indices.push(b.0 as GLuint);
+                                    indices.push(c.0 as GLuint);
+                                }
+                                _ => panic!("Unsupported shape primitive"),
+                            }
+                        }
+                    }
+                    println!("Indices length: {}", indices.len());
+                    println!("Indices lenght bytes: {}",
+                             (indices.len() * ::std::mem::size_of::<GLfloat>()) as isize);
+
+                    let mut ebo = gen_element_array_buffer();
+                    ebo.bind();
+                    ebo.upload_data(indices.as_ptr() as _,
+                                    (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);
+                    ebo.unbind();
+
                     Model {
                         name: o.name.to_string(),
-                        vertices: o.vertices
-                            .iter()
-                            .map(|v| Vertex::new(v.x as f32, v.y as f32, v.z as f32))
-                            .collect(),
-                        geometry: o.geometry
-                            .iter()
-                            .map(|g| {
-                                Geometry {
-                        shapes: g.shapes.iter().map(|s| {
-                            match s.primitive {
-                                self::wavefront_obj::obj::Primitive::Triangle(a,b,c) => {
-                                    Shape::Triangle(Face(a.0 as _, b.0 as _, c.0 as _))
-                                },
-                                _ => { panic!("Unsupported shape primitive") }
-                            }
-                        }).collect()
-                    }
-                            })
-                            .collect(),
+                        num_indices: indices.len() as i32,
+                        vbo: vbo,
+                        ebo: ebo,
                     }
                 })
                 .collect();
@@ -60,45 +82,22 @@ impl Model {
         }
     }
 
-    fn get_vertices_byte_ptr(&self) -> *const u8 {
-        self.vertices.as_ptr() as *const u8
-    }
-
     pub fn draw(&mut self) {
-        let mut vbo = gen_vertex_array_buffer();
-        let mut ebo = gen_element_array_buffer();
-
-        vbo.bind();
-        ebo.bind();
-
-        let vertices_bytes_len = self.vertices.len() * ::std::mem::size_of::<f32>() * 3;
-        let vertices = self.get_vertices_byte_ptr();
-
-        vbo.upload_data(vertices, vertices_bytes_len as _);
-        // ebo.upload_data();
-
-        vbo.enable_vertex_attrib(&[VertexAttribute::new(0, gl::FLOAT, 3)]);
-        // vbo.enable_vertex_attrib(VertexAttribute::new(1, GLDataType::Float, 2));
-
-        let mut num_indices = 0;
-        let mut indices: Vec<u32> = Vec::new();
-        for g in &self.geometry {
-            for s in &g.shapes {
-                match s {
-                    &Shape::Triangle(ref f) => {
-                        indices.push(f.0);
-                        indices.push(f.1);
-                        indices.push(f.2);
-                        num_indices += 3;
-                    }
-                }
-            }
+        self.ebo.bind();
+        self.vbo.bind();
+        println!("Drawing num indices: {}", self.num_indices);
+        unsafe {
+            gl::VertexAttribPointer(0,
+                                    3,
+                                    gl::FLOAT,
+                                    gl::FALSE,
+                                    3, // Tightly packed atm
+                                    0 as *const GLvoid);
+            gl::EnableVertexAttribArray(0);
         }
-
-        let num_indices_bytes = num_indices * 4;
-
-        ebo.upload_data(indices.as_ptr() as _, num_indices_bytes);
-        draw_triangles(num_indices as _, gl::UNSIGNED_INT);
+        draw_triangles(self.num_indices as _, gl::UNSIGNED_INT);
+        self.ebo.unbind();
+        self.vbo.unbind();
     }
 }
 
@@ -109,16 +108,6 @@ mod tests {
     #[test]
     fn load_al_model() {
         if let Ok(models) = Model::load_from_wavefront_file("al.obj") {
-            // println!("Models:");
-            // for m in  models {
-            // println!("\tModel name : {}", m.name);
-            // for g in m.geometry {
-            // println!("\t\tShape:");
-            // for t in g.shapes {
-            // println!("\t\t\tTriangle: {:?}", t)
-            // }
-            // }
-            // }
         } else {
             panic!("Model did not load correctly")
         }
