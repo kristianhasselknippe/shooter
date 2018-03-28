@@ -71,7 +71,7 @@ fn main() {
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
-    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
+    let mut models = Model::load_from_wavefront_file("unicorn/twilight.obj").unwrap();
     println!("Models len: {}", models.len());
 
     let mut draw_calls = Vec::new();
