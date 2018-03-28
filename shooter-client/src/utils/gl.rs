@@ -131,7 +131,7 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
 
 pub fn draw_triangles(num_indices: GLsizei, element_type: GLenum) {
     println!("Drawing triangles: num: {}", num_indices);
-    unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, gl::UNSIGNED_INT, 0 as _) }
+    unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, element_type, 0 as _) }
     gl_print_error("DrawElements");
 }
 

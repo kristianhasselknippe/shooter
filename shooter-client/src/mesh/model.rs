@@ -5,7 +5,6 @@ use gl::types::*;
 use self::wavefront_obj::obj;
 use utils::file::read_asset;
 use utils::gl::*;
-use super::{Vertex, Face};
 
 #[derive(Debug)]
 pub struct Model {

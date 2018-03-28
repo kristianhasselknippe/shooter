@@ -1,10 +1,10 @@
 use gl;
-use gl::types::*;
 use utils::gl::*;
 use shader::ShaderProgram;
 use na::Matrix4;
 use camera::Camera;
 use mesh::model::Model;
+use std::rc::Rc;
 
 pub struct Color(f32, f32, f32, f32);
 
@@ -38,13 +38,13 @@ impl DrawContext {
 
 pub struct DrawCall {
     vao: VertexArray,
-    program: ShaderProgram,
+    program: Rc<ShaderProgram>,
     model: Model,
     vertex_attributes: Vec<VertexAttribute>,
 }
 
 impl DrawCall {
-    pub fn new(program: ShaderProgram, model: Model, vertex_attributes: Vec<VertexAttribute>) -> DrawCall {
+    pub fn new(program: Rc<ShaderProgram>, model: Model, vertex_attributes: Vec<VertexAttribute>) -> DrawCall {
         let mut vao = gen_vertex_array();
         let mut model = model;
         vao.bind();
@@ -63,7 +63,6 @@ impl DrawCall {
 
     pub fn draw(&mut self) {
         self.bind();
-        assert!(self.model.num_indices != 0);
         draw_triangles(self.model.num_indices, self.model.index_type);
         self.unbind();
     }

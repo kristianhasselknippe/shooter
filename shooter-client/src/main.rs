@@ -69,19 +69,22 @@ fn main() {
     let mut dc = DrawContext::new(window_size.0, window_size.1, camera);
 
     // let program = ShaderProgram::create_program("default");
-    let program = ShaderProgram::create_program("default");
+    let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
     let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
-    println!("Model: {:?}", models);
+    println!("Models len: {}", models.len());
 
-    let mut draw_call = DrawCall::new(
-        program,
-        models.remove(1), //NONO
-        vec![
-            VertexAttribute::new(0, gl::FLOAT, 3)
-        ]
-    );
-    
+    let mut draw_calls = Vec::new();
+
+    for m in models {
+        draw_calls.push(DrawCall::new(
+            program.clone(),
+            m,
+            vec![
+                VertexAttribute::new(0, gl::FLOAT, 3)
+            ]
+        ));
+    }
 
     let mut time = Time::new(60);
 
@@ -132,7 +135,7 @@ fn main() {
             }
         });
 
-        let input_vector = input.normalized_input_vector();
+        //let input_vector = input.normalized_input_vector();
 
         if input.escape {
             break 'running;
@@ -142,12 +145,13 @@ fn main() {
 
         let model_view_projection = camera.projection * (view * model).to_homogeneous();
 
-        println!("Num models: {}", models.len());
-
-        draw_call.set_mat4("mvp", &model_view_projection);    
-
         clear(0.3, 0.0, 0.5, 1.0);
-        dc.draw(&mut draw_call);
+
+        for mut d in &mut draw_calls {
+            d.set_mat4("mvp", &model_view_projection);
+            dc.draw(&mut d);
+        }
+        
         gl_window.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
