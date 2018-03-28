@@ -109,11 +109,12 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
     let mut offset = 0;
     for attrib in attribs {
         unsafe {
-            println!("VertexAttribPointer: {},{},{},{}",
+            println!("VertexAttribPointer: {},{},{},{},{}",
                      attrib.location,
                      attrib.num_comps,
                      attrib.data_type,
-                     stride);
+                     stride,
+                     offset);
             gl::VertexAttribPointer(attrib.location,
                                     attrib.num_comps,
                                     attrib.data_type,

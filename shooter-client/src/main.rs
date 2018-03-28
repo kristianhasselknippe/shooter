@@ -61,8 +61,9 @@ fn main() {
     unsafe {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Disable(gl::DEPTH_TEST);
-        // gl::Enable(gl::CULL_FACE);
+        gl::Enable(gl::DEPTH_TEST);
+        //gl::Enable(gl::CULL_FACE);
+        gl::CullFace(gl::BACK);
     };
 
     let camera = Camera::new_orthographic(60.0, 60.0);
@@ -71,7 +72,7 @@ fn main() {
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
-    let mut models = Model::load_from_wavefront_file("unicorn/twilight.obj").unwrap();
+    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
     println!("Models len: {}", models.len());
 
     let mut draw_calls = Vec::new();
@@ -81,7 +82,8 @@ fn main() {
             program.clone(),
             m,
             vec![
-                VertexAttribute::new(0, gl::FLOAT, 3)
+                VertexAttribute::new(0, gl::FLOAT, 3),
+                VertexAttribute::new(1, gl::FLOAT, 3)
             ]
         ));
     }
@@ -141,7 +143,7 @@ fn main() {
             break 'running;
         }
 
-        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -4.0), na::Vector3::new(0.0,accum.cos(),0.0));
+        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0), na::Vector3::new(0.0,accum.cos(),0.0));
 
         let model_view_projection = camera.projection * (view * model).to_homogeneous();
 

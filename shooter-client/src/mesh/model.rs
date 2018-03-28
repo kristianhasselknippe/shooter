@@ -5,6 +5,7 @@ use gl::types::*;
 use self::wavefront_obj::obj;
 use utils::file::read_asset;
 use utils::gl::*;
+use na::{Vector3};
 
 #[derive(Debug)]
 pub struct Model {
@@ -25,23 +26,11 @@ impl Model {
                 let ret = obj.objects
                     .iter()
                     .map(|o| {
-                        let mut vertices = Vec::new();
-                        for v in &o.vertices {
-                            vertices.push(v.x as GLfloat);
-                            vertices.push(v.y as GLfloat);
-                            vertices.push(v.z as GLfloat);
-                        }
-                        println!("Vertices length: {}, normals length: {}", o.vertices.len(), o.normals.len());
-                        /*for n in &o.normals {
+                        let stride = 3+3;//+2;//vertices(3) normals(3) texcoords(2)
+                        let mut vertices: Vec<GLfloat> = vec![0.0;o.vertices.len() * stride];
                         
-                    }*/
-                        // println!("Vertices: {:?}", vertices);
-
-                        let mut vbo = gen_vertex_array_buffer();
-                        vbo.bind();
-                        vbo.upload_data(vertices.as_ptr() as _,
-                                        (vertices.len() * ::std::mem::size_of::<GLfloat>()) as _);
-                        vbo.unbind();
+                        println!("Vertices: {}", vertices.len());
+                        
 
                         let mut indices = Vec::new();
                         for g in &o.geometry {
@@ -51,11 +40,83 @@ impl Model {
                                         indices.push(a.0 as GLuint);
                                         indices.push(b.0 as GLuint);
                                         indices.push(c.0 as GLuint);
+
+                                        let base_index_a = a.0 * stride;
+                                        vertices[base_index_a] = o.vertices[a.0].x as GLfloat;
+                                        vertices[base_index_a+1] = o.vertices[a.0].y as GLfloat;
+                                        vertices[base_index_a+2] = o.vertices[a.0].z as GLfloat;
+
+                                        let base_index_b = b.0 * stride;
+                                        vertices[base_index_b] = o.vertices[b.0].x as GLfloat;
+                                        vertices[base_index_b+1] = o.vertices[b.0].y as GLfloat;
+                                        vertices[base_index_b+2] = o.vertices[b.0].z as GLfloat;
+
+                                        
+                                        let base_index_c = c.0 * stride;
+                                        vertices[base_index_c] = o.vertices[c.0].x as GLfloat;
+                                        vertices[base_index_c+1] = o.vertices[c.0].y as GLfloat;
+                                        vertices[base_index_c+2] = o.vertices[c.0].z as GLfloat;
+                                        
+
+                                        //Normal coords
+                                        if let (Some(na),Some(nb),Some(nc)) = (a.2,b.2,c.2) {
+                                            
+                                        } else {
+                                            let _va = o.vertices[a.0];
+                                            let _vb = o.vertices[b.0];
+                                            let _vc = o.vertices[c.0];
+                                            let va = Vector3::new(_va.x, _va.y, _va.z);
+                                            let vb = Vector3::new(_vb.x, _vb.y, _vb.z);
+                                            let vc = Vector3::new(_vc.x, _vc.y, _vc.z);
+                                            let dir1 = vc - vb;
+                                            let dir2 = vc - va;
+                                            let normal = dir1.cross(&dir2).normalize();
+                                            
+                                            vertices[base_index_a+3] += normal.x as GLfloat;
+                                            vertices[base_index_a+4] += normal.y as GLfloat;
+                                            vertices[base_index_a+5] += normal.z as GLfloat;
+                                            
+                                            vertices[base_index_b+3] += normal.x as GLfloat;
+                                            vertices[base_index_b+4] += normal.y as GLfloat;
+                                            vertices[base_index_b+5] += normal.z as GLfloat;
+                                           
+                                            vertices[base_index_c+3] += normal.x as GLfloat;
+                                            vertices[base_index_c+4] += normal.y as GLfloat;
+                                            vertices[base_index_c+5] += normal.z as GLfloat;
+                                        }
+                                        
+                                        //Texture coords
+                                        /*if let (Some(ta),Some(tb),Some(tc)) = (a.1,b.1,c.1) {
+                                            let base_index_a = ta * stride;
+                                            vertices[base_index_a+6] = o.vertices[na].y;
+                                            vertices[base_index_a+7] = o.vertices[na].z;
+                                            let base_index_a = ta * stride;
+                                            vertices[base_index_a+6] = o.vertices[na].y;
+                                            vertices[base_index_a+7] = o.vertices[na].z;
+                                            let base_index_a = ta * stride;
+                                            vertices[base_index_a+6] = o.vertices[na].y;
+                                            vertices[base_index_a+7] = o.vertices[na].z;
+                                        }*/
                                     }
                                     _ => panic!("Unsupported shape primitive"),
                                 }
                             }
                         }
+
+                        for i in 0..o.vertices.len() {
+                            vertices[(i * stride) + 3] /= 3.0;
+                            vertices[(i * stride) + 4] /= 3.0;
+                            vertices[(i * stride) + 5] /= 3.0;
+                        }
+
+                        
+                        let mut vbo = gen_vertex_array_buffer();
+                        vbo.bind();
+                        vbo.upload_data(vertices.as_ptr() as _,
+                                        (vertices.len() * ::std::mem::size_of::<GLfloat>()) as _);
+                        check_gl_errors();
+                        vbo.unbind();
+                        
                         println!("Indices length: {}", indices.len());
                         println!("Indices lenght bytes: {}",
                                  (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);
