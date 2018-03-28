@@ -14,16 +14,19 @@ lazy_static! {
 
 type BufferHandle = GLuint;
 
+#[derive(Debug)]
 struct BufferData {
     target: GLenum,
     is_bound: bool,
 }
 
+#[derive(Debug)]
 pub enum BufferType {
     VertexArrayBuffer,
     ElementArrayBuffer,
 }
 
+#[derive(Debug)]
 pub struct Buffer {
     buffer_type: BufferType,
     handle: BufferHandle,
@@ -80,12 +83,9 @@ impl Buffer {
     pub fn upload_data(&mut self, data: *const u8, len: isize) {
         assert!(self.data.is_bound,
                 "Attempted to upload data to unbound buffer");
-        println!("Uploading data of len: {:?}", len);
+        println!("Uploading data of len: {:?}, to target: {}", len, self.data.target);
         unsafe {
-            gl::BufferData(self.data.target,
-                           len as isize,
-                           data as *const GLvoid,
-                           gl::STATIC_DRAW);
+            gl::BufferData(self.data.target, len, data as *const GLvoid, gl::STATIC_DRAW);
             gl_print_error("BufferData");
         }
     }
@@ -247,4 +247,8 @@ pub fn get_gl_version() -> String {
     } else {
         panic!("Unable to get GL VERSION string");
     }
+}
+
+pub fn viewport(width: i32, height: i32) {
+    unsafe { gl::Viewport(0, 0, width, height) };
 }

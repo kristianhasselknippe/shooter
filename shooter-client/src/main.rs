@@ -71,14 +71,16 @@ fn main() {
     // let program = ShaderProgram::create_program("default");
     let program = ShaderProgram::create_program("default");
 
-    let mut models = Model::load_from_wavefront_file("quad.obj").unwrap();
+    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
+    println!("Model: {:?}", models);
 
     let mut time = Time::new(60);
 
     let mut input = Input::new();
 
     println!("Window size: {},{}", window_size.0, window_size.1);
-    unsafe { gl::Viewport(0, 0, window_size.0 as i32, window_size.1 as i32) };
+    viewport(window_size.0 as i32, window_size.1 as i32);
+    
 
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
@@ -86,8 +88,21 @@ fn main() {
     let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
     let mut camera_pos = na::Point3::<f32>::new(0.0, 0.0, 1.0);
 
-
     dc.bind();
+
+    clear(0.3, 0.0, 0.5, 1.0);
+
+    program.use_program();
+    //program.set_mat4("mvp", &model_view_projection);
+
+    println!("Models length: {}", models.len());
+    for mut m in &mut models {
+        m.draw();
+    }
+
+    println!("Swapping \n\n");
+
+    gl_window.swap_buffers().unwrap();
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -113,7 +128,7 @@ fn main() {
             }
         });
 
-        let input_vector = input.normalized_input_vector();
+/*        let input_vector = input.normalized_input_vector();
 
         // camera_pos += na::Vector3::new(input_vector.x, 0.0, -input_vector.y) * dt;
 
@@ -140,11 +155,10 @@ fn main() {
             m.draw();
         }
 
-        println!("Swapping \n\n");
+        println!("Swapping \n\n");*/
 
-        gl_window.swap_buffers().unwrap();
-
-
+        
+        //gl_window.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
         fps_counter.update(dt as f32);

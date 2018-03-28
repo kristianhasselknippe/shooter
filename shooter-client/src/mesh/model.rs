@@ -8,14 +8,6 @@ use utils::gl::*;
 use super::{Vertex, Face};
 
 #[derive(Debug)]
-pub enum Shape {
-    Triangle(Face),
-}
-
-pub struct Geometry {
-    shapes: Vec<Shape>,
-}
-
 pub struct Model {
     name: String,
 
@@ -38,6 +30,7 @@ impl Model {
                         vertices.push(v.y as GLfloat);
                         vertices.push(v.z as GLfloat);
                     }
+                    println!("Vertices: {:?}", vertices);
 
                     let mut vbo = gen_vertex_array_buffer();
                     vbo.bind();
@@ -60,12 +53,12 @@ impl Model {
                     }
                     println!("Indices length: {}", indices.len());
                     println!("Indices lenght bytes: {}",
-                             (indices.len() * ::std::mem::size_of::<GLfloat>()) as isize);
+                             (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);
 
                     let mut ebo = gen_element_array_buffer();
                     ebo.bind();
                     ebo.upload_data(indices.as_ptr() as _,
-                                    (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);
+                                    (indices.len() * ::std::mem::size_of::<GLuint>()) as _);
                     ebo.unbind();
 
                     Model {
@@ -87,11 +80,11 @@ impl Model {
         self.vbo.bind();
         println!("Drawing num indices: {}", self.num_indices);
         unsafe {
-            gl::VertexAttribPointer(0,
-                                    3,
+            gl::VertexAttribPointer(0, //position
+                                    3, //num components
                                     gl::FLOAT,
                                     gl::FALSE,
-                                    3, // Tightly packed atm
+                                    3 * ::std::mem::size_of::<GLfloat>() as GLsizei, // Tightly packed atm
                                     0 as *const GLvoid);
             gl::EnableVertexAttribArray(0);
         }
