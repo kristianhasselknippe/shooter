@@ -3,9 +3,29 @@ extern crate wavefront_obj;
 use gl;
 use gl::types::*;
 use self::wavefront_obj::obj;
+use super::{Vertex3,Normal};
 use utils::file::read_asset;
 use utils::gl::*;
 use na::{Vector3};
+
+pub struct MemModel {
+    vertices: Vec<Vertex3>,
+    normals: Vec<Normal>,
+    indices: Vec<GLuint>,
+}
+
+impl MemModel {
+    pub fn new(vertices: Vec<Vertex3>,
+               normals: Vec<Normal>,
+               indices: Vec<GLuint>,) -> MemModel {
+        MemModel {
+            vertices: vertices,
+            normals: normals,
+            indices: indices,
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub struct Model {
@@ -153,18 +173,5 @@ impl Model {
     pub fn unbind(&mut self) {
         self.ebo.unbind();
         self.vbo.unbind();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn load_al_model() {
-        if let Ok(models) = Model::load_from_wavefront_file("al.obj") {
-        } else {
-            panic!("Model did not load correctly")
-        }
     }
 }
