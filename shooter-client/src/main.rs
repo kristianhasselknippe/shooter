@@ -104,6 +104,9 @@ fn main() {
     'running: while running {
         let dt = time.delta_time() as f32;
         accum += dt;
+
+
+        let mut mouseDelta = na::Vector2::new(0.0,0.0);
         
         events_loop.poll_events(|event| {
             match event {
@@ -111,17 +114,27 @@ fn main() {
                     match event {
                         glutin::WindowEvent::Closed => {
                             running = false;
-                        }
+                        },
                         glutin::WindowEvent::Resized(w, h) => {
                             gl_window.resize(w, h);
                             unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
-                        }
+                        },
                         glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                             input.update_glutin_input(&i);
-                        }
+                        },
                         _ => (),
                     }
-                }
+                },
+                glutin::Event::DeviceEvent { event, .. } => {
+                    match event {
+                        glutin::DeviceEvent::MouseMotion {
+                            delta
+                        } => {
+                            mouseDelta = na::Vector2::new(delta.0 as f32, delta.1 as f32);
+                        },
+                        _ => (),
+                    }
+                },
                 _ => (),
             }
         });
@@ -129,6 +142,8 @@ fn main() {
         //let input_vector = input.normalized_input_vector();
 
         //camera.yaw = 3.14 * accum.cos();
+
+        println!("Mouse delta: {:?}", mouseDelta);
 
         if input.escape {
             break 'running;
