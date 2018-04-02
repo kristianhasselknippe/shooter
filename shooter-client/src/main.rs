@@ -66,8 +66,8 @@ fn main() {
         gl::CullFace(gl::BACK);
     };
 
-    let camera = Camera::new_orthographic(60.0, 60.0);
-    let mut dc = DrawContext::new(window_size.0, window_size.1, camera);
+    let mut camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0, na::Point3::new(0.0, 0.0, 1.0));
+    let mut dc = DrawContext::new(window_size.0, window_size.1);
 
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
@@ -96,17 +96,6 @@ fn main() {
 
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
-
-    let camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0);
-    let mut camera_pos = na::Point3::<f32>::new(0.0, 0.0, 1.0);
-
-    let eye = camera_pos;
-    let target = na::Point3::new(0.0, 0.0, -1.0);
-    let view = na::Isometry3::look_at_rh(&eye, &target, &na::Vector3::y());
-
-    
-
-    println!("Swapping \n\n");
 
     viewport(window_size.0 as i32, window_size.1 as i32);
 
@@ -139,13 +128,15 @@ fn main() {
 
         //let input_vector = input.normalized_input_vector();
 
+        //camera.yaw = 3.14 * accum.cos();
+
         if input.escape {
             break 'running;
         }
 
         let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0), na::Vector3::new(0.0,accum.cos(),0.0));
 
-        let model_view_projection = camera.projection * (view * model).to_homogeneous();
+        let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
 
         clear(0.3, 0.0, 0.5, 1.0);
 

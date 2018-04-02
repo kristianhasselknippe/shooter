@@ -2,7 +2,6 @@ use gl;
 use utils::gl::*;
 use shader::ShaderProgram;
 use na::Matrix4;
-use camera::Camera;
 use mesh::model::Model;
 use std::rc::Rc;
 
@@ -11,14 +10,12 @@ pub struct Color(f32, f32, f32, f32);
 pub struct DrawContext {
     width: u32,
     height: u32,
-    camera: Camera,
 }
 
 impl DrawContext {
-    pub fn new(width: u32, height: u32, camera: Camera) -> DrawContext {
+    pub fn new(width: u32, height: u32) -> DrawContext {
         println!("Creating draw context");
         DrawContext {
-            camera: camera,
             width: width,
             height: height,
         }

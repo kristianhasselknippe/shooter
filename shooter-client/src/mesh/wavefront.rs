@@ -34,8 +34,6 @@ fn parse_vert(line: &str) {
             let vertex = Vertex3::new(parts[0], parts[1], parts[2]);
             println!("Vertex: {:?}", vertex);
         },
-        4 => {
-        }
         _ => {
             panic!("Vertex has more components than we currently handle: {}", len);
         }
