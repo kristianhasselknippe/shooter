@@ -36,7 +36,7 @@ use time::*;
 use input::*;
 use fps_counter::*;
 use utils::gl::*;
-use drawing::{DrawContext,DrawCall};
+use drawing::{DrawContext, DrawCall};
 
 fn main() {
 
@@ -62,11 +62,15 @@ fn main() {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         gl::Enable(gl::DEPTH_TEST);
-        //gl::Enable(gl::CULL_FACE);
+        // gl::Enable(gl::CULL_FACE);
         gl::CullFace(gl::BACK);
     };
 
-    let mut camera = Camera::new_perspective(16.0 / 9.0, 3.14 / 2.0, 1.0, 1000.0, na::Point3::new(0.0, 0.0, 1.0));
+    let mut camera = Camera::new_perspective(16.0 / 9.0,
+                                             3.14 / 2.0,
+                                             1.0,
+                                             1000.0,
+                                             na::Point3::new(0.0, 0.0, 1.0));
     let mut dc = DrawContext::new(window_size.0, window_size.1);
 
     // let program = ShaderProgram::create_program("default");
@@ -78,14 +82,10 @@ fn main() {
     let mut draw_calls = Vec::new();
 
     for m in models {
-        draw_calls.push(DrawCall::new(
-            program.clone(),
-            m,
-            vec![
-                VertexAttribute::new(0, gl::FLOAT, 3),
-                VertexAttribute::new(1, gl::FLOAT, 3)
-            ]
-        ));
+        draw_calls.push(DrawCall::new(program.clone(),
+                                      m,
+                                      vec![VertexAttribute::new(0, gl::FLOAT, 3),
+                                           VertexAttribute::new(1, gl::FLOAT, 3)]));
     }
 
     let mut time = Time::new(60);
@@ -105,51 +105,54 @@ fn main() {
         let dt = time.delta_time() as f32;
         accum += dt;
 
+        let mut mouseDelta = na::Vector2::new(0.0, 0.0);
 
-        let mut mouseDelta = na::Vector2::new(0.0,0.0);
-        
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => {
                     match event {
                         glutin::WindowEvent::Closed => {
                             running = false;
-                        },
+                        }
                         glutin::WindowEvent::Resized(w, h) => {
                             gl_window.resize(w, h);
                             unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
-                        },
+                        }
                         glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                             input.update_glutin_input(&i);
-                        },
+                        }
                         _ => (),
                     }
-                },
+                }
                 glutin::Event::DeviceEvent { event, .. } => {
                     match event {
-                        glutin::DeviceEvent::MouseMotion {
-                            delta
-                        } => {
-                            mouseDelta = na::Vector2::new(delta.0 as f32, delta.1 as f32);
-                        },
+                        glutin::DeviceEvent::Motion { axis, value } => {
+                            // axis == 0 is X, 1 is Y
+                            // println!("Motion: axis: {} value: {}", axis, value);
+                            if axis == 0 {
+                                mouseDelta += na::Vector2::new(value as f32, 0.0);
+                            } else {
+                                mouseDelta += na::Vector2::new(0.0, value as f32);
+                            }
+                        }
                         _ => (),
                     }
-                },
+                }
                 _ => (),
             }
         });
 
-        //let input_vector = input.normalized_input_vector();
+        // let input_vector = input.normalized_input_vector();
 
-        //camera.yaw = 3.14 * accum.cos();
-
-        println!("Mouse delta: {:?}", mouseDelta);
+        camera.yaw += mouseDelta.x / 125.0;
+        camera.pitch += mouseDelta.y / 150.0;
 
         if input.escape {
             break 'running;
         }
 
-        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0), na::Vector3::new(0.0,accum.cos(),0.0));
+        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0),
+                                           na::Vector3::new(0.0, accum.cos(), 0.0));
 
         let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
 
@@ -159,7 +162,7 @@ fn main() {
             d.set_mat4("mvp", &model_view_projection);
             dc.draw(&mut d);
         }
-        
+
         gl_window.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
