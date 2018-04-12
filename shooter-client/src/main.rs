@@ -76,7 +76,7 @@ fn main() {
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
-    let mut models = Model::load_from_wavefront_file("al.obj").unwrap();
+    let models = Model::load_from_wavefront_file("al.obj").unwrap();
     println!("Models len: {}", models.len());
 
     let mut draw_calls = Vec::new();
@@ -123,7 +123,7 @@ fn main() {
                         }
                         _ => (),
                     }
-                }
+                },
                 glutin::Event::DeviceEvent { event, .. } => {
                     match event {
                         glutin::DeviceEvent::Motion { axis, value } => {
@@ -132,7 +132,7 @@ fn main() {
                             if axis == 0 {
                                 mouseDelta += na::Vector2::new(value as f32, 0.0);
                             } else {
-                                mouseDelta += na::Vector2::new(0.0, value as f32);
+                                mouseDelta -= na::Vector2::new(0.0, value as f32);
                             }
                         }
                         _ => (),
@@ -151,7 +151,7 @@ fn main() {
             break 'running;
         }
 
-        let mut model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0),
+        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0),
                                            na::Vector3::new(0.0, accum.cos(), 0.0));
 
         let model_view_projection = camera.camera_matrix() * model.to_homogeneous();

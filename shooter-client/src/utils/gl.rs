@@ -33,8 +33,8 @@ pub struct Buffer {
 }
 
 fn gl_print_error(msg: &str) {
-    /*print!("{} - ", msg);
-    check_gl_errors();*/
+    print!("{} - ", msg);
+    check_gl_errors();
 }
 
 fn gen_buffer() -> BufferHandle {

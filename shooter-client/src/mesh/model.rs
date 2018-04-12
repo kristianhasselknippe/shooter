@@ -1,3 +1,5 @@
+#![allow(dead_code,unused_variables)]
+
 extern crate wavefront_obj;
 
 use gl;
