@@ -9,25 +9,19 @@ use super::{Vertex3,Normal};
 use utils::file::read_asset;
 use utils::gl::*;
 use na::{Vector3};
+use mesh::wavefront::parse_wavefront;
+
+pub struct Group {
+    pub name: String,
+    pub vertices: Vec<Vertex3>,
+    pub normals: Vec<Normal>,
+    pub indices: Vec<GLuint>,
+}
 
 pub struct MemModel {
-    vertices: Vec<Vertex3>,
-    normals: Vec<Normal>,
-    indices: Vec<GLuint>,
+    pub name: String,
+    pub groups: Vec<Group>
 }
-
-impl MemModel {
-    pub fn new(vertices: Vec<Vertex3>,
-               normals: Vec<Normal>,
-               indices: Vec<GLuint>,) -> MemModel {
-        MemModel {
-            vertices: vertices,
-            normals: normals,
-            indices: indices,
-        }
-    }
-}
-
 
 #[derive(Debug)]
 pub struct Model {
@@ -41,6 +35,46 @@ pub struct Model {
 
 impl Model {
     pub fn load_from_wavefront_file(name: &str) -> Result<Vec<Model>, ()> {
+        let content = read_asset(name)?;
+        let mm = parse_wavefront(&content);
+
+        let mut models = Vec::new();
+
+        for g in mm.groups {
+            let vertices = g.vertices;
+            let normals = g.normals;
+            let indices = g.indices;
+
+            let mut vbo = gen_vertex_array_buffer();
+            vbo.bind();
+            vbo.upload_data(vertices.as_ptr() as _,
+                            (vertices.len() * ::std::mem::size_of::<GLfloat>()) as _);
+            check_gl_errors();
+            vbo.unbind();
+
+            println!("Indices length: {}", indices.len());
+            println!("Indices lenght bytes: {}",
+                     (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);
+
+            let mut ebo = gen_element_array_buffer();
+            ebo.bind();
+            ebo.upload_data(indices.as_ptr() as _,
+                            (indices.len() * ::std::mem::size_of::<GLuint>()) as _);
+            ebo.unbind();
+
+            models.push(Model {
+                name: "Named not handled".to_string(),
+                num_indices: indices.len() as i32,
+                index_type: gl::UNSIGNED_INT,
+                vbo: vbo,
+                ebo: ebo,
+            });
+        }
+        println!("Number of models : {}", models.len());
+        Ok(models)
+    }
+
+    pub fn load_from_wavefront_file__(name: &str) -> Result<Vec<Model>, ()> {
         println!("Loading wavefront file for : {}", name);
         let content = read_asset(name)?;
         match obj::parse(content) {
@@ -50,9 +84,9 @@ impl Model {
                     .map(|o| {
                         let stride = 3+3;//+2;//vertices(3) normals(3) texcoords(2)
                         let mut vertices: Vec<GLfloat> = vec![0.0;o.vertices.len() * stride];
-                        
+
                         println!("Vertices: {}", vertices.len());
-                        
+
 
                         let mut indices = Vec::new();
                         for g in &o.geometry {
@@ -73,16 +107,16 @@ impl Model {
                                         vertices[base_index_b+1] = o.vertices[b.0].y as GLfloat;
                                         vertices[base_index_b+2] = o.vertices[b.0].z as GLfloat;
 
-                                        
+
                                         let base_index_c = c.0 * stride;
                                         vertices[base_index_c] = o.vertices[c.0].x as GLfloat;
                                         vertices[base_index_c+1] = o.vertices[c.0].y as GLfloat;
                                         vertices[base_index_c+2] = o.vertices[c.0].z as GLfloat;
-                                        
+
 
                                         //Normal coords
                                         if let (Some(na),Some(nb),Some(nc)) = (a.2,b.2,c.2) {
-                                            
+
                                         } else {
                                             let _va = o.vertices[a.0];
                                             let _vb = o.vertices[b.0];
@@ -93,20 +127,20 @@ impl Model {
                                             let dir1 = vc - vb;
                                             let dir2 = vc - va;
                                             let normal = dir1.cross(&dir2).normalize();
-                                            
+
                                             vertices[base_index_a+3] += normal.x as GLfloat;
                                             vertices[base_index_a+4] += normal.y as GLfloat;
                                             vertices[base_index_a+5] += normal.z as GLfloat;
-                                            
+
                                             vertices[base_index_b+3] += normal.x as GLfloat;
                                             vertices[base_index_b+4] += normal.y as GLfloat;
                                             vertices[base_index_b+5] += normal.z as GLfloat;
-                                           
+
                                             vertices[base_index_c+3] += normal.x as GLfloat;
                                             vertices[base_index_c+4] += normal.y as GLfloat;
                                             vertices[base_index_c+5] += normal.z as GLfloat;
                                         }
-                                        
+
                                         //Texture coords
                                         /*if let (Some(ta),Some(tb),Some(tc)) = (a.1,b.1,c.1) {
                                             let base_index_a = ta * stride;
@@ -131,14 +165,14 @@ impl Model {
                             vertices[(i * stride) + 5] /= 3.0;
                         }
 
-                        
+
                         let mut vbo = gen_vertex_array_buffer();
                         vbo.bind();
                         vbo.upload_data(vertices.as_ptr() as _,
                                         (vertices.len() * ::std::mem::size_of::<GLfloat>()) as _);
                         check_gl_errors();
                         vbo.unbind();
-                        
+
                         println!("Indices length: {}", indices.len());
                         println!("Indices lenght bytes: {}",
                                  (indices.len() * ::std::mem::size_of::<GLuint>()) as isize);

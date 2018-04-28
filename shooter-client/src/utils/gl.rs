@@ -131,6 +131,8 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
 }
 
 pub fn draw_triangles(num_indices: GLsizei, element_type: GLenum) {
+    gl_print_error("Before draw triangles");
+    println!("...num indices: {}", num_indices);
     unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, element_type, 0 as _) }
     gl_print_error("DrawElements");
 }
@@ -152,7 +154,7 @@ impl VertexAttribute {
 }
 
 pub struct VertexArray {
-    handle: GLuint,
+    pub handle: GLuint,
 }
 
 pub fn gen_vertex_array() -> VertexArray {
@@ -171,7 +173,7 @@ impl VertexArray {
     pub fn bind(&mut self) {
         unsafe {
             gl::BindVertexArray(self.handle);
-            gl_print_error("BindVertexArray");
+            gl_print_error(&format!("BindVertexArray {}", self.handle));
         }
     }
 
