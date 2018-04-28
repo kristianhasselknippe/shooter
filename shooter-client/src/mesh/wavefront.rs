@@ -42,7 +42,7 @@ impl WavefrontParser {
             _ => {
                 panic!("Vertex has more components than we currently handle: {}", len);
             }
-        }    
+        }
     }
 
     fn parse_texcoord(&mut self, line: &str) {
@@ -60,15 +60,15 @@ impl WavefrontParser {
     }
 
     fn parse_face(&mut self, line: &str) {
-        
+
     }
 
     fn parse_s(&mut self, line: &str) {
-        
+
     }
 
     fn parse_usemtl(&mut self, line: &str) {
-        
+
     }
 
     fn parse_line(&mut self, line: &str) {
@@ -126,7 +126,7 @@ pub fn parse_wavefront(content: &str) -> MemModel {
         normals: Vec::new(),
         indices: Vec::new(),
     };
-    
+
     let mut line_start: usize = 0;
     let mut line_end: usize = 0;
     for c in content.chars() {
