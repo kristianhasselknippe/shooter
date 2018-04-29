@@ -37,6 +37,7 @@ use input::*;
 use fps_counter::*;
 use utils::gl::*;
 use drawing::{DrawCall, DrawContext};
+use alga::general::Inverse;
 
 fn main() {
     let window_size = (800, 600);
@@ -159,12 +160,15 @@ fn main() {
 
         clear(0.3, 0.0, 0.5, 1.0);
 
+        let inverse_transpose = model_view_projection.inverse().transpose();
+
         for mut d in &mut draw_calls {
+            d.set_mat4("inv_transp", &inverse_transpose);
+            d.set_mat4("model", &model.to_homogeneous());
             d.set_mat4("view", &camera.view());
-            d.set_mat4("vp", &camera.camera_matrix());
-            d.set_mat4("m", &model.to_homogeneous());
+            d.set_mat4("projection", &camera.projection);
             d.set_mat4("mvp", &model_view_projection);
-            d.set_vec3("vp", &na::Vector3::new(camera.pos.x, camera.pos.y, camera.pos.z));
+            d.set_vec3("viewPosition", &na::Vector3::new(camera.pos.x, camera.pos.y, camera.pos.z));
             dc.draw(&mut d);
         }
 
