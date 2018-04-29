@@ -85,7 +85,7 @@ fn main() {
         model,
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
-            //VertexAttribute::new(1, gl::FLOAT, 3),
+            VertexAttribute::new(1, gl::FLOAT, 3),
         ],
     ));
 

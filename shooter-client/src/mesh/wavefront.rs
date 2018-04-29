@@ -2,10 +2,12 @@
 
 use gl::types::*;
 use super::{Vertex3,Normal,TexCoord};
+use na::{Vector3};
 use super::model::{ MemModel, Group };
 
 struct WavefrontParser {
     vertices: Vec<Vertex3>,
+    normals: Vec<Normal>,
     groups: Vec<Group>
 }
 
@@ -29,7 +31,6 @@ impl WavefrontParser {
         let name = if split.len() > 1 { split[1] } else { "default" };
         self.groups.push(Group {
             name: name.to_string(),
-            normals: Vec::new(),
             indices: Vec::new(),
         })
     }
@@ -154,6 +155,7 @@ impl WavefrontParser {
 pub fn parse_wavefront(content: &str) -> MemModel {
     let mut parser = WavefrontParser {
         vertices: Vec::new(),
+        normals: Vec::new(),
         groups: Vec::new(),
     };
 
@@ -170,9 +172,44 @@ pub fn parse_wavefront(content: &str) -> MemModel {
         line_end += 1;
     }
 
+    let mut normals = vec![Normal::new(0.0,0.0,0.0);parser.vertices.len()];
+
+    for g in &parser.groups {
+        let mut i = 0;
+        while i < g.indices.len() {
+            let a = &parser.vertices[g.indices[i] as usize];
+            let a = Vector3::new(a.x,a.y,a.z);
+            let b = &parser.vertices[g.indices[i+1] as usize];
+            let b = Vector3::new(b.x,b.y,b.z);
+            let c = &parser.vertices[g.indices[i+2] as usize];
+            let c = Vector3::new(c.x,c.y,c.z);
+
+            let v1 = b - a;
+            let v2 = c - a;
+
+            let normal = v1.cross(&v2);
+            normals[g.indices[i] as usize] += normal;
+            normals[g.indices[i+1] as usize] += normal;
+            normals[g.indices[i+2] as usize] += normal;
+
+            i += 3;
+        }
+    }
+
+    for i in 0..normals.len() {
+        normals[i] = normals[i].normalize();
+    }
+
+    //println!("Normals: {:#?}", normals);
+
+    for v in &parser.vertices {
+
+    }
+
     MemModel {
         name: "No name yet".to_string(),
         vertices: parser.vertices,
+        normals: normals,
         groups: parser.groups,
     }
 }

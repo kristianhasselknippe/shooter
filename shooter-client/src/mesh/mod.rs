@@ -1,6 +1,8 @@
 pub mod model;
 pub mod wavefront;
 use gl::types::*;
+use std::ops::{Add,Sub,AddAssign};
+use na::Vector3;
 
 #[derive(Debug)]
 #[repr(C)]
@@ -18,13 +20,8 @@ impl TexCoord {
     }
 }
 
-#[derive(Debug)]
-#[repr(C)]
-pub struct Vertex3 {
-    x: GLfloat,
-    y: GLfloat,
-    z: GLfloat,
-}
+pub type Vertex3 = Vector3<GLfloat>;
+pub type Normal = Vertex3;
 
 #[derive(Debug)]
 #[repr(C)]
@@ -35,14 +32,4 @@ pub struct Vertex4 {
     w: GLfloat,
 }
 
-pub type Normal = Vertex3;
 
-impl Vertex3 {
-    fn new(x: GLfloat, y: GLfloat, z: GLfloat) -> Vertex3 {
-        Vertex3 {
-            x: x,
-            y: y,
-            z: z,
-        }
-    }
-}
