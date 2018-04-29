@@ -6,7 +6,7 @@ use std::ptr;
 use std::str;
 use utils::file::read_file;
 
-use na::Matrix4;
+use na::{Matrix4, Matrix3};
 
 pub struct Shader {
     handle: GLuint,
@@ -246,6 +246,16 @@ impl ShaderProgram {
                           val.1,
                           val.2,
                           val.3);
+        }
+    }
+
+    pub fn set_mat3(&self, name: &str, val: &Matrix3<f32>) {
+        unsafe {
+            let c_name = CString::new(name.as_bytes()).unwrap();
+            gl::UniformMatrix3fv(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                                 1,
+                                 gl::FALSE,
+                                 val.as_slice().as_ptr());
         }
     }
 

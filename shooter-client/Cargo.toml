@@ -6,7 +6,7 @@ authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 [dependencies]
 gl = "0.6.0"
 glutin = "*"
-nalgebra = "0.11.0"
+nalgebra = "*"
 image = "*"
 rusttype = "0.2.1"
 alga = "0.5.1"

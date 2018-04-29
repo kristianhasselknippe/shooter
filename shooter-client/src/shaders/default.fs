@@ -26,5 +26,5 @@ void main() {
 	float diffuse = clamp(dot(n, lightVector), 0.0, 1.0);
 	vec3 Lo = vec3(diffuse);
 
-	color = vec4(Lo, 1.0);
+	color = vec4(n, 1.0);
 }

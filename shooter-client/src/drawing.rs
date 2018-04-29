@@ -1,7 +1,7 @@
 use gl;
 use utils::gl::*;
 use shader::ShaderProgram;
-use na::{Matrix4,Vector3};
+use na::{Matrix4,Vector3,Matrix3};
 use mesh::model::Model;
 use std::rc::Rc;
 
@@ -72,6 +72,10 @@ impl DrawCall {
 
     pub fn unbind(&mut self) {
         self.vao.unbind();
+    }
+
+    pub fn set_mat3(&self, name: &str, val: &Matrix3<f32>) {
+        self.program.set_mat3(name, val);
     }
 
     pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
