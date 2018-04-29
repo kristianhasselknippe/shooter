@@ -1,7 +1,7 @@
 use gl;
 use utils::gl::*;
 use shader::ShaderProgram;
-use na::Matrix4;
+use na::{Matrix4,Vector3};
 use mesh::model::Model;
 use std::rc::Rc;
 
@@ -76,5 +76,9 @@ impl DrawCall {
 
     pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
         self.program.set_mat4(name, val);
+    }
+
+    pub fn set_vec3(&self, name: &str, val: &Vector3<f32>) {
+        self.program.set_float3(name, (val.x,val.y,val.z));
     }
 }

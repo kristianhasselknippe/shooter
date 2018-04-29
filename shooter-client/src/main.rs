@@ -67,10 +67,10 @@ fn main() {
 
     let mut camera = Camera::new_perspective(
         16.0 / 9.0,
-        3.14 / 2.0,
+        3.14 / 4.0,
         1.0,
         1000.0,
-        na::Point3::new(0.0, 0.0, 1.0),
+        na::Point3::new(0.0, 0.0, 5.0),
     );
     let mut dc = DrawContext::new(window_size.0, window_size.1);
 
@@ -160,7 +160,11 @@ fn main() {
         clear(0.3, 0.0, 0.5, 1.0);
 
         for mut d in &mut draw_calls {
+            d.set_mat4("view", &camera.view());
+            d.set_mat4("vp", &camera.camera_matrix());
+            d.set_mat4("m", &model.to_homogeneous());
             d.set_mat4("mvp", &model_view_projection);
+            d.set_vec3("vp", &na::Vector3::new(camera.pos.x, camera.pos.y, camera.pos.z));
             dc.draw(&mut d);
         }
 
