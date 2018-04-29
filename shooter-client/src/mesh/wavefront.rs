@@ -4,11 +4,8 @@ use gl::types::*;
 use super::{Vertex3,Normal,TexCoord};
 use super::model::{ MemModel, Group };
 
-pub struct WavefrontModel {
-    object: MemModel
-}
-
 struct WavefrontParser {
+    vertices: Vec<Vertex3>,
     groups: Vec<Group>
 }
 
@@ -29,10 +26,9 @@ impl WavefrontParser {
     fn parse_group(&mut self, line: &str) {
         //println!("Parsed group: {}", line);
         let split = self.split_parts(line);
-        let name = if split.len() > 1 { split[1] } else { "Unnamed" };
+        let name = if split.len() > 1 { split[1] } else { "default" };
         self.groups.push(Group {
             name: name.to_string(),
-            vertices: Vec::new(),
             normals: Vec::new(),
             indices: Vec::new(),
         })
@@ -56,7 +52,7 @@ impl WavefrontParser {
             3 => {
                 let vertex = Vertex3::new(parts[0], parts[1], parts[2]);
                 //println!("Vertex: {:?}", vertex);
-                self.current_group().vertices.push(vertex);
+                self.vertices.push(vertex);
             },
             _ => {
                 panic!("Vertex has more components than we currently handle: {}", len);
@@ -85,9 +81,9 @@ impl WavefrontParser {
         }
 
         for i in 0..parts.len() - 2 {
-            self.current_group().indices.push(parts[0] as u32);
-            self.current_group().indices.push(parts[i + 1] as u32);
-            self.current_group().indices.push(parts[i + 2] as u32);
+            self.current_group().indices.push(parts[0] as u32 - 1);
+            self.current_group().indices.push(parts[i + 1] as u32 - 1);
+            self.current_group().indices.push(parts[i + 2] as u32 - 1);
         }
     }
 
@@ -100,7 +96,7 @@ impl WavefrontParser {
     }
 
     fn match_line_type(&mut self) {
-        
+
     }
 
     fn parse_line(&mut self, line: &str) {
@@ -157,7 +153,8 @@ impl WavefrontParser {
 
 pub fn parse_wavefront(content: &str) -> MemModel {
     let mut parser = WavefrontParser {
-        groups: Vec::new()
+        vertices: Vec::new(),
+        groups: Vec::new(),
     };
 
     let mut line_start: usize = 0;
@@ -175,6 +172,7 @@ pub fn parse_wavefront(content: &str) -> MemModel {
 
     MemModel {
         name: "No name yet".to_string(),
+        vertices: parser.vertices,
         groups: parser.groups,
     }
 }

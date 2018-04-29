@@ -1,18 +1,18 @@
 #![allow(dead_code)]
 
+extern crate alga;
+extern crate gl;
+extern crate glutin;
+extern crate image;
 #[macro_use]
 extern crate lazy_static;
+extern crate libc;
 #[macro_use]
 extern crate maplit;
-extern crate glutin;
-extern crate gl;
 extern crate nalgebra as na;
-extern crate alga;
-extern crate image;
+extern crate ordered_float as of;
 extern crate rusttype;
 extern crate time as t;
-extern crate libc;
-extern crate ordered_float as of;
 
 mod utils;
 mod scene;
@@ -36,10 +36,9 @@ use time::*;
 use input::*;
 use fps_counter::*;
 use utils::gl::*;
-use drawing::{DrawContext, DrawCall};
+use drawing::{DrawCall, DrawContext};
 
 fn main() {
-
     let window_size = (800, 600);
 
     let mut events_loop = glutin::EventsLoop::new();
@@ -66,27 +65,29 @@ fn main() {
         gl::CullFace(gl::BACK);
     };
 
-    let mut camera = Camera::new_perspective(16.0 / 9.0,
-                                             3.14 / 2.0,
-                                             1.0,
-                                             1000.0,
-                                             na::Point3::new(0.0, 0.0, 1.0));
+    let mut camera = Camera::new_perspective(
+        16.0 / 9.0,
+        3.14 / 2.0,
+        1.0,
+        1000.0,
+        na::Point3::new(0.0, 0.0, 1.0),
+    );
     let mut dc = DrawContext::new(window_size.0, window_size.1);
 
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
-    let models = Model::load_from_wavefront_file("al.obj").unwrap();
-    println!("Models len: {}", models.len());
+    let model = Model::load_from_wavefront_file("al.obj").unwrap();
 
     let mut draw_calls = Vec::new();
-
-    for m in models {
-        draw_calls.push(DrawCall::new(program.clone(),
-                                      m,
-                                      vec![VertexAttribute::new(0, gl::FLOAT, 3),
-                                           VertexAttribute::new(1, gl::FLOAT, 3)]));
-    }
+    draw_calls.push(DrawCall::new(
+        program.clone(),
+        model,
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3),
+            //VertexAttribute::new(1, gl::FLOAT, 3),
+        ],
+    ));
 
     let mut time = Time::new(60);
 
@@ -109,20 +110,18 @@ fn main() {
 
         events_loop.poll_events(|event| {
             match event {
-                glutin::Event::WindowEvent { event, .. } => {
-                    match event {
-                        glutin::WindowEvent::Closed => {
-                            running = false;
-                        }
-                        glutin::WindowEvent::Resized(w, h) => {
-                            gl_window.resize(w, h);
-                            unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
-                        }
-                        glutin::WindowEvent::KeyboardInput { input: i, .. } => {
-                            input.update_glutin_input(&i);
-                        }
-                        _ => (),
+                glutin::Event::WindowEvent { event, .. } => match event {
+                    glutin::WindowEvent::Closed => {
+                        running = false;
                     }
+                    glutin::WindowEvent::Resized(w, h) => {
+                        gl_window.resize(w, h);
+                        unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
+                    }
+                    glutin::WindowEvent::KeyboardInput { input: i, .. } => {
+                        input.update_glutin_input(&i);
+                    }
+                    _ => (),
                 },
                 glutin::Event::DeviceEvent { event, .. } => {
                     match event {
@@ -151,8 +150,10 @@ fn main() {
             break 'running;
         }
 
-        let model = na::Isometry3::new(na::Vector3::new(0.0, 0.0, -3.0),
-                                           na::Vector3::new(0.0, accum.cos(), 0.0));
+        let model = na::Isometry3::new(
+            na::Vector3::new(0.0, 0.0, -3.0),
+            na::Vector3::new(0.0, accum.cos(), 0.0),
+        );
 
         let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
 

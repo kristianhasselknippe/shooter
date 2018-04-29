@@ -43,7 +43,7 @@ pub struct DrawCall {
 impl DrawCall {
     pub fn new(program: Rc<ShaderProgram>, model: Model, vertex_attributes: Vec<VertexAttribute>) -> DrawCall {
         let mut vao = gen_vertex_array();
-        println!("Genrated vao: {:?}", vao.handle);
+        //println!("Genrated vao: {:?}", vao.handle);
         let mut model = model;
         vao.bind();
         program.use_program();
@@ -61,7 +61,7 @@ impl DrawCall {
 
     pub fn draw(&mut self) {
         self.bind();
-        println!("Drawing triangles for : {}", self.vao.handle);
+        //println!("Drawing triangles for : {}", self.vao.handle);
         draw_triangles(self.model.num_indices, self.model.index_type);
         self.unbind();
     }
