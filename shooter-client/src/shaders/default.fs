@@ -9,11 +9,11 @@ uniform mat4 projection;
 
 const float ambientAmount = 0.1;
 
-const float lightIntensity = 2.0;
+const float lightIntensity = 4.0;
 const vec3 ambientColor = vec3(1.0,1.0,1.0);
 const vec3 diffuseColor = vec3(1.0,1.0,1.0); //Diffuse
 const vec3 specularColor = vec3(1.0,0.5,0.5); //Specular
-const vec3 lightPosWorld = vec3(5,5,5);//In world space..?
+const vec3 lightPosWorld = vec3(5,10,15);//In world space..?
 
 const float smoothness = 10.0;
 

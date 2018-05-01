@@ -80,27 +80,40 @@ fn main() {
 
     //let model = Model::load_from_wavefront_file("quad.obj").unwrap();
     let al = Model::load_from_wavefront_file("al.obj").unwrap();
-    let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
+    //let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
+    let bow = Model::load_from_wavefront_file("Bow/Bow.obj").unwrap();
 
     let mut draw_calls = Vec::new();
+    draw_calls.push(DrawCall::new(
+        program.clone(),
+        bow,
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3),
+            VertexAttribute::new(1, gl::FLOAT, 3),
+            VertexAttribute::new(2, gl::FLOAT, 3),
+        ],
+        drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,-8.0))
+    ));
     draw_calls.push(DrawCall::new(
         program.clone(),
         al,
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
+            VertexAttribute::new(2, gl::FLOAT, 3),
         ],
-        drawing::Transform::from_pos(na::Vector3::new(10.0,0.0,0.0))
+        drawing::Transform::from_pos(na::Vector3::new(15.0,0.0,0.0))
     ));
-    draw_calls.push(DrawCall::new(
+
+    /*draw_calls.push(DrawCall::new(
         program.clone(),
         sphere,
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
         ],
-        drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,0.0))
-    ));
+        drawing::Transform::from_pos(na::Vector3::new(10.0,0.0,0.0))
+    ));*/
 
     let mut time = Time::new(60);
 

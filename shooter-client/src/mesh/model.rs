@@ -5,22 +5,23 @@ extern crate wavefront_obj;
 use gl;
 use gl::types::*;
 use self::wavefront_obj::obj;
-use super::{Normal, Vertex3};
+use super::{Normal, Vertex3, TexCoord};
 use utils::file::read_asset;
 use utils::gl::*;
 use na::Vector3;
 use mesh::wavefront::parse_wavefront;
 
-pub struct Group {
-    pub name: String,
-    pub indices: Vec<GLuint>,
+#[repr(C)]
+pub struct VertexData {
+    pub vertex: Vertex3,
+    pub normal: Normal,
+    pub tex_coord: TexCoord,
 }
 
 pub struct MemModel {
     pub name: String,
-    pub vertices: Vec<Vertex3>,
-    pub normals: Vec<Normal>,
-    pub groups: Vec<Group>,
+    pub vertex_data: Vec<VertexData>,
+    pub indices: Vec<GLuint>,
 }
 
 #[derive(Debug)]
@@ -37,35 +38,25 @@ impl Model {
     pub fn load_from_wavefront_file(name: &str) -> Result<Model, ()> {
         let content = read_asset(name)?;
         let mut mm = parse_wavefront(&content);
-        let mut vertices = Vec::with_capacity(mm.vertices.len() + mm.normals.len());
 
-        for i in 0..mm.vertices.len() {
-            vertices.push(mm.vertices[i]);
-            vertices.push(mm.normals[i]);
-        }
+        println!("Size of vertex data: {}", ::std::mem::size_of::<VertexData>());
 
         println!(
             "Number of vertices in model: {}, bytes: {}",
-            vertices.len(),
-            (vertices.len() * ::std::mem::size_of::<Vertex3>())
+            mm.vertex_data.len(),
+            (mm.vertex_data.len() * ::std::mem::size_of::<VertexData>())
         );
-
-
 
         let mut vbo = gen_vertex_array_buffer();
         vbo.bind();
         vbo.upload_data(
-            vertices.as_ptr() as _,
-            (vertices.len() * ::std::mem::size_of::<Vertex3>()) as _,
+            mm.vertex_data.as_ptr() as _,
+            (mm.vertex_data.len() * ::std::mem::size_of::<VertexData>()) as _,
         );
         check_gl_errors();
         vbo.unbind();
 
-        //let normals = g.normals;
-        let mut indices = Vec::new();
-        for g in &mut mm.groups {
-            indices.append(&mut g.indices);
-        }
+        let indices = mm.indices;
 
         println!("Indices length: {}", indices.len());
         println!(
