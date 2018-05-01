@@ -22,7 +22,7 @@ impl WavefrontParser {
     }
 
     fn parse_obj(&mut self, line: &str) {
-        //println!("Parsed obj: {}", line);
+        self.parse_group(line);
     }
 
     fn parse_group(&mut self, line: &str) {
@@ -76,15 +76,37 @@ impl WavefrontParser {
     }
 
     fn parse_face(&mut self, line: &str) {
-        let parts = self.split_parts_f32(line);
+        let parts: Vec<(f32,Option<f32>,Option<f32>)> = self.split_parts(line)
+            .iter()
+            .map(|x| {
+                let split: Vec<&str> = x.split(|c| c == '/').collect();
+                match split.len() {
+                    1 => {
+                        (split[0].parse::<f32>().unwrap(), None, None)
+                    },
+                    2 => {
+                        (split[0].parse::<f32>().unwrap(),
+                         split[1].parse::<f32>().map(|x| Some(x)).unwrap_or(None),
+                         None)
+                    },
+                    3 => {
+                        (split[0].parse::<f32>().unwrap(),
+                         split[1].parse::<f32>().map(|x| Some(x)).unwrap_or(None),
+                         split[2].parse::<f32>().map(|x| Some(x)).unwrap_or(None))
+                    },
+                    _ => { panic!("Faces can't have more than 3 items per value"); }
+                }
+            })
+            .collect();
+        
         if parts.len() <= 2 {
             panic!("Faces should refer to 3 or more vertices")
         }
 
         for i in 0..parts.len() - 2 {
-            self.current_group().indices.push(parts[0] as u32 - 1);
-            self.current_group().indices.push(parts[i + 1] as u32 - 1);
-            self.current_group().indices.push(parts[i + 2] as u32 - 1);
+            self.current_group().indices.push(parts[0].0 as u32 - 1);
+            self.current_group().indices.push(parts[i + 1].0 as u32 - 1);
+            self.current_group().indices.push(parts[i + 2].0 as u32 - 1);
         }
     }
 
@@ -184,7 +206,7 @@ pub fn parse_wavefront(content: &str) -> MemModel {
             let c = &parser.vertices[g.indices[i+2] as usize];
             let c = Vector3::new(c.x,c.y,c.z);
 
-            let v1 = b - a;
+            let v1 = a - b;
             let v2 = c - a;
 
             let normal = v1.cross(&v2);

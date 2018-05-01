@@ -14,8 +14,6 @@ out vec3 p;
 
 void main()
 {
-	mat4 viewModel = view * model;
-
 	n = mv_inv * normal;
 	p = (view * model * vec4(position, 1.0)).xyz;
 

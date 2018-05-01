@@ -79,12 +79,21 @@ fn main() {
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
 
     //let model = Model::load_from_wavefront_file("quad.obj").unwrap();
-    let model = Model::load_from_wavefront_file("al.obj").unwrap();
+    let al = Model::load_from_wavefront_file("al.obj").unwrap();
+    let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
 
     let mut draw_calls = Vec::new();
     draw_calls.push(DrawCall::new(
         program.clone(),
-        model,
+        sphere,
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3),
+            VertexAttribute::new(1, gl::FLOAT, 3),
+        ],
+    ));
+    draw_calls.push(DrawCall::new(
+        program.clone(),
+        al,
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
@@ -204,24 +213,27 @@ fn main() {
             break 'running;
         }
 
-        let model = na::Isometry3::new(na::zero(), na::zero());
-
-        let model_view = camera.view() * model.to_homogeneous();
-        let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
-
         clear(0.3, 0.0, 0.5, 1.0);
 
-        let m_inv = model.to_homogeneous()
-            .fixed_slice::<na::U3,na::U3>(0,0)
-            .clone_owned()
-            .inverse();
-
-        let mv_inv = model_view
-            .fixed_slice::<na::U3,na::U3>(0,0)
-            .clone_owned()
-            .inverse();
+        let mut model_x = 0.0;
 
         for mut d in &mut draw_calls {
+            let model = na::Isometry3::new(na::Vector3::new(model_x,0.0,0.0), na::zero());
+            model_x += 10.0;
+
+            let model_view = camera.view() * model.to_homogeneous();
+            let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
+
+            let m_inv = model.to_homogeneous()
+                .fixed_slice::<na::U3,na::U3>(0,0)
+                .clone_owned()
+                .inverse();
+
+            let mv_inv = model_view
+                .fixed_slice::<na::U3,na::U3>(0,0)
+                .clone_owned()
+                .inverse();
+
             d.set_mat3("m_inv", &m_inv);
             d.set_mat3("mv_inv", &mv_inv);
             d.set_mat4("model", &model.to_homogeneous());
