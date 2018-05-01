@@ -36,8 +36,7 @@ pub struct Model {
 
 impl Model {
     pub fn load_from_wavefront_file(name: &str) -> Result<Model, ()> {
-        let content = read_asset(name)?;
-        let mut mm = parse_wavefront(&content);
+        let mut mm = parse_wavefront(name);
 
         println!("Size of vertex data: {}", ::std::mem::size_of::<VertexData>());
 

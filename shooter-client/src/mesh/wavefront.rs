@@ -1,9 +1,11 @@
 #![allow(dead_code,unused_variables)]
 
 use gl::types::*;
+use utils::file::*;
 use super::{Vertex3,Normal,TexCoord};
 use na::{Vector3};
 use super::model::{ MemModel, VertexData };
+use std::path::Path;
 
 struct FaceItem {
     vertex: i32,
@@ -233,7 +235,8 @@ impl WavefrontParser {
     }
 }
 
-pub fn parse_wavefront(content: &str) -> MemModel {
+pub fn parse_wavefront(name: &str) -> MemModel {
+    let content = read_asset(name).unwrap();
     let mut parser = WavefrontParser {
         vertices: Vec::new(),
         normals: Vec::new(),
@@ -254,31 +257,6 @@ pub fn parse_wavefront(content: &str) -> MemModel {
         }
         line_end += 1;
     }
-
-        /*let mut normals = vec![Normal::new(0.0,0.0,0.0);parser.vertices.len()];
-        for g in &parser.vertices {
-            let mut i = 0;
-            while i < g.indices.len() {
-                let a = &parser.vertices[g.indices[i] as usize];
-                let a = Vector3::new(a.x,a.y,a.z);
-                let b = &parser.vertices[g.indices[i+1] as usize];
-                let b = Vector3::new(b.x,b.y,b.z);
-                let c = &parser.vertices[g.indices[i+2] as usize];
-                let c = Vector3::new(c.x,c.y,c.z);
-
-                let v1 = a - b;
-                let v2 = c - a;
-
-                let normal = v1.cross(&v2);
-                normals[g.indices[i] as usize] += normal;
-                normals[g.indices[i+1] as usize] += normal;
-                normals[g.indices[i+2] as usize] += normal;
-
-                i += 3;
-            }
-        }
-        parser.normals = normals
-    }*/
 
     let mut vertex_data = Vec::new();
     let mut indices: Vec<GLuint> = Vec::new();
@@ -337,12 +315,32 @@ pub fn parse_wavefront(content: &str) -> MemModel {
         }
     }
 
+    if let Some(mtl_path) = parser.mtl_path {
+        parse_mtl(name, &mtl_path);
+    }
+
     MemModel {
         name: "No name yet".to_string(),
         vertex_data: vertex_data,
         indices: indices,
     }
 }
+
+struct MtlParser {
+    //TODO: Continue here!!
+}
+
+pub fn parse_mtl(obj_name: &str, mtl_path: &str) {
+    let mut pb = path_of(obj_name);
+    println!("Pb: {:?}", &pb);
+    pb.pop();
+    println!("Pop: {:?}", &pb);
+    let mtl_p = Path::new(mtl_path);
+    pb.push(mtl_p);
+    println!("Pb final: {:?}", pb);
+    let mtl_content = read_file(&pb);
+}
+
 
 #[cfg(test)]
 mod tests {
