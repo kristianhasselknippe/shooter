@@ -3,7 +3,7 @@
 extern crate alga;
 extern crate gl;
 extern crate glutin;
-extern crate image;
+extern crate image as img;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
@@ -20,6 +20,7 @@ mod shader;
 mod mesh;
 mod transform;
 mod drawing;
+mod image;
 // mod text;
 mod camera;
 mod entities;

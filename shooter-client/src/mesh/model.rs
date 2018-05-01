@@ -6,10 +6,10 @@ use gl;
 use gl::types::*;
 use self::wavefront_obj::obj;
 use super::{Normal, Vertex3, TexCoord};
-use utils::file::read_asset;
+use utils::file::{read_asset,path_of};
 use utils::gl::*;
 use na::Vector3;
-use mesh::wavefront::parse_wavefront;
+use mesh::wavefront::{parse_wavefront, MtlItem};
 
 #[repr(C)]
 pub struct VertexData {
@@ -22,6 +22,7 @@ pub struct MemModel {
     pub name: String,
     pub vertex_data: Vec<VertexData>,
     pub indices: Vec<GLuint>,
+    pub materials: Option<Vec<MtlItem>>
 }
 
 #[derive(Debug)]
@@ -32,6 +33,7 @@ pub struct Model {
     pub index_type: GLenum,
     vbo: Buffer,
     ebo: Buffer,
+    pub textures: Vec<Texture>
 }
 
 impl Model {
@@ -73,17 +75,36 @@ impl Model {
         );
         ebo.unbind();
 
+        let mut textures = Vec::new();
+        if let Some(materials) = mm.materials {
+            for m in materials {
+                let mat_name = m.name;
+                let mut pb = path_of(name);
+                pb.pop();
+                pb.push(m.map_Kd.unwrap());
+                let img = ::image::load_texture(&pb);
+                let mut tex = Texture::new();
+                tex.upload(&img.data, img.width, img.height);
+            }
+        }
+
         Ok(Model {
             name: "Named not handled".to_string(),
             num_indices: indices.len() as i32,
             index_type: gl::UNSIGNED_INT,
             vbo: vbo,
             ebo: ebo,
+            textures: textures,
         })
     }
     pub fn bind(&mut self) {
         self.ebo.bind();
         self.vbo.bind();
+        let mut i = 0;
+        for t in &self.textures {
+            t.bind_to_texture_unit(i);
+            i+=1;
+        }
     }
 
     pub fn unbind(&mut self) {

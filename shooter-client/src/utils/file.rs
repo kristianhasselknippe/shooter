@@ -24,6 +24,17 @@ pub fn read_asset(asset_name: &str) -> Result<String,()> {
     }
 }
 
+pub fn open_asset(asset_name: &str) -> File {
+    if let Ok(mut p) = current_dir() {
+        p.push(ASSETS_FOLDER);
+        p.push(asset_name);
+        println!("Asset path: {:?}", p);
+        File::open(&p).unwrap()
+    } else {
+        panic!("Could not get current dir");
+    }
+}
+
 pub fn path_of(asset_name: &str) -> PathBuf {
     if let Ok(mut p) = current_dir() {
         p.push(ASSETS_FOLDER);
