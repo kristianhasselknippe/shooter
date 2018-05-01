@@ -33,8 +33,8 @@ pub struct Buffer {
 }
 
 fn gl_print_error(msg: &str) {
-    print!("{} - ", msg);
-    check_gl_errors();
+    //print!("{} - ", msg);
+    //check_gl_errors();
 }
 
 fn gen_buffer() -> BufferHandle {
@@ -132,7 +132,6 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
 
 pub fn draw_triangles(num_indices: GLsizei, element_type: GLenum) {
     gl_print_error("Before draw triangles");
-    println!("...num indices: {}", num_indices);
     unsafe { gl::DrawElements(gl::TRIANGLES, num_indices, element_type, 0 as _) }
     gl_print_error("DrawElements");
 }
