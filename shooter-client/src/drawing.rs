@@ -1,7 +1,7 @@
 use gl;
 use utils::gl::*;
 use shader::ShaderProgram;
-use na::{Matrix4,Vector3,Matrix3};
+use na::*;
 use mesh::model::Model;
 use std::rc::Rc;
 
@@ -27,9 +27,22 @@ impl DrawContext {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
+}
 
-    pub fn draw(&mut self, draw_call: &mut DrawCall) {
-        draw_call.draw();
+pub struct Transform {
+    pos: Vector3<f32>
+}
+
+impl Transform {
+    pub fn from_pos(pos: Vector3<f32>) -> Transform {
+        Transform {
+            pos: pos
+        }
+    }
+
+    pub fn matrix(&self) -> Matrix4<f32> {
+        let isom = Isometry3::new(self.pos, zero());
+        isom.to_homogeneous()
     }
 }
 
@@ -37,11 +50,17 @@ pub struct DrawCall {
     vao: VertexArray,
     program: Rc<ShaderProgram>,
     model: Model,
+    pub transform: Transform,
     vertex_attributes: Vec<VertexAttribute>,
 }
 
 impl DrawCall {
-    pub fn new(program: Rc<ShaderProgram>, model: Model, vertex_attributes: Vec<VertexAttribute>) -> DrawCall {
+    pub fn new(
+        program: Rc<ShaderProgram>,
+        model: Model,
+        vertex_attributes: Vec<VertexAttribute>,
+        transform: Transform,
+    ) -> DrawCall {
         let mut vao = gen_vertex_array();
         //println!("Genrated vao: {:?}", vao.handle);
         let mut model = model;
@@ -55,15 +74,13 @@ impl DrawCall {
             vao: vao,
             program: program,
             model: model,
+            transform: transform,
             vertex_attributes: vertex_attributes,
         }
     }
 
     pub fn draw(&mut self) {
-        self.bind();
-        //println!("Drawing triangles for : {}", self.vao.handle);
         draw_triangles(self.model.num_indices, self.model.index_type);
-        self.unbind();
     }
 
     pub fn bind(&mut self) {
@@ -83,6 +100,6 @@ impl DrawCall {
     }
 
     pub fn set_vec3(&self, name: &str, val: &Vector3<f32>) {
-        self.program.set_float3(name, (val.x,val.y,val.z));
+        self.program.set_float3(name, (val.x, val.y, val.z));
     }
 }

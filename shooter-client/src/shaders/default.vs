@@ -6,7 +6,6 @@ layout (location = 1) in vec3 normal;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-
 uniform mat3 mv_inv;
 
 out vec3 n;

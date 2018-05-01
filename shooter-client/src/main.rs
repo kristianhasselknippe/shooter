@@ -85,19 +85,21 @@ fn main() {
     let mut draw_calls = Vec::new();
     draw_calls.push(DrawCall::new(
         program.clone(),
-        sphere,
-        vec![
-            VertexAttribute::new(0, gl::FLOAT, 3),
-            VertexAttribute::new(1, gl::FLOAT, 3),
-        ],
-    ));
-    draw_calls.push(DrawCall::new(
-        program.clone(),
         al,
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
         ],
+        drawing::Transform::from_pos(na::Vector3::new(10.0,0.0,0.0))
+    ));
+    draw_calls.push(DrawCall::new(
+        program.clone(),
+        sphere,
+        vec![
+            VertexAttribute::new(0, gl::FLOAT, 3),
+            VertexAttribute::new(1, gl::FLOAT, 3),
+        ],
+        drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,0.0))
     ));
 
     let mut time = Time::new(60);
@@ -214,17 +216,13 @@ fn main() {
         }
 
         clear(0.3, 0.0, 0.5, 1.0);
-
-        let mut model_x = 0.0;
-
         for mut d in &mut draw_calls {
-            let model = na::Isometry3::new(na::Vector3::new(model_x,0.0,0.0), na::zero());
-            model_x += 10.0;
+            d.bind();
+            let model = d.transform.matrix();
+            let model_view = camera.view() * model;
+            let model_view_projection = camera.camera_matrix() * model;
 
-            let model_view = camera.view() * model.to_homogeneous();
-            let model_view_projection = camera.camera_matrix() * model.to_homogeneous();
-
-            let m_inv = model.to_homogeneous()
+            let m_inv = model
                 .fixed_slice::<na::U3,na::U3>(0,0)
                 .clone_owned()
                 .inverse();
@@ -236,10 +234,11 @@ fn main() {
 
             d.set_mat3("m_inv", &m_inv);
             d.set_mat3("mv_inv", &mv_inv);
-            d.set_mat4("model", &model.to_homogeneous());
+            d.set_mat4("model", &d.transform.matrix());
             d.set_mat4("view", &camera.view());
             d.set_mat4("projection", &camera.projection);
-            dc.draw(&mut d);
+            d.draw();
+            d.unbind();
         }
 
         gl_window.swap_buffers().unwrap();
