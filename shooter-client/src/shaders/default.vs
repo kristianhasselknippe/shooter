@@ -11,11 +11,13 @@ uniform mat3 mv_inv;
 
 out vec3 n;
 out vec3 p;
+out vec2 texCoords;
 
 void main()
 {
 	n = mv_inv * normal;
 	p = (view * model * vec4(position, 1.0)).xyz;
+	texCoords = tex_coords.xy;
 
 	gl_Position = projection * view * model * vec4(position, 1.0);
 }

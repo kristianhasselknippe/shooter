@@ -240,7 +240,7 @@ pub fn viewport(width: i32, height: i32) {
 
 #[derive(Debug)]
 pub struct Texture {
-    handle: GLuint,
+    pub handle: GLuint,
 }
 
 impl Texture {
@@ -318,12 +318,12 @@ impl Texture {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGB as i32,
+                gl::RGBA as _,
                 width as GLsizei,
                 height as GLsizei,
                 0,
-                gl::RGB as u32,
-                gl::FLOAT,
+                gl::RGBA as _,
+                gl::UNSIGNED_BYTE,
                 pixels.as_ptr() as *const u8 as _,
             );
         }

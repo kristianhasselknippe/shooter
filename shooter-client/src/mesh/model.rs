@@ -85,8 +85,11 @@ impl Model {
                 let img = ::image::load_texture(&pb);
                 let mut tex = Texture::new();
                 tex.upload(&img.data, img.width, img.height);
+                textures.push(tex);
             }
         }
+
+        println!("Done uploading textures");
 
         Ok(Model {
             name: "Named not handled".to_string(),

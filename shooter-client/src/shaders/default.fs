@@ -2,6 +2,9 @@
 
 in vec3 n;
 in vec3 p;
+in vec2 texCoords;
+
+uniform sampler2D diffuseMap;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -37,11 +40,12 @@ void main() {
 
 	float diffuseAmount = clamp(dot(lightDir, normal), 0.0, 1.0);
 
-	vec3 diffuse = diffuseColor * diffuseAmount;
+	//diffuseColor
+	vec3 diffuse = texture(diffuseMap, texCoords).xyz * diffuseAmount;
 	vec3 specular = ((smoothness + 8.0) / (8.0 * 3.14)) * specAmount * specularColor;
 	vec3 ambient = ambientAmount * ambientColor;
 	vec3 Lo = ambient + (diffuse + specular) * attenuation * lightIntensity;
 
-
 	color = vec4(Lo, 1.0);
+	color = vec4(texture(diffuseMap, texCoords));
 }

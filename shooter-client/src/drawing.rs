@@ -49,7 +49,7 @@ impl Transform {
 pub struct DrawCall {
     vao: VertexArray,
     program: Rc<ShaderProgram>,
-    model: Model,
+    pub model: Model,
     pub transform: Transform,
     vertex_attributes: Vec<VertexAttribute>,
 }
@@ -101,5 +101,9 @@ impl DrawCall {
 
     pub fn set_vec3(&self, name: &str, val: &Vector3<f32>) {
         self.program.set_float3(name, (val.x, val.y, val.z));
+    }
+
+    pub fn set_texture2d(&self, name: &str, val: &Texture) {
+        self.program.set_int(name, val.handle as i32);
     }
 }

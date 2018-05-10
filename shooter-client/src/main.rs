@@ -251,6 +251,7 @@ fn main() {
             d.set_mat4("model", &d.transform.matrix());
             d.set_mat4("view", &camera.view());
             d.set_mat4("projection", &camera.projection);
+            d.set_texture2d("diffuseMap", &d.model.textures[0]);
             d.draw();
             d.unbind();
         }
