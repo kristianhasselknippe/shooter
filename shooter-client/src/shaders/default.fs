@@ -41,11 +41,13 @@ void main() {
 	float diffuseAmount = clamp(dot(lightDir, normal), 0.0, 1.0);
 
 	//diffuseColor
-	vec3 diffuse = texture(diffuseMap, texCoords).xyz * diffuseAmount;
+	//have to do 1-texCoords.y since obj and glsl disagree on the origin
+	vec3 diffuse = texture(diffuseMap, vec2(texCoords.x, 1.0-texCoords.y)).xyz * diffuseAmount;
 	vec3 specular = ((smoothness + 8.0) / (8.0 * 3.14)) * specAmount * specularColor;
 	vec3 ambient = ambientAmount * ambientColor;
 	vec3 Lo = ambient + (diffuse + specular) * attenuation * lightIntensity;
 
-	color = vec4(Lo, 1.0);
-	color = vec4(texture(diffuseMap, texCoords));
+	color = vec4(Lo, 1.0); 
+	//color = texture(diffuseMap, vec2(texCoords.x, 1.0 - texCoords.y));
+	//color = vec4(texCoords,0.0,1.0);
 }
