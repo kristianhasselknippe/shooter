@@ -55,12 +55,12 @@ pub struct DrawCall {
 }
 
 impl DrawCall {
-    pub fn new(
+    pub fn new<T: Fn(&DrawCall)>(
         program: Rc<ShaderProgram>,
         model: Model,
         vertex_attributes: Vec<VertexAttribute>,
         transform: Transform,
-    ) -> DrawCall {
+        setup: T) -> DrawCall {
         let mut vao = gen_vertex_array();
         //println!("Genrated vao: {:?}", vao.handle);
         let mut model = model;
@@ -68,15 +68,18 @@ impl DrawCall {
         program.use_program();
         model.bind();
         enable_vertex_attribs(&vertex_attributes);
-        vao.unbind();
 
-        DrawCall {
+        let mut ret = DrawCall {
             vao: vao,
             program: program,
             model: model,
             transform: transform,
             vertex_attributes: vertex_attributes,
-        }
+        };
+
+        setup(&mut ret);
+        ret.vao.unbind();
+        ret
     }
 
     pub fn draw(&mut self) {
@@ -103,7 +106,8 @@ impl DrawCall {
         self.program.set_float3(name, (val.x, val.y, val.z));
     }
 
-    pub fn set_texture2d(&self, name: &str, val: &Texture) {
-        self.program.set_int(name, val.handle as i32);
+    pub fn bind_texture(&self, name: &str, val: &Texture, unit: u32) {
+        val.bind_to_texture_unit(unit);
+        self.program.set_int(name, unit as i32);
     }
 }

@@ -322,8 +322,6 @@ pub fn parse_wavefront(name: &str) -> MemModel {
         mtl = Some(parse_mtl(name, &mtl_path));
     }
 
-    println!("Mtl: {:#?}", mtl);
-
     MemModel {
         name: "No name yet".to_string(),
         vertex_data: vertex_data,

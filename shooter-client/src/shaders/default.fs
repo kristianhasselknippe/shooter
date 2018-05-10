@@ -4,7 +4,7 @@ in vec3 n;
 in vec3 p;
 in vec2 texCoords;
 
-uniform sampler2D diffuseMap;
+layout(binding = 0) uniform sampler2D diffuseMap;
 
 uniform mat4 model;
 uniform mat4 view;

@@ -82,6 +82,7 @@ impl Model {
                 let mut pb = path_of(name);
                 pb.pop();
                 pb.push(m.map_Kd.unwrap());
+                println!("Loading image: {:?}", pb);
                 let img = ::image::load_texture(&pb);
                 let mut tex = Texture::new();
                 tex.upload(&img.data, img.width, img.height);

@@ -240,7 +240,7 @@ pub fn viewport(width: i32, height: i32) {
 
 #[derive(Debug)]
 pub struct Texture {
-    pub handle: GLuint,
+    handle: GLuint,
 }
 
 impl Texture {
