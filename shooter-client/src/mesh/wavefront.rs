@@ -6,7 +6,6 @@ use super::{Normal, TexCoord, Vertex3};
 use na::*;
 use super::model::{MemModel, VertexData};
 use std::path::Path;
-use na::core::allocator::Allocator;
 
 struct FaceItem {
     vertex: i32,
@@ -331,6 +330,7 @@ pub fn parse_wavefront(name: &str) -> MemModel {
 }
 
 #[derive(Debug)]
+#[allow(non_snake_case)]
 pub struct MtlItem {
     pub name: String,
     pub Ns: Option<f32>,

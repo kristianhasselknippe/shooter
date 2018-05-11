@@ -74,7 +74,7 @@ fn main() {
         1000.0,
         na::Point3::new(0.0, 0.0, 8.0),
     );
-    let mut dc = DrawContext::new(window_size.0, window_size.1);
+    let mut _dc = DrawContext::new(window_size.0, window_size.1);
 
     // let program = ShaderProgram::create_program("default");
     let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
@@ -95,7 +95,7 @@ fn main() {
             VertexAttribute::new(2, gl::FLOAT, 3),
         ],
         drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,-8.0)),
-        |dc: &DrawCall| {
+        |_dc: &DrawCall| {
         }
     ));
     draw_calls.push(DrawCall::new(
@@ -107,7 +107,7 @@ fn main() {
             VertexAttribute::new(2, gl::FLOAT, 3),
         ],
         drawing::Transform::from_pos(na::Vector3::new(40.0,0.0,-8.0)),
-        |dc: &DrawCall| {
+        |_dc: &DrawCall| {
         }
     ));
     /*draw_calls.push(DrawCall::new(
@@ -133,8 +133,6 @@ fn main() {
 
     let mut time = Time::new(60);
 
-    let mut input = Input::new();
-
     println!("Window size: {},{}", window_size.0, window_size.1);
 
     let mut fps_counter = FpsCounter::new();
@@ -142,59 +140,35 @@ fn main() {
 
     viewport(window_size.0 as i32, window_size.1 as i32);
 
-    let mut accum = 0.0;
-
-    let mut forward = false;
-    let mut backward = false;
-    let mut left = false;
-    let mut right = false;
-    let mut up = false;
-    let mut down = false;
+    let mut input = Input::new();
 
 
     'running: while running {
         let dt = time.delta_time() as f32;
-        accum += dt;
 
-        let mut mouseDelta = na::Vector2::new(0.0, 0.0);
-
+        input.reset_mouse_delta();
 
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::Closed => {
                         running = false;
-                    }
+                    },
                     glutin::WindowEvent::Resized(w, h) => {
                         gl_window.resize(w, h);
                         unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
-                    }
+                    },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
-                        input.update_glutin_input(&i);
-                        if let Some(keycode) = i.virtual_keycode {
-                            match keycode {
-                                glutin::VirtualKeyCode::A => {
-                                    left = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                glutin::VirtualKeyCode::D => {
-                                    right = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                glutin::VirtualKeyCode::W => {
-                                    forward = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                glutin::VirtualKeyCode::S => {
-                                    backward = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                glutin::VirtualKeyCode::Q => {
-                                    down = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                glutin::VirtualKeyCode::E => {
-                                    up = if i.state == glutin::ElementState::Pressed { true } else { false };
-                                },
-                                _ => {},
-                            }
-                        }
-                    }
+                        input.update_glutin_keyboard_input(&i);
+                    },
+                    glutin::WindowEvent::MouseInput {
+                        state: s,
+                        button: mb,
+                        modifiers: m,
+                        ..
+                    } => {
+                        input.update_mouse_buttons(&mb, &s, &m);
+                    },
                     _ => (),
                 },
                 glutin::Event::DeviceEvent { event, .. } => {
@@ -202,11 +176,7 @@ fn main() {
                         glutin::DeviceEvent::Motion { axis, value } => {
                             // axis == 0 is X, 1 is Y
                             // println!("Motion: axis: {} value: {}", axis, value);
-                            if axis == 0 {
-                                mouseDelta += na::Vector2::new(value as f32, 0.0);
-                            } else {
-                                mouseDelta -= na::Vector2::new(0.0, value as f32);
-                            }
+                            input.update_glutin_mouse_delta(axis, value as _);
                         },
                         glutin::DeviceEvent::Key(ki) => {
                             println!("Key: {:#?}", ki.scancode);
@@ -218,26 +188,36 @@ fn main() {
             }
         });
 
-        camera.yaw += mouseDelta.x / 125.0;
-        camera.pitch += mouseDelta.y / 150.0;
+        let mut speed = 10.0;
+        if input.shift {
+            speed *= 2.0;
+        }
+        if input.mouse_right {
+            gl_window.set_cursor_state(glutin::CursorState::Grab);
 
-        if forward {
-            camera.move_forward(dt * -10.0);
-        }
-        if backward {
-            camera.move_forward(dt * 10.0);
-        }
-        if left {
-            camera.move_right(dt * -10.0);
-        }
-        if right {
-            camera.move_right(dt * 10.0);
-        }
-        if up {
-            camera.move_up(dt * 10.0);
-        }
-        if down {
-            camera.move_up(dt * -10.0);
+            camera.yaw += input.mouse_delta.x / 125.0;
+            camera.pitch += input.mouse_delta.y / 150.0;
+
+            if input.forward {
+                camera.move_forward(dt * -speed);
+            }
+            if input.backward {
+                camera.move_forward(dt * speed);
+            }
+            if input.left {
+                camera.move_right(dt * -speed);
+            }
+            if input.right {
+                camera.move_right(dt * speed);
+            }
+            if input.up {
+                camera.move_up(dt * speed);
+            }
+            if input.down {
+                camera.move_up(dt * -speed);
+            }
+        } else {
+            gl_window.set_cursor_state(glutin::CursorState::Normal);
         }
 
         if input.escape {
@@ -249,7 +229,7 @@ fn main() {
             d.bind();
             let model = d.transform.matrix();
             let model_view = camera.view() * model;
-            let model_view_projection = camera.camera_matrix() * model;
+            //let model_view_projection = camera.camera_matrix() * model;
 
             let m_inv = model
                 .fixed_slice::<na::U3,na::U3>(0,0)

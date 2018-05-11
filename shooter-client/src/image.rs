@@ -1,4 +1,4 @@
-use img::{load, ImageFormat, DynamicImage, GenericImage};
+use img::{load, ImageFormat, GenericImage};
 use std::io::BufReader;
 use std::path::Path;
 use std::fs::File;

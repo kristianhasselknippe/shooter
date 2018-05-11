@@ -35,8 +35,8 @@ impl Camera {
     }
 
     pub fn move_right(&mut self, d: f32) {
-        let origDir = self.direction();
-        let dir = Vector3::new(origDir.x, 0.0, origDir.z);
+        let orig_dir = self.direction();
+        let dir = Vector3::new(orig_dir.x, 0.0, orig_dir.z);
         let dir = Rotation3::from_euler_angles(0.0, 3.14/2.0, 0.0) * dir;
         self.pos -= dir * d;
     }

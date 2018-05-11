@@ -33,7 +33,7 @@ pub struct Buffer {
     data: BufferData,
 }
 
-fn gl_print_error(msg: &str) {
+fn gl_print_error(_msg: &str) {
     //print!("{} - ", msg);
     //check_gl_errors();
 }

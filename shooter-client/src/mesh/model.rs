@@ -4,14 +4,12 @@ extern crate wavefront_obj;
 
 use gl;
 use gl::types::*;
-use self::wavefront_obj::obj;
 use super::{Normal, Vertex3, TexCoord};
-use utils::file::{read_asset,path_of};
+use utils::file::{path_of};
 use utils::gl::{
     *,
     texture::*
 };
-use na::Vector3;
 use mesh::wavefront::{parse_wavefront, MtlItem};
 
 #[repr(C)]
@@ -41,7 +39,7 @@ pub struct Model {
 
 impl Model {
     pub fn load_from_wavefront_file(name: &str) -> Result<Model, ()> {
-        let mut mm = parse_wavefront(name);
+        let mm = parse_wavefront(name);
 
         println!("Size of vertex data: {}", ::std::mem::size_of::<VertexData>());
 

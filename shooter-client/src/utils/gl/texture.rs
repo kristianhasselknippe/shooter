@@ -1,6 +1,5 @@
 use gl;
 use gl::types::*;
-use std::mem::size_of;
 
 struct TextureBinding<'a> {
     handle: &'a Texture
