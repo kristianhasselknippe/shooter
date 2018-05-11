@@ -1,5 +1,8 @@
 use gl;
-use utils::gl::*;
+use utils::gl::{
+    *,
+    texture::*
+};
 use shader::ShaderProgram;
 use na::*;
 use mesh::model::Model;
