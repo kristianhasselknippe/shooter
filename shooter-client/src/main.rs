@@ -10,13 +10,16 @@ extern crate libc;
 #[macro_use]
 extern crate maplit;
 extern crate nalgebra as na;
+extern crate ncollide as nc;
 extern crate ordered_float as of;
 extern crate rusttype;
 extern crate time as t;
+extern crate itertools;
 
 mod utils;
 mod scene;
 mod shader;
+mod collision;
 mod mesh;
 mod transform;
 mod drawing;
@@ -39,6 +42,13 @@ use fps_counter::*;
 use utils::gl::*;
 use drawing::{DrawCall, DrawContext};
 use alga::general::Inverse;
+
+
+use nc::{
+    shape::{ShapeHandle,Shape},
+    world::{CollisionWorld,CollisionGroups,GeometricQueryType}
+};
+use na::{Isometry3,Vector3,Point3,zero};
 
 fn main() {
     let window_size = (800, 600);
@@ -83,7 +93,10 @@ fn main() {
     //let al = Model::load_from_wavefront_file("al.obj").unwrap();
     //let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
     let bow = Model::load_from_wavefront_file("Bow/Bow.obj").unwrap();
+    let bow_iso = Isometry3::new(Vector3::new(0.0,0.0,-8.0), zero());
+
     let bow2 = Model::load_from_wavefront_file("Bow2/Bow.obj").unwrap();
+    let bow2_iso = Isometry3::new(Vector3::new(40.0,0.0,-8.0), zero());
 
     let mut draw_calls = Vec::new();
     draw_calls.push(DrawCall::new(
@@ -142,6 +155,17 @@ fn main() {
 
     let mut input = Input::new();
 
+    let groups = CollisionGroups::new();
+    let contacts_query = GeometricQueryType::Contacts(0.0,0.0);
+
+    let bow_handle = ShapeHandle::new(bow.trimesh.unwrap());
+    let bow2_handle = bow2.trimesh.unwrap();
+
+    let mut world: CollisionWorld<Point3<f32>, Isometry3<f32>, ()> = CollisionWorld::new(0.02);
+    world.add(bow_iso, bow_handle, groups, contacts_query, ());
+    world.add(bow2_iso, bow2_handle, groups, contacts_query, ());
+
+    //collision_world.
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -151,9 +175,6 @@ fn main() {
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
-                    glutin::WindowEvent::Closed => {
-                        running = false;
-                    },
                     glutin::WindowEvent::Resized(w, h) => {
                         gl_window.resize(w, h);
                         unsafe { gl::Viewport(0, 0, w as i32, h as i32) };

@@ -4,13 +4,13 @@ extern crate wavefront_obj;
 
 use gl;
 use gl::types::*;
-use super::{Normal, Vertex3, TexCoord};
-use utils::file::{path_of};
-use utils::gl::{
-    *,
-    texture::*
-};
+use super::{Normal, TexCoord, Vertex3};
+use utils::file::path_of;
+use utils::gl::{*, texture::*};
 use mesh::wavefront::{parse_wavefront, MtlItem};
+use nc::shape::TriMesh;
+use na::Point3;
+use itertools::Itertools;
 
 #[repr(C)]
 pub struct VertexData {
@@ -23,10 +23,9 @@ pub struct MemModel {
     pub name: String,
     pub vertex_data: Vec<VertexData>,
     pub indices: Vec<GLuint>,
-    pub materials: Option<Vec<MtlItem>>
+    pub materials: Option<Vec<MtlItem>>,
 }
 
-#[derive(Debug)]
 pub struct Model {
     pub name: String,
 
@@ -34,14 +33,19 @@ pub struct Model {
     pub index_type: GLenum,
     vbo: Buffer,
     ebo: Buffer,
-    pub textures: Vec<Texture>
+    pub textures: Vec<Texture>,
+
+    pub trimesh: Option<TriMesh<f32>>,
 }
 
 impl Model {
     pub fn load_from_wavefront_file(name: &str) -> Result<Model, ()> {
         let mm = parse_wavefront(name);
 
-        println!("Size of vertex data: {}", ::std::mem::size_of::<VertexData>());
+        println!(
+            "Size of vertex data: {}",
+            ::std::mem::size_of::<VertexData>()
+        );
 
         println!(
             "Number of vertices in model: {}, bytes: {}",
@@ -58,14 +62,13 @@ impl Model {
         check_gl_errors();
         vbo.unbind();
 
-        let indices = mm.indices;
+        let indices = &mm.indices;
 
         println!("Indices length: {}", indices.len());
         println!(
             "Indices lenght bytes: {}",
             (indices.len() * ::std::mem::size_of::<GLuint>()) as isize
         );
-
 
         let mut ebo = gen_element_array_buffer();
         ebo.bind();
@@ -93,6 +96,18 @@ impl Model {
 
         println!("Done uploading textures");
 
+        let mesh_vertices = mm.vertex_data
+            .iter()
+            .map(|vd| Point3::new(vd.vertex.x, vd.vertex.y, vd.vertex.z))
+            .collect();
+
+        let mesh_indices = mm.indices
+                .iter()
+                .chunks(3)
+                .into_iter()
+                .map(|mut c| Point3::new(*c.next().unwrap(), *c.next().unwrap(), *c.next().unwrap()))
+                .collect();
+
         Ok(Model {
             name: "Named not handled".to_string(),
             num_indices: indices.len() as i32,
@@ -100,6 +115,8 @@ impl Model {
             vbo: vbo,
             ebo: ebo,
             textures: textures,
+
+            trimesh: Some(TriMesh::new(mesh_vertices, mesh_indices, None)),
         })
     }
     pub fn bind(&mut self) {
@@ -108,7 +125,7 @@ impl Model {
         let mut i = 0;
         for t in &self.textures {
             t.bind_to_texture_unit(i);
-            i+=1;
+            i += 1;
         }
     }
 
