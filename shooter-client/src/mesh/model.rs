@@ -2,15 +2,15 @@
 
 extern crate wavefront_obj;
 
+use super::{Normal, TexCoord, Vertex3};
 use gl;
 use gl::types::*;
-use super::{Normal, TexCoord, Vertex3};
+use itertools::Itertools;
+use mesh::wavefront::{parse_wavefront, MtlItem};
+use na::{Point3, Real};
+use nc::shape::TriMesh;
 use utils::file::path_of;
 use utils::gl::{*, texture::*};
-use mesh::wavefront::{parse_wavefront, MtlItem};
-use nc::shape::TriMesh;
-use na::Point3;
-use itertools::Itertools;
 
 #[repr(C)]
 pub struct VertexData {
@@ -26,6 +26,7 @@ pub struct MemModel {
     pub materials: Option<Vec<MtlItem>>,
 }
 
+#[derive(Clone)]
 pub struct Model {
     pub name: String,
 
@@ -102,11 +103,17 @@ impl Model {
             .collect();
 
         let mesh_indices = mm.indices
-                .iter()
-                .chunks(3)
-                .into_iter()
-                .map(|mut c| Point3::new(*c.next().unwrap(), *c.next().unwrap(), *c.next().unwrap()))
-                .collect();
+            .iter()
+            .chunks(3)
+            .into_iter()
+            .map(|mut c| {
+                Point3::new(
+                    *c.next().unwrap() as usize,
+                    *c.next().unwrap() as usize,
+                    *c.next().unwrap() as usize,
+                )
+            })
+            .collect();
 
         Ok(Model {
             name: "Named not handled".to_string(),

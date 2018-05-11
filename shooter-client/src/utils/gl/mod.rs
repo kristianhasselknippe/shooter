@@ -15,18 +15,18 @@ lazy_static! {
 
 type BufferHandle = GLuint;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct BufferData {
     target: GLenum,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum BufferType {
     VertexArrayBuffer,
     ElementArrayBuffer,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Buffer {
     buffer_type: BufferType,
     handle: BufferHandle,

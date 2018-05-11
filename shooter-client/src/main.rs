@@ -10,7 +10,7 @@ extern crate libc;
 #[macro_use]
 extern crate maplit;
 extern crate nalgebra as na;
-extern crate ncollide as nc;
+extern crate ncollide3d as nc;
 extern crate ordered_float as of;
 extern crate rusttype;
 extern crate time as t;
@@ -101,7 +101,7 @@ fn main() {
     let mut draw_calls = Vec::new();
     draw_calls.push(DrawCall::new(
         program.clone(),
-        bow,
+        bow.clone(),
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
@@ -113,7 +113,7 @@ fn main() {
     ));
     draw_calls.push(DrawCall::new(
         program.clone(),
-        bow2,
+        bow2.clone(),
         vec![
             VertexAttribute::new(0, gl::FLOAT, 3),
             VertexAttribute::new(1, gl::FLOAT, 3),
@@ -158,12 +158,12 @@ fn main() {
     let groups = CollisionGroups::new();
     let contacts_query = GeometricQueryType::Contacts(0.0,0.0);
 
-    let bow_handle = ShapeHandle::new(bow.trimesh.unwrap());
-    let bow2_handle = bow2.trimesh.unwrap();
+    let bow_handle = bow.trimesh.unwrap().clone();
+    let bow2_handle = bow2.trimesh.unwrap().clone();
 
-    let mut world: CollisionWorld<Point3<f32>, Isometry3<f32>, ()> = CollisionWorld::new(0.02);
-    world.add(bow_iso, bow_handle, groups, contacts_query, ());
-    world.add(bow2_iso, bow2_handle, groups, contacts_query, ());
+    let mut world: CollisionWorld<f32, ()> = CollisionWorld::new(0.02);
+    world.add(bow_iso, ShapeHandle::new(bow_handle), groups, contacts_query, ());
+    world.add(bow2_iso, ShapeHandle::new(bow2_handle), groups, contacts_query, ());
 
     //collision_world.
 

@@ -11,7 +11,7 @@ impl<'a> Drop for TextureBinding<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Texture {
     handle: GLuint,
 }
