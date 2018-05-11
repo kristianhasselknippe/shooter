@@ -196,7 +196,7 @@ fn main() {
             gl_window.set_cursor_state(glutin::CursorState::Grab);
 
             camera.yaw += input.mouse_delta.x / 125.0;
-            camera.pitch += input.mouse_delta.y / 150.0;
+            camera.pitch -= input.mouse_delta.y / 150.0;
 
             if input.forward {
                 camera.move_forward(dt * -speed);

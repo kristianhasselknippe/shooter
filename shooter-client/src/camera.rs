@@ -26,34 +26,30 @@ impl Camera {
             projection: ::na::Perspective3::new(aspect, fov, near, far).as_matrix().clone(),
             pos: pos,
             pitch: 0.0,
-            yaw: -3.14/2.0,
+            yaw: 0.0,
         }
     }
 
+    pub fn rotation(&self) -> Rotation3<f32> {
+        Rotation3::from_axis_angle(&Vector3::x_axis(), self.pitch) *
+        Rotation3::from_axis_angle(&Vector3::y_axis(), self.yaw)
+    }
+
     pub fn move_forward(&mut self, d: f32) {
-        self.pos -= self.direction() * d;
+        self.pos += self.rotation().inverse() * (Vector3::z() * d);
     }
 
     pub fn move_right(&mut self, d: f32) {
-        let orig_dir = self.direction();
-        let dir = Vector3::new(orig_dir.x, 0.0, orig_dir.z);
-        let dir = Rotation3::from_euler_angles(0.0, 3.14/2.0, 0.0) * dir;
-        self.pos -= dir * d;
+        self.pos += self.rotation().inverse() * (Vector3::x() * d);
     }
 
     pub fn move_up(&mut self, d: f32)  {
-        self.pos += Vector3::new(0.0,d,0.0);
-    }
-
-    pub fn direction(&self) -> Vector3<f32> {
-        Vector3::new(self.pitch.cos() * self.yaw.cos(),
-                     self.pitch.sin(),
-                     self.pitch.cos() * self.yaw.sin()).normalize()
+        self.pos += self.rotation().inverse() * (Vector3::y() * d);
     }
 
     pub fn view(&self) -> Matrix4<f32> {
-        let target = self.pos + self.direction();
-        Isometry3::look_at_rh(&self.pos, &target, &Vector3::y()).to_homogeneous()
+        let iso = self.rotation() * Translation3::from_vector(Vector3::new(-self.pos.x, -self.pos.y, -self.pos.z));
+        iso.to_homogeneous()
     }
 
     pub fn camera_matrix(&self) -> Matrix4<f32> {
