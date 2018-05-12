@@ -59,12 +59,10 @@ impl Input {
         }
     }
 
-    pub fn update_mouse_buttons(
-        &mut self,
-        button: &glutin::MouseButton,
-        state: &glutin::ElementState,
-        _modifiers: &glutin::ModifiersState,
-    ) {
+    pub fn update_mouse_buttons(&mut self,
+                                button: &glutin::MouseButton,
+                                state: &glutin::ElementState,
+                                _modifiers: &glutin::ModifiersState) {
         match button {
             &glutin::MouseButton::Left => {
                 self.mouse_left = pressed_state_to_bool!(*state);
@@ -100,13 +98,16 @@ impl Input {
                 glutin::VirtualKeyCode::E => {
                     self.up = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LShift | glutin::VirtualKeyCode::RShift => {
+                glutin::VirtualKeyCode::LShift |
+                glutin::VirtualKeyCode::RShift => {
                     self.shift = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LAlt | glutin::VirtualKeyCode::RAlt => {
+                glutin::VirtualKeyCode::LAlt |
+                glutin::VirtualKeyCode::RAlt => {
                     self.alt = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LControl | glutin::VirtualKeyCode::RControl => {
+                glutin::VirtualKeyCode::LControl |
+                glutin::VirtualKeyCode::RControl => {
                     self.ctrl = pressed_state_to_bool!(input.state);
                 }
                 glutin::VirtualKeyCode::Escape => {
@@ -128,23 +129,4 @@ impl Input {
             self.mouse_delta -= Vector2::new(0.0, value);
         }
     }
-
-    /*pub fn update_sdl_input(&mut self) {
-        for event in self.event_pump.poll_iter() {
-            match event {
-                Event::KeyDown { keycode: Some(Keycode::W), .. } => { self.up_down = true; },
-                Event::KeyDown { keycode: Some(Keycode::A), .. } => { self.left_down = true; },
-                Event::KeyDown { keycode: Some(Keycode::S), .. } => { self.down_down = true; },
-                Event::KeyDown { keycode: Some(Keycode::D), .. } => { self.right_down = true; },
-                Event::KeyUp { keycode: Some(Keycode::W), .. } => { self.up_down = false; },
-                Event::KeyUp { keycode: Some(Keycode::A), .. } => { self.left_down = false; },
-                Event::KeyUp { keycode: Some(Keycode::S), .. } => { self.down_down = false; },
-                Event::KeyUp { keycode: Some(Keycode::D), .. } => { self.right_down = false; },
-
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } |
-                Event::Quit { .. } => self.escape = true,
-                _ => {}
-            }
-        }
-    }*/
 }

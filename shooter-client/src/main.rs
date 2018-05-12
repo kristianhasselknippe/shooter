@@ -151,7 +151,10 @@ fn main() {
     let mut fps_counter = FpsCounter::new();
     let mut running = true;
 
-    viewport(window_size.0 as i32, window_size.1 as i32);
+    let dpi_factor = gl_window.hidpi_factor();
+    println!("DPI: {}", dpi_factor);
+    viewport((window_size.0 as f32 * dpi_factor) as i32,
+             (window_size.1 as f32 * dpi_factor) as i32);
 
     let mut input = Input::new();
 
@@ -167,6 +170,7 @@ fn main() {
 
     //collision_world.
 
+
     'running: while running {
         let dt = time.delta_time() as f32;
 
@@ -177,6 +181,7 @@ fn main() {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::Resized(w, h) => {
                         gl_window.resize(w, h);
+                        println!("New Window size: {},{}", w, h);
                         unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
                     },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
