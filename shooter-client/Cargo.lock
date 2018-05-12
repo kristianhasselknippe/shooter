@@ -337,6 +337,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "imgui"
+version = "0.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "imgui-sys 0.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "imgui-sys"
+version = "0.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bitflags 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cc 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "inflate"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -884,6 +901,7 @@ dependencies = [
  "gl 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glutin 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "imgui 0.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1180,6 +1198,8 @@ dependencies = [
 "checksum gleam 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e47b39459e47b76be4d2c82702932cdc66df09dcb8f813424167991adb8b3380"
 "checksum glutin 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a9caee44b73388b2b4452ab783b13a1af80edb363bfc6e5292bdb2dd990a3171"
 "checksum image 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ebdff791af04e30089bde8ad2a632b86af433b40c04db8d70ad4b21487db7a6a"
+"checksum imgui 0.0.18 (registry+https://github.com/rust-lang/crates.io-index)" = "9ceccdd3263306b49c57cde2d1681a6520b88e6501331252489ca5cbd3e84617"
+"checksum imgui-sys 0.0.18 (registry+https://github.com/rust-lang/crates.io-index)" = "47aea503694cda888f5176e0cc01099ee89b5ebb4548e309711e96b927e2a4b7"
 "checksum inflate 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "4ec18d981200fd14e65ee8e35fb60ed1ce55227a02407303f3a72517c6146dcc"
 "checksum inotify 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "887fcc180136e77a85e6a6128579a719027b1bab9b1c38ea4444244fe262c20c"
 "checksum itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)" = "f58856976b776fedd95533137617a02fb25719f40e7d9b01c7043cd65474f450"
