@@ -48,26 +48,6 @@ fn gen_buffer() -> BufferHandle {
     }
 }
 
-pub fn gen_vertex_array_buffer() -> Buffer {
-    Buffer {
-        buffer_type: BufferType::VertexArrayBuffer,
-        handle: gen_buffer(),
-        data: BufferData {
-            target: gl::ARRAY_BUFFER,
-        },
-    }
-}
-
-pub fn gen_element_array_buffer() -> Buffer {
-    Buffer {
-        buffer_type: BufferType::ElementArrayBuffer,
-        handle: gen_buffer(),
-        data: BufferData {
-            target: gl::ELEMENT_ARRAY_BUFFER,
-        },
-    }
-}
-
 pub fn clear(r: f32, g: f32, b: f32, a: f32) {
     unsafe {
         gl::ClearColor(r, g, b, a);
@@ -78,6 +58,26 @@ pub fn clear(r: f32, g: f32, b: f32, a: f32) {
 }
 
 impl Buffer {
+    pub fn gen_vbo() -> Buffer {
+        Buffer {
+            buffer_type: BufferType::VertexArrayBuffer,
+            handle: gen_buffer(),
+            data: BufferData {
+                target: gl::ARRAY_BUFFER,
+            },
+        }
+    }
+
+    pub fn gen_ebo() -> Buffer {
+        Buffer {
+            buffer_type: BufferType::ElementArrayBuffer,
+            handle: gen_buffer(),
+            data: BufferData {
+                target: gl::ELEMENT_ARRAY_BUFFER,
+            },
+        }
+    }
+
     pub fn upload_data(&mut self, data: *const u8, len: isize) {
         println!(
             "Uploading data of len: {:?}, to target: {}",

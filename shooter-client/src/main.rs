@@ -123,26 +123,6 @@ fn main() {
         |_dc: &DrawCall| {
         }
     ));
-    /*draw_calls.push(DrawCall::new(
-        program.clone(),
-        al,
-        vec![
-            VertexAttribute::new(0, gl::FLOAT, 3),
-            VertexAttribute::new(1, gl::FLOAT, 3),
-            VertexAttribute::new(2, gl::FLOAT, 3),
-        ],
-        drawing::Transform::from_pos(na::Vector3::new(15.0,0.0,0.0))
-    ));*/
-
-    /*draw_calls.push(DrawCall::new(
-        program.clone(),
-        sphere,
-        vec![
-            VertexAttribute::new(0, gl::FLOAT, 3),
-            VertexAttribute::new(1, gl::FLOAT, 3),
-        ],
-        drawing::Transform::from_pos(na::Vector3::new(10.0,0.0,0.0))
-    ));*/
 
     let mut time = Time::new(60);
 
@@ -219,7 +199,7 @@ fn main() {
             speed *= 2.0;
         }
         if input.mouse_right {
-            gl_window.set_cursor_state(glutin::CursorState::Grab);
+            //gl_window.set_cursor_state(glutin::CursorState::Grab);
 
             camera.yaw += input.mouse_delta.x / 125.0;
             camera.pitch -= input.mouse_delta.y / 150.0;
@@ -243,7 +223,7 @@ fn main() {
                 camera.move_up(dt * -speed);
             }
         } else {
-            gl_window.set_cursor_state(glutin::CursorState::Normal);
+            //gl_window.set_cursor_state(glutin::CursorState::Normal);
         }
 
         if input.escape {

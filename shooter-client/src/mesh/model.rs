@@ -54,7 +54,7 @@ impl Model {
             (mm.vertex_data.len() * ::std::mem::size_of::<VertexData>())
         );
 
-        let mut vbo = gen_vertex_array_buffer();
+        let mut vbo = Buffer::gen_vbo();
         vbo.bind();
         vbo.upload_data(
             mm.vertex_data.as_ptr() as _,
@@ -71,7 +71,7 @@ impl Model {
             (indices.len() * ::std::mem::size_of::<GLuint>()) as isize
         );
 
-        let mut ebo = gen_element_array_buffer();
+        let mut ebo = Buffer::gen_ebo();
         ebo.bind();
 
         ebo.upload_data(
