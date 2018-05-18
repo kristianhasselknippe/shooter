@@ -8,6 +8,7 @@ pub struct Camera {
     pub projection: Matrix4<f32>,
 }
 
+
 impl Camera {
     pub fn new_orthographic(width: f32, height: f32, pos: Point3<f32>) -> Camera {
         let proj = Matrix4::new_orthographic(0.0, width, 0.0, height, -10.0, 1000.0);
@@ -52,5 +53,28 @@ impl Camera {
 
     pub fn camera_matrix(&self) -> Matrix4<f32> {
         self.projection * self.view()
+    }
+}
+
+pub struct OrthoCamera {
+    pub projection: Matrix4<f32>,
+}
+
+/*
+Matrix4::new(
+                2.0/w,    0.0,  0.0, 0.0,
+                0.0,   2.0/-h,  0.0, 0.0,
+                0.0,      0.0, -1.0, 0.0,
+                -1.0,      1.0,  0.0, 1.0,
+            )
+*/
+impl OrthoCamera {
+    pub fn new(w: f32, h: f32) -> OrthoCamera {
+        let o = Matrix4::new_orthographic(0.0, w, 0.0, h, -10.0, 1000.0);
+        let s = Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, -1.0, 1.0));
+
+        OrthoCamera {
+            projection: s * o
+        }
     }
 }

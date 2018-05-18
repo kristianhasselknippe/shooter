@@ -1,4 +1,4 @@
-use camera::Camera;
+use camera::OrthoCamera;
 use drawing::*;
 use gl;
 use gl::types::*;
@@ -205,7 +205,8 @@ impl Gui {
         let mut ebo = Buffer::gen_ebo();
         ebo.bind();
 
-        let camera = Camera::new_orthographic(w, h, Point3::new(0.0, 0.0, 0.0));
+        println!("FOOOOOOOOOO: {},{}", w, h);
+        let camera = OrthoCamera::new(w, h);
 
         disable(Capability::CullFace);
         disable(Capability::DepthTest);
