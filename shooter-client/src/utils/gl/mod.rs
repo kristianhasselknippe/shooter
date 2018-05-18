@@ -8,7 +8,8 @@ use std::mem::size_of;
 lazy_static! {
     static ref GL_TYPE_TO_SIZE: HashMap<GLenum, GLsizei> = {
         hashmap! {
-            gl::FLOAT => size_of::<GLfloat>() as GLsizei
+            gl::FLOAT => size_of::<GLfloat>() as GLsizei,
+            gl::UNSIGNED_INT => size_of::<GLuint>() as GLsizei,
         }
     };
 }
@@ -34,8 +35,8 @@ pub struct Buffer {
 }
 
 fn gl_print_error(_msg: &str) {
-    //print!("{} - ", msg);
-    //check_gl_errors();
+    print!("{} - ", _msg);
+    check_gl_errors();
 }
 
 fn gen_buffer() -> BufferHandle {
@@ -75,6 +76,12 @@ impl Buffer {
             data: BufferData {
                 target: gl::ELEMENT_ARRAY_BUFFER,
             },
+        }
+    }
+
+    pub fn delete(&mut self) {
+        unsafe {
+            gl::DeleteBuffers(1, &mut self.handle as *mut _);
         }
     }
 
@@ -182,6 +189,12 @@ impl VertexArray {
         }
     }
 
+    pub fn delete(&mut self) {
+        unsafe {
+            gl::DeleteVertexArrays(1, &mut self.handle as *mut _);
+        }
+    }
+
     pub fn unbind(&mut self) {
         unsafe {
             gl::BindVertexArray(0);
@@ -240,3 +253,71 @@ pub fn viewport(width: i32, height: i32) {
     unsafe { gl::Viewport(0, 0, width, height) };
 }
 
+pub enum CullFace {
+    Front,
+    Back,
+    FrontAndBack,
+}
+
+pub fn set_cull_face(cull_face: CullFace) {
+    unsafe {
+        match cull_face {
+            CullFace::Front => gl::CullFace(gl::FRONT),
+            CullFace::Back => gl::CullFace(gl::BACK),
+            CullFace::FrontAndBack => gl::CullFace(gl::FRONT_AND_BACK),
+        }
+    }
+}
+
+pub enum Capability {
+    /** If enabled, blend the computed fragment color values with the values in the color buffers. See glBlendFunc. */
+    Blend,
+    /** If enabled, cull polygons based on their winding in window coordinates. See glCullFace.*/
+    CullFace,
+    /** If enabled, do depth comparisons and update the depth buffer. Note that even if the depth buffer exists and the depth mask is non-zero, the depth buffer is not updated if the depth test is disabled. See glDepthFunc and glDepthRangef. */
+    DepthTest,
+    /** If enabled, dither color components or indices before they are written to the color buffer. */
+    Dither,
+    /** If enabled, an offset is added to depth values of a polygon's fragments produced by rasterization. See glPolygonOffset. */
+    PolygonOffsetFill,
+    /** If enabled, compute a temporary coverage value where each bit is determined by the alpha value at the corresponding sample location. The temporary coverage value is then ANDed with the fragment coverage value. */
+    SampleAlphaToCoverage,
+    /** If enabled, the fragment's coverage is ANDed with the temporary coverage value. If GL_SAMPLE_COVERAGE_INVERT is set to GL_TRUE, invert the coverage value. See glSampleCoverage. */
+    SampleCoverage,
+    /** If enabled, discard fragments that are outside the scissor rectangle. See glScissor. */
+    ScissorTest,
+    /** If enabled, do stencil testing and update the stencil buffer. See glStencilFunc and glStencilOp. */
+    StencilTest,
+}
+
+pub fn enable(cap: Capability) {
+    unsafe {
+        match cap {
+            Capability::Blend => gl::Enable(gl::BLEND),
+            Capability::CullFace => gl::Enable(gl::CULL_FACE),
+            Capability::DepthTest => gl::Enable(gl::DEPTH_TEST),
+            Capability::Dither => gl::Enable(gl::DITHER),
+            Capability::PolygonOffsetFill => gl::Enable(gl::POLYGON_OFFSET_FILL),
+            Capability::SampleAlphaToCoverage => gl::Enable(gl::SAMPLE_ALPHA_TO_COVERAGE),
+            Capability::SampleCoverage => gl::Enable(gl::SAMPLE_COVERAGE),
+            Capability::ScissorTest => gl::Enable(gl::SCISSOR_TEST),
+            Capability::StencilTest => gl::Enable(gl::STENCIL_TEST),
+        }
+    }
+}
+
+pub fn disable(cap: Capability) {
+    unsafe {
+        match cap {
+            Capability::Blend => gl::Disable(gl::BLEND),
+            Capability::CullFace => gl::Disable(gl::CULL_FACE),
+            Capability::DepthTest => gl::Disable(gl::DEPTH_TEST),
+            Capability::Dither => gl::Disable(gl::DITHER),
+            Capability::PolygonOffsetFill => gl::Disable(gl::POLYGON_OFFSET_FILL),
+            Capability::SampleAlphaToCoverage => gl::Disable(gl::SAMPLE_ALPHA_TO_COVERAGE),
+            Capability::SampleCoverage => gl::Disable(gl::SAMPLE_COVERAGE),
+            Capability::ScissorTest => gl::Disable(gl::SCISSOR_TEST),
+            Capability::StencilTest => gl::Disable(gl::STENCIL_TEST),
+        }
+    }
+}

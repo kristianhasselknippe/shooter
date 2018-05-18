@@ -15,9 +15,8 @@ extern crate ordered_float as of;
 extern crate rusttype;
 extern crate time as t;
 extern crate itertools;
-extern crate imgui;
+extern crate imgui_sys as imgui;
 
-use imgui::*;
 mod utils;
 mod scene;
 mod shader;
@@ -32,6 +31,7 @@ mod entities;
 mod time;
 mod input;
 mod fps_counter;
+mod gui;
 
 use glutin::{GlContext,GlWindow,WindowBuilder,EventsLoop,ContextBuilder};
 use shader::*;
@@ -45,13 +45,13 @@ use utils::gl::*;
 use drawing::{DrawCall, DrawContext};
 use alga::general::Inverse;
 
-use imgui::{FontGlyphRange, ImFontConfig};
-
 use nc::{
     shape::{ShapeHandle,Shape},
     world::{CollisionWorld,CollisionGroups,GeometricQueryType}
 };
 use na::{Isometry3,Vector3,Point3,zero};
+
+use gui::*;
 
 fn main() {
     let window_size = (800, 600);
@@ -152,14 +152,7 @@ fn main() {
 
     //collision_world.
 
-    let mut imgui = ImGui::init();
-    let config = ImFontConfig::new()
-        .oversample_h(1)
-        .pixel_snap_h(true)
-        .size_pixels(13.0);
-    config.rasterizer_multiply(1.75).add_font(
-        &mut imgui.fonts(), include_bytes!("../Roboto-Regular.ttf"), &FontGlyphRange::japanese());
-    config.merge_mode(true).add_default_font(&mut imgui.fonts());
+    let mut gui = Gui::init_gui(1920.0, 1280.0);
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -241,7 +234,15 @@ fn main() {
         }
 
         clear(0.3, 0.0, 0.5, 1.0);
-        for mut d in &mut draw_calls {
+
+        gui.update_input(&input);
+
+        gui.new_frame();
+
+        gui.draw_test();
+
+        gui.render();
+        /*for mut d in &mut draw_calls {
             d.bind();
             let model = d.transform.matrix();
             let model_view = camera.view() * model;
@@ -266,18 +267,8 @@ fn main() {
             d.bind_texture("diffuseMap", &d.model.textures[0], 0);
             d.draw();
             d.unbind();
-        }
+        }*/
 
-        let mut ui = imgui.frame((200,200), (200,200), dt);
-        ui.window(im_str!("Hello world"))
-            .size((300.0, 100.0), ImGuiCond::FirstUseEver)
-            .build(|| {
-                ui.text(im_str!("Hello world!"));
-                ui.text(im_str!("This...is...imgui-rs!"));
-                ui.separator();
-                let mouse_pos = ui.imgui().mouse_pos();
-                ui.text(im_str!("Mouse Position: ({:.1},{:.1})", mouse_pos.0, mouse_pos.1));
-            });
 
         gl_window.swap_buffers().unwrap();
 

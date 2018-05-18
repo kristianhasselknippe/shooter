@@ -104,3 +104,34 @@ impl Texture {
         self.unbind();
     }
 }
+
+pub fn bind_texture_unit(unit: u32, handle: GLuint) {
+    unsafe {
+        match unit {
+            0 => { gl::ActiveTexture(gl::TEXTURE0); },
+            1 => { gl::ActiveTexture(gl::TEXTURE1); },
+            2 => { gl::ActiveTexture(gl::TEXTURE2); },
+            3 => { gl::ActiveTexture(gl::TEXTURE3); },
+            4 => { gl::ActiveTexture(gl::TEXTURE4); },
+            5 => { gl::ActiveTexture(gl::TEXTURE5); },
+            6 => { gl::ActiveTexture(gl::TEXTURE6); },
+            7 => { gl::ActiveTexture(gl::TEXTURE7); },
+            8 => { gl::ActiveTexture(gl::TEXTURE8); },
+            9 => { gl::ActiveTexture(gl::TEXTURE9); },
+            10 => { gl::ActiveTexture(gl::TEXTURE10); },
+            11 => { gl::ActiveTexture(gl::TEXTURE11); },
+            12 => { gl::ActiveTexture(gl::TEXTURE12); },
+            13 => { gl::ActiveTexture(gl::TEXTURE13); },
+            14 => { gl::ActiveTexture(gl::TEXTURE14); },
+            15 => { gl::ActiveTexture(gl::TEXTURE15); },
+            16 => { gl::ActiveTexture(gl::TEXTURE16); },
+            17 => { gl::ActiveTexture(gl::TEXTURE17); },
+            18 => { gl::ActiveTexture(gl::TEXTURE18); },
+            19 => { gl::ActiveTexture(gl::TEXTURE19); },
+            _ => {
+                panic!("Unsupported texture unit {}", unit);
+            }
+        }
+        gl::BindTexture(gl::TEXTURE_2D, handle);
+    }
+}
