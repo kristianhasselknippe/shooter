@@ -1,5 +1,6 @@
 use gl;
 use gl::types::*;
+use std::ptr::null_mut;
 
 struct TextureBinding<'a> {
     handle: &'a Texture
@@ -94,7 +95,7 @@ impl Texture {
             },
             _ => panic!("Unsupported bbp: {}", bbp)
         };
-        
+
         unsafe {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
@@ -109,11 +110,10 @@ impl Texture {
             );
         }
         println!("Done uploading texture");
-        self.unbind();
     }
 }
 
-pub fn bind_texture_unit(unit: u32, handle: GLuint) {
+pub fn set_active_unit(unit: u32) {
     unsafe {
         match unit {
             0 => { gl::ActiveTexture(gl::TEXTURE0); },
@@ -140,6 +140,48 @@ pub fn bind_texture_unit(unit: u32, handle: GLuint) {
                 panic!("Unsupported texture unit {}", unit);
             }
         }
+    }
+}
+
+pub fn bind_texture_unit(unit: u32, handle: GLuint) {
+    unsafe {
+        set_active_unit(unit);
         gl::BindTexture(gl::TEXTURE_2D, handle);
+    }
+}
+
+pub enum TextureInfoType {
+    Width,
+    Height,
+}
+
+pub fn get_texture_info_i(info_type: TextureInfoType) -> i32 {
+    unsafe {
+        let mut out: GLint = 0;
+        match info_type {
+            TextureInfoType::Width => gl::GetTexLevelParameteriv(gl::TEXTURE_2D, 0, gl::TEXTURE_WIDTH, &mut out as *mut GLint),
+            TextureInfoType::Height => gl::GetTexLevelParameteriv(gl::TEXTURE_2D, 0, gl::TEXTURE_HEIGHT, &mut out as *mut GLint),
+        }
+        out
+    }
+}
+
+pub fn get_texture_dim(unit: u32) -> (i32,i32) {
+    set_active_unit(unit);
+    let width = get_texture_info_i(TextureInfoType::Width);
+    let height = get_texture_info_i(TextureInfoType::Height);
+    (width, height)
+}
+
+pub fn read_pixels_from_texture2d(unit: u32) -> (Vec<u8>, (i32,i32)) {
+    unsafe {
+        let dim = get_texture_dim(unit);
+        println!("Texture dim: {:?}", dim);
+        let buffer_len = (dim.0 * dim.1 * 4) as usize;
+        let mut out: Vec<u8> = vec![0;buffer_len];
+        println!("Getting text img");
+        gl::GetTexImage(gl::TEXTURE_2D, 0, gl::RGBA, gl::UNSIGNED_BYTE, out.as_mut_ptr() as _);
+        println!("Done getting tex img");
+        (out, dim)
     }
 }

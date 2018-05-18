@@ -27,6 +27,7 @@ impl Gui {
     pub fn init_gui(w: f32, h: f32) -> Gui {
         let shader = ShaderProgram::create_program("gui");
 
+        println!("InitGUI: {},{}", w, h);
         unsafe {
             // Application init
             let ctx = igCreateContext(None, None);
@@ -60,7 +61,7 @@ impl Gui {
                 pixels as i32, width, height, bytes_per_pixel
             );
 
-            let mut cdir = ::std::env::current_dir().unwrap();
+            /*let mut cdir = ::std::env::current_dir().unwrap();
             cdir.push("font_tex.png");
             let pixel_slice: &[u8] =
                 ::std::slice::from_raw_parts(pixels, (width * height * bytes_per_pixel) as usize);
@@ -70,7 +71,7 @@ impl Gui {
                 width as _,
                 height as _,
                 bytes_per_pixel as _,
-            );
+            );*/
 
             let mut font_texture = Texture::new();
             font_texture.bind_to_texture_unit(0);
@@ -79,7 +80,9 @@ impl Gui {
 
             // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'.
             //This will be passed back to your via the renderer.
+            println!("Setting fontatlas texture id to: {}", font_texture.handle);
             ImFontAtlas_SetTexID((*io).fonts, font_texture.handle as _);
+
             Gui {
                 context: ctx,
                 io: io,
@@ -142,7 +145,20 @@ impl Gui {
                         // The texture for the draw call is specified by pcmd->TextureId.
                         // The vast majority of draw calls with use the imgui texture atlas, which value you have set yourself during initialization.
                         //TODO: bind_texture((*pcmd).texture_id);
+
+                        println!("Trying to read pixzels");
+                        let pixels = read_pixels_from_texture2d(0);
+                        println!("Done reading pixels");
+                        ::utils::img::save_as_image_in_current_dir(
+                            "foobar.png",
+                            &(pixels.0),
+                            (pixels.1).0 as _,
+                            (pixels.1).1 as _,
+                            4
+                        );
+
                         let tid = pcmd.texture_id;
+                        println!("Enabling texture id {}, which we got from pcmd", tid as GLuint);
                         bind_texture_unit(0, tid as _);
                         // We are using scissoring to clip some objects. All low-level graphics API supports it.
                         // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches
@@ -202,13 +218,6 @@ impl Gui {
         let elems_size = elements.size * ::std::mem::size_of::<ImDrawIdx>() as i32;
         vbo.upload_data(vertices.data as _, verts_size as isize);
         ebo.upload_data(elements.data as _, elems_size as isize);
-
-        /*unsafe {
-            for i in 0..vertices.size {
-                let v = vertices.data.offset(i as isize);
-                println!("Vert: {},{}", (*v).pos.x, (*v).pos.y);
-            }
-        }*/
 
         self.shader.use_program();
         self.shader.set_mat4("proj", &camera.projection);
