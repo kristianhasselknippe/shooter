@@ -36,8 +36,8 @@ pub struct Buffer {
 }
 
 fn gl_print_error(_msg: &str) {
-    print!("{} - ", _msg);
-    check_gl_errors();
+    //print!("{} - ", _msg);
+    //check_gl_errors();
 }
 
 fn gen_buffer() -> BufferHandle {
@@ -87,10 +87,10 @@ impl Buffer {
     }
 
     pub fn upload_data(&mut self, data: *const u8, len: isize) {
-        println!(
+        /*println!(
             "Uploading data of len: {:?}, to target: {}",
             len, self.data.target
-        );
+        );*/
         unsafe {
             gl::BufferData(
                 self.data.target,
@@ -121,15 +121,10 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
         stride += a.num_comps * GL_TYPE_TO_SIZE[&a.data_type]
     }
 
-    println!("Stride: {}", stride);
-
     let mut offset = 0;
     for attrib in attribs {
         unsafe {
-            println!(
-                "VertexAttribPointer: {},{},{},{},{}",
-                attrib.location, attrib.num_comps, attrib.data_type, stride, offset
-            );
+
             gl::VertexAttribPointer(
                 attrib.location,
                 attrib.num_comps,

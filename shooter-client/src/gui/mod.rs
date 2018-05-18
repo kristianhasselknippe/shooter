@@ -107,13 +107,12 @@ impl Gui {
         }
     }
 
-    pub fn update_input(&mut self, input: &Input) {
+    pub fn update_input(&mut self, input: &Input, dt: f32) {
         unsafe {
-            /*ImGuiIO& io = ImGui::GetIO();
-            io.DeltaTime = 1.0f/60.0f;
-            io.MousePos = mouse_pos;
-            io.MouseDown[0] = mouse_button_0;
-            io.MouseDown[1] = mouse_button_1;*/
+            (*self.io).delta_time = dt;
+            (*self.io).mouse_pos = ImVec2::new(input.mouse_pos.x, input.mouse_pos.y);
+            (*self.io).mouse_down[0] = input.mouse_left;
+            (*self.io).mouse_down[1] = input.mouse_right;
         }
     }
 
@@ -162,7 +161,7 @@ impl Gui {
                         let tid = pcmd.texture_id;
                         //bind_texture_unit(0, tid as GLuint as _);
                         println!("Enabling texture id {}, which we got from pcmd", tid as GLuint);
-                        
+
                         // We are using scissoring to clip some objects. All low-level graphics API supports it.
                         // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches
                         // (some elements visible outside their bounds) but you can fix that once everywhere else works!
@@ -205,7 +204,6 @@ impl Gui {
         let mut ebo = Buffer::gen_ebo();
         ebo.bind();
 
-        println!("FOOOOOOOOOO: {},{}", w, h);
         let camera = OrthoCamera::new(w, h);
 
         disable(Capability::CullFace);
@@ -213,20 +211,11 @@ impl Gui {
         enable(Capability::Blend);
         enable(Capability::ScissorTest);
 
-        println!("Enabling vertex attribs");
         enable_vertex_attribs(&[
             VertexAttribute::new(0, gl::FLOAT, 2, false),
             VertexAttribute::new(1, gl::FLOAT, 2, false),
             VertexAttribute::new(2, gl::UNSIGNED_BYTE, 4, true),
         ]);
-
-        /*unsafe {
-            for i in 0..vertices.size {
-                let vert = vertices.data.offset(i as isize);
-                let uv = (*vert).uv;
-                println!("UV {}: {},{}", i, uv.x, uv.y);
-            }
-        }*/
 
         let verts_size = vertices.size * ::std::mem::size_of::<ImDrawVert>() as i32;
         let elems_size = elements.size * ::std::mem::size_of::<ImDrawIdx>() as i32;
@@ -237,9 +226,7 @@ impl Gui {
         self.shader.set_mat4("proj", &camera.projection);
         self.shader.set_int("tex", 0);
 
-        println!("Drawing triangles: {}", elems_size);
         draw_triangles(elems_size, element_type);
-        println!("done drawing triangles");
 
         vbo.delete();
         ebo.delete();

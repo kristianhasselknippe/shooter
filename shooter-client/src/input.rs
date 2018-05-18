@@ -21,6 +21,7 @@ pub struct Input {
     pub mouse_middle: bool,
 
     pub mouse_delta: Vector2<f32>,
+    pub mouse_pos: Vector2<f32>,
 }
 
 macro_rules! pressed_state_to_bool {
@@ -56,6 +57,7 @@ impl Input {
             mouse_middle: false,
 
             mouse_delta: Vector2::new(0.0, 0.0),
+            mouse_pos: Vector2::new(0.0, 0.0),
         }
     }
 
@@ -116,6 +118,10 @@ impl Input {
                 _ => {}
             }
         }
+    }
+
+    pub fn update_mouse_pos(&mut self, pos: Vector2<f32>) {
+        self.mouse_pos = pos;
     }
 
     pub fn reset_mouse_delta(&mut self) {

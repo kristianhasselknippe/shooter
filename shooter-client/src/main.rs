@@ -181,6 +181,12 @@ fn main() {
                     } => {
                         input.update_mouse_buttons(&mb, &s, &m);
                     },
+                    glutin::WindowEvent::CursorMoved {
+                        position: (x, y),
+                        ..
+                    } => {
+                        input.update_mouse_pos(na::Vector2::new(x as _, y as _));
+                    }
                     _ => (),
                 },
                 glutin::Event::DeviceEvent { event, .. } => {
@@ -238,7 +244,7 @@ fn main() {
 
         clear(0.3, 0.0, 0.5, 1.0);
 
-        gui.update_input(&input);
+        gui.update_input(&input, dt);
 
         gui.new_frame();
 
