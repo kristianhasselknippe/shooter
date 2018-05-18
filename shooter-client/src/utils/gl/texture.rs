@@ -1,6 +1,5 @@
 use gl;
 use gl::types::*;
-use std::ptr::null_mut;
 
 struct TextureBinding<'a> {
     handle: &'a Texture

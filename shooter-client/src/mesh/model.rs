@@ -7,7 +7,7 @@ use gl;
 use gl::types::*;
 use itertools::Itertools;
 use mesh::wavefront::{parse_wavefront, MtlItem};
-use na::{Point3, Real};
+use na::{Point3};
 use nc::shape::TriMesh;
 use utils::file::path_of;
 use utils::gl::{*, texture::*};

@@ -7,7 +7,10 @@ pub fn save_as_image(path: &Path, pixels: &[u8], width: u32, height: u32, bbp: u
         _ => panic!("save_as_image: Unsupported bbp: {}", bbp),
     };
     println!("Trying to save image at: {:#?}", path);
-    save_buffer(path, pixels, width, height, color_type);
+    match save_buffer(path, pixels, width, height, color_type) {
+        Ok(_) => (),
+        Err(_) => panic!("Error trying to save pixels as image"),
+    }
     println!("Image was saved");
 }
 

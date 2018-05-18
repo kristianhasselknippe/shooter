@@ -43,13 +43,12 @@ use input::*;
 use fps_counter::*;
 use utils::gl::*;
 use drawing::{DrawCall, DrawContext};
-use alga::general::Inverse;
 
 use nc::{
-    shape::{ShapeHandle,Shape},
+    shape::{ShapeHandle},
     world::{CollisionWorld,CollisionGroups,GeometricQueryType}
 };
-use na::{Isometry3,Vector3,Point3,zero};
+use na::{Isometry3,Vector3,zero};
 
 use gui::*;
 
@@ -131,7 +130,6 @@ fn main() {
     println!("Window size: {},{}", window_size.0, window_size.1);
 
     let mut fps_counter = FpsCounter::new();
-    let mut running = true;
 
     let dpi_factor = gl_window.hidpi_factor();
     println!("DPI: {}", dpi_factor);
@@ -156,6 +154,8 @@ fn main() {
         window_size.0 as f32 * dpi_factor,
         window_size.1 as f32 * dpi_factor,
     );
+
+    let mut running = true;
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -239,7 +239,7 @@ fn main() {
         }
 
         if input.escape {
-            break 'running;
+            running = false;
         }
 
         clear(0.3, 0.0, 0.5, 1.0);
