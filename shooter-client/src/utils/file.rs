@@ -3,6 +3,7 @@ use std::path::{Path,PathBuf};
 use std::fs::File;
 use std::io::Read;
 
+
 pub fn read_file(path: &Path) -> Result<String,()> {
     let mut f = File::open(path).unwrap();
     let mut s = String::new();

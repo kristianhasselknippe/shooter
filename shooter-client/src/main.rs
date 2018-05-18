@@ -152,7 +152,10 @@ fn main() {
 
     //collision_world.
 
-    let mut gui = Gui::init_gui(1920.0, 1280.0);
+    let mut gui = Gui::init_gui(
+        window_size.0 as f32 * dpi_factor,
+        window_size.1 as f32 * dpi_factor,
+    );
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -241,7 +244,7 @@ fn main() {
 
         gui.draw_test();
 
-        gui.render();
+        gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
         /*for mut d in &mut draw_calls {
             d.bind();
             let model = d.transform.matrix();

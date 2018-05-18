@@ -1,22 +1,19 @@
-use gl::types::*;
-use gl;
-use utils::gl::{
-    texture::*,
-    *
-};
-use drawing::*;
-use input::Input;
-use imgui::*;
-use shader::ShaderProgram;
 use camera::Camera;
-use std::ptr::{null, null_mut};
-use std::os::raw::c_char;
+use drawing::*;
+use gl;
+use gl::types::*;
+use imgui::*;
+use input::Input;
 use na::Point3;
+use shader::ShaderProgram;
+use std::os::raw::c_char;
+use std::ptr::{null, null_mut};
+use utils::gl::{*, texture::*};
 
 macro_rules! cstr {
-    ($s:expr) => (
+    ($s:expr) => {
         concat!($s, "\0") as *const str as *const [c_char] as *const c_char
-    );
+    };
 }
 
 pub struct Gui {
@@ -28,7 +25,6 @@ pub struct Gui {
 
 impl Gui {
     pub fn init_gui(w: f32, h: f32) -> Gui {
-
         let shader = ShaderProgram::create_program("gui");
 
         unsafe {
@@ -38,20 +34,52 @@ impl Gui {
             (*io).display_size.x = w;
             (*io).display_size.y = h;
 
+            println!("PWN: {:#?}", ::std::env::current_dir());
+            ImFontAtlas_AddFontFromFileTTF(
+                (*io).fonts,
+                cstr!("./assets/fonts/Lato-Regular.ttf"),
+                15.0,
+                null_mut(),
+                null_mut(),
+            );
+
             let mut pixels: *mut u8 = null_mut();
             let mut width: i32 = 0;
             let mut height: i32 = 0;
             let mut bytes_per_pixel: i32 = 0;
 
-            ImFontAtlas_GetTexDataAsRGBA32((*io).fonts, &mut pixels as *mut *mut u8, width as *mut i32, &mut height as *mut i32, &mut bytes_per_pixel as *mut i32);
-            println!("Pixels adr: {}, width: {}, height: {}, bbp: {}", pixels as i32, width, height, bytes_per_pixel);
+            ImFontAtlas_GetTexDataAsRGBA32(
+                (*io).fonts,
+                &mut pixels as *mut *mut u8,
+                &mut width as *mut i32,
+                &mut height as *mut i32,
+                &mut bytes_per_pixel as *mut i32,
+            );
+            println!(
+                "Pixels adr: {}, width: {}, height: {}, bbp: {}",
+                pixels as i32, width, height, bytes_per_pixel
+            );
 
-            let my_texture = Texture::new();
+            let mut cdir = ::std::env::current_dir().unwrap();
+            cdir.push("font_tex.png");
+            let pixel_slice: &[u8] =
+                ::std::slice::from_raw_parts(pixels, (width * height * bytes_per_pixel) as usize);
+            ::utils::img::save_as_image(
+                &cdir,
+                pixel_slice,
+                width as _,
+                height as _,
+                bytes_per_pixel as _,
+            );
+
+            let mut font_texture = Texture::new();
+            font_texture.bind_to_texture_unit(0);
+            font_texture.upload(pixels, width as u32, height as u32, bytes_per_pixel);
             //upload
 
-            // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'. This will be passed back to your via the renderer.
-
-            ImFontAtlas_SetTexID((*io).fonts, 2 as _); //TODO: This should be the ID of the texture
+            // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'.
+            //This will be passed back to your via the renderer.
+            ImFontAtlas_SetTexID((*io).fonts, font_texture.handle as _);
             Gui {
                 context: ctx,
                 io: io,
@@ -66,13 +94,13 @@ impl Gui {
         }
     }
 
-    pub fn render(&mut self) {
+    pub fn render(&mut self, w: f32, h: f32) {
         unsafe {
             // Render & swap video buffers
             igRender();
             /*MyImGuiRenderFunction(ImGui::GetDrawData());
             SwapBuffers();*/
-            self.my_render_function(igGetDrawData());
+            self.my_render_function(igGetDrawData(), w, h);
         }
     }
 
@@ -89,16 +117,65 @@ impl Gui {
     pub fn draw_test(&mut self) {
         unsafe {
             igText(cstr!("Hello, world"));
-            if igButton(cstr!("Save"), ImVec2::new(20.0,10.0))
-            {
-
-            }
+            if igButton(cstr!("Save"), ImVec2::new(20.0, 10.0)) {}
             //igInputText(cstr("string"), buf, IM_ARRAYSIZE(buf));
             //igSliderFloat("float", &f, 0.0f, 1.0f);
         }
     }
 
-    fn draw_indexed_triangles(&mut self, element_type: GLenum, elements: &ImVector<ImDrawIdx>, vertices: &ImVector<ImDrawVert>) {
+    fn my_render_function(&mut self, draw_data: *mut ImDrawData, w: f32, h: f32) {
+        unsafe {
+            // TODO: Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
+            // TODO: Setup viewport, orthographic projection matrix
+            // TODO: Setup shader: vertex { float2 pos, float2 uv, u32 color }, fragment shader sample color from 1 texture, multiply by vertex color.
+
+            let cmd_lists_count = (*draw_data).cmd_lists_count;
+            println!("DrawData: {}", cmd_lists_count);
+            for &cmd_list in (*draw_data).cmd_lists() {
+                let vtx_buffer = (*cmd_list).vtx_buffer.data; // vertex buffer generated by ImGui
+                let mut idx_buffer = (*cmd_list).idx_buffer.data; // index buffer generated by ImGui
+                for cmd_i in 0..(*cmd_list).cmd_buffer.size {
+                    let pcmd = &(*cmd_list).cmd_buffer.as_slice()[cmd_i as usize];
+                    if let Some(user_callback) = (*pcmd).user_callback {
+                        user_callback(cmd_list, pcmd);
+                    } else {
+                        // The texture for the draw call is specified by pcmd->TextureId.
+                        // The vast majority of draw calls with use the imgui texture atlas, which value you have set yourself during initialization.
+                        //TODO: bind_texture((*pcmd).texture_id);
+                        let tid = pcmd.texture_id;
+                        bind_texture_unit(0, tid as _);
+                        // We are using scissoring to clip some objects. All low-level graphics API supports it.
+                        // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches
+                        // (some elements visible outside their bounds) but you can fix that once everywhere else works!
+                        //TODO: MyEngineScissor((int)pcmd->ClipRect.x, (int)pcmd->ClipRect.y, (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+                        // Render 'pcmd->ElemCount/3' indexed triangles.
+                        // By default the indices ImDrawIdx are 16-bits, you can change them to 32-bits if your engine doesn't support 16-bits indices.
+                        self.draw_indexed_triangles(
+                            if ::std::mem::size_of::<ImDrawIdx>() == 2 {
+                                gl::UNSIGNED_SHORT
+                            } else {
+                                gl::UNSIGNED_INT
+                            },
+                            &(*cmd_list).idx_buffer,
+                            &(*cmd_list).vtx_buffer,
+                            w,
+                            h,
+                        );
+                    }
+                    idx_buffer.add((*pcmd).elem_count as usize);
+                }
+            }
+        }
+    }
+
+    fn draw_indexed_triangles(
+        &mut self,
+        element_type: GLenum,
+        elements: &ImVector<ImDrawIdx>,
+        vertices: &ImVector<ImDrawVert>,
+        w: f32,
+        h: f32,
+    ) {
         let mut vao = gen_vertex_array();
         vao.bind();
 
@@ -107,7 +184,7 @@ impl Gui {
         let mut ebo = Buffer::gen_ebo();
         ebo.bind();
 
-        let camera = Camera::new_orthographic(800.0, 600.0, Point3::new(0.0,0.0,0.0));
+        let camera = Camera::new_orthographic(w, h, Point3::new(0.0, 0.0, 0.0));
 
         disable(Capability::CullFace);
         disable(Capability::DepthTest);
@@ -144,52 +221,6 @@ impl Gui {
         ebo.delete();
         vao.delete();
     }
-
-    fn my_render_function(&mut self, draw_data: *mut ImDrawData)
-    {
-        unsafe {
-
-            // TODO: Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-            // TODO: Setup viewport, orthographic projection matrix
-            // TODO: Setup shader: vertex { float2 pos, float2 uv, u32 color }, fragment shader sample color from 1 texture, multiply by vertex color.
-
-            let cmd_lists_count = (*draw_data).cmd_lists_count;
-            println!("DrawData: {}", cmd_lists_count);
-            for &cmd_list in (*draw_data).cmd_lists()
-            {
-                let vtx_buffer = (*cmd_list).vtx_buffer.data;  // vertex buffer generated by ImGui
-                let mut idx_buffer = (*cmd_list).idx_buffer.data;   // index buffer generated by ImGui
-                for cmd_i in 0..(*cmd_list).cmd_buffer.size
-                {
-                    let pcmd = &(*cmd_list).cmd_buffer.as_slice()[cmd_i as usize];
-                    if let Some(user_callback) = (*pcmd).user_callback
-                    {
-                        user_callback(cmd_list, pcmd);
-                    }
-                    else
-                    {
-                        // The texture for the draw call is specified by pcmd->TextureId.
-                        // The vast majority of draw calls with use the imgui texture atlas, which value you have set yourself during initialization.
-                        //TODO: bind_texture((*pcmd).texture_id);
-                        bind_texture_unit(0,0);
-                        // We are using scissoring to clip some objects. All low-level graphics API supports it.
-                        // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches
-                        // (some elements visible outside their bounds) but you can fix that once everywhere else works!
-                        //TODO: MyEngineScissor((int)pcmd->ClipRect.x, (int)pcmd->ClipRect.y, (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                        // Render 'pcmd->ElemCount/3' indexed triangles.
-                        // By default the indices ImDrawIdx are 16-bits, you can change them to 32-bits if your engine doesn't support 16-bits indices.
-                        self.draw_indexed_triangles(
-                            if ::std::mem::size_of::<ImDrawIdx>() == 2 { gl::UNSIGNED_SHORT } else { gl::UNSIGNED_INT },
-                            &(*cmd_list).idx_buffer,
-                            &(*cmd_list).vtx_buffer,
-                        );
-                    }
-                    idx_buffer.add((*pcmd).elem_count as usize);
-                }
-            }
-        }
-    }
-
 }
 
 impl Drop for Gui {
@@ -199,4 +230,3 @@ impl Drop for Gui {
         }
     }
 }
-

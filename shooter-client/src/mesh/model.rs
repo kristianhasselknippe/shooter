@@ -90,7 +90,7 @@ impl Model {
                 println!("Loading image: {:?}", pb);
                 let img = ::image::load_texture(&pb);
                 let mut tex = Texture::new();
-                tex.upload(&img.data, img.width, img.height);
+                tex.upload(img.data.as_ptr() as _, img.width, img.height, 4);
                 textures.push(tex);
             }
         }

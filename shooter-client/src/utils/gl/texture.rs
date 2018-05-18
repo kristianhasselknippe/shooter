@@ -13,7 +13,7 @@ impl<'a> Drop for TextureBinding<'a> {
 
 #[derive(Debug,Clone)]
 pub struct Texture {
-    handle: GLuint,
+    pub handle: GLuint,
 }
 
 impl Texture {
@@ -84,20 +84,28 @@ impl Texture {
     }
 
 
-    pub fn upload(&mut self, pixels: &Vec<u8>, width: u32, height: u32) {
+    pub fn upload(&mut self, pixels: *const u8, width: u32, height: u32, bbp: i32) {
         self.bind();
-        println!("Uploading image of len: {} and dim: ({},{})", pixels.len(), width, height);
+        println!("Uploading image of len: {} and dim: ({},{})", width*height, width, height);
+
+        let format = match bbp {
+            4 => {
+                gl::RGBA
+            },
+            _ => panic!("Unsupported bbp: {}", bbp)
+        };
+        
         unsafe {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGBA as _,
+                format as _,
                 width as GLsizei,
                 height as GLsizei,
                 0,
-                gl::RGBA as _,
+                format as _,
                 gl::UNSIGNED_BYTE,
-                pixels.as_ptr() as *const u8 as _,
+                pixels as _,
             );
         }
         println!("Done uploading texture");
