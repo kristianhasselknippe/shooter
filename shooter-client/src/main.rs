@@ -105,9 +105,9 @@ fn main() {
         program.clone(),
         bow.clone(),
         vec![
-            VertexAttribute::new(0, gl::FLOAT, 3),
-            VertexAttribute::new(1, gl::FLOAT, 3),
-            VertexAttribute::new(2, gl::FLOAT, 3),
+            VertexAttribute::new(0, gl::FLOAT, 3, false),
+            VertexAttribute::new(1, gl::FLOAT, 3, false),
+            VertexAttribute::new(2, gl::FLOAT, 3, false),
         ],
         drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,-8.0)),
         |_dc: &DrawCall| {
@@ -117,9 +117,9 @@ fn main() {
         program.clone(),
         bow2.clone(),
         vec![
-            VertexAttribute::new(0, gl::FLOAT, 3),
-            VertexAttribute::new(1, gl::FLOAT, 3),
-            VertexAttribute::new(2, gl::FLOAT, 3),
+            VertexAttribute::new(0, gl::FLOAT, 3, false),
+            VertexAttribute::new(1, gl::FLOAT, 3, false),
+            VertexAttribute::new(2, gl::FLOAT, 3, false),
         ],
         drawing::Transform::from_pos(na::Vector3::new(40.0,0.0,-8.0)),
         |_dc: &DrawCall| {

@@ -122,7 +122,7 @@ impl Gui {
             igText(cstr!("Hello, world"));
             igText(cstr!("Hello, world 2"));
             igText(cstr!("Hello, world 3"));
-            if igButton(cstr!("Save"), ImVec2::new(20.0, 10.0)) {}
+            if igButton(cstr!("Save"), ImVec2::new(150.0, 80.0)) {}
             //igInputText(cstr("string"), buf, IM_ARRAYSIZE(buf));
             //igSliderFloat("float", &f, 0.0f, 1.0f);
         }
@@ -214,9 +214,9 @@ impl Gui {
 
         println!("Enabling vertex attribs");
         enable_vertex_attribs(&[
-            VertexAttribute::new(0, gl::FLOAT, 2),
-            VertexAttribute::new(1, gl::FLOAT, 2),
-            VertexAttribute::new(2, gl::UNSIGNED_BYTE, 4),
+            VertexAttribute::new(0, gl::FLOAT, 2, false),
+            VertexAttribute::new(1, gl::FLOAT, 2, false),
+            VertexAttribute::new(2, gl::UNSIGNED_BYTE, 4, true),
         ]);
 
         /*unsafe {

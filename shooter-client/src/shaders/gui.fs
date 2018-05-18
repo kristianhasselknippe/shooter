@@ -1,7 +1,7 @@
 #version 330 core
 
-varying vec2 tex_coords;
-varying vec4 v_color;
+in vec2 tex_coords;
+in vec4 v_color;
 
 uniform sampler2D tex;
 

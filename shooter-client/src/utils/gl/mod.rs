@@ -134,7 +134,7 @@ pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
                 attrib.location,
                 attrib.num_comps,
                 attrib.data_type,
-                gl::FALSE,
+                if attrib.norm { gl::TRUE } else { gl::FALSE },
                 stride, // Tightly packed atm
                 offset as *const GLvoid,
             );
@@ -156,14 +156,16 @@ pub struct VertexAttribute {
     location: GLuint,
     data_type: GLenum,
     num_comps: GLsizei,
+    norm: bool,
 }
 
 impl VertexAttribute {
-    pub fn new(location: GLuint, data_type: GLenum, num_comps: GLsizei) -> VertexAttribute {
+    pub fn new(location: GLuint, data_type: GLenum, num_comps: GLsizei, normalize: bool) -> VertexAttribute {
         VertexAttribute {
             location: location,
             data_type: data_type,
             num_comps: num_comps,
+            norm: normalize,
         }
     }
 }
