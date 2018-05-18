@@ -10,6 +10,7 @@ lazy_static! {
         hashmap! {
             gl::FLOAT => size_of::<GLfloat>() as GLsizei,
             gl::UNSIGNED_INT => size_of::<GLuint>() as GLsizei,
+            gl::UNSIGNED_BYTE => size_of::<GLubyte>() as GLsizei,
         }
     };
 }

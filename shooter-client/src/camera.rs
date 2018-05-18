@@ -10,8 +10,6 @@ pub struct Camera {
 
 impl Camera {
     pub fn new_orthographic(width: f32, height: f32, pos: Point3<f32>) -> Camera {
-        let w = width / 2.0;
-        let h = height / 2.0;
         let proj = Matrix4::new_orthographic(0.0, width, 0.0, height, -10.0, 1000.0);
         Camera {
             projection: proj,

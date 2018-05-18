@@ -6,8 +6,8 @@ layout (location = 2) in vec4 color;
 
 uniform mat4 proj;
 
-out vec2 tex_coords;
-out vec4 v_color;
+varying vec2 tex_coords;
+varying vec4 v_color;
 
 void main()
 {

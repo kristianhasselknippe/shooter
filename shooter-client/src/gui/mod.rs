@@ -120,6 +120,8 @@ impl Gui {
     pub fn draw_test(&mut self) {
         unsafe {
             igText(cstr!("Hello, world"));
+            igText(cstr!("Hello, world 2"));
+            igText(cstr!("Hello, world 3"));
             if igButton(cstr!("Save"), ImVec2::new(20.0, 10.0)) {}
             //igInputText(cstr("string"), buf, IM_ARRAYSIZE(buf));
             //igSliderFloat("float", &f, 0.0f, 1.0f);
@@ -147,19 +149,20 @@ impl Gui {
                         //TODO: bind_texture((*pcmd).texture_id);
 
                         println!("Trying to read pixzels");
-                        let pixels = read_pixels_from_texture2d(0);
+                        //let pixels = read_pixels_from_texture2d(0);
                         println!("Done reading pixels");
-                        ::utils::img::save_as_image_in_current_dir(
+                        /*::utils::img::save_as_image_in_current_dir(
                             "foobar.png",
                             &(pixels.0),
                             (pixels.1).0 as _,
                             (pixels.1).1 as _,
                             4
-                        );
+                        );*/
 
                         let tid = pcmd.texture_id;
+                        //bind_texture_unit(0, tid as GLuint as _);
                         println!("Enabling texture id {}, which we got from pcmd", tid as GLuint);
-                        bind_texture_unit(0, tid as _);
+                        
                         // We are using scissoring to clip some objects. All low-level graphics API supports it.
                         // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches
                         // (some elements visible outside their bounds) but you can fix that once everywhere else works!
@@ -174,6 +177,7 @@ impl Gui {
                             },
                             &(*cmd_list).idx_buffer,
                             &(*cmd_list).vtx_buffer,
+                            tid as _,
                             w,
                             h,
                         );
@@ -189,6 +193,7 @@ impl Gui {
         element_type: GLenum,
         elements: &ImVector<ImDrawIdx>,
         vertices: &ImVector<ImDrawVert>,
+        texture_handle: u32,
         w: f32,
         h: f32,
     ) {
@@ -211,8 +216,16 @@ impl Gui {
         enable_vertex_attribs(&[
             VertexAttribute::new(0, gl::FLOAT, 2),
             VertexAttribute::new(1, gl::FLOAT, 2),
-            VertexAttribute::new(2, gl::UNSIGNED_INT, 1),
+            VertexAttribute::new(2, gl::UNSIGNED_BYTE, 4),
         ]);
+
+        /*unsafe {
+            for i in 0..vertices.size {
+                let vert = vertices.data.offset(i as isize);
+                let uv = (*vert).uv;
+                println!("UV {}: {},{}", i, uv.x, uv.y);
+            }
+        }*/
 
         let verts_size = vertices.size * ::std::mem::size_of::<ImDrawVert>() as i32;
         let elems_size = elements.size * ::std::mem::size_of::<ImDrawIdx>() as i32;
@@ -221,6 +234,7 @@ impl Gui {
 
         self.shader.use_program();
         self.shader.set_mat4("proj", &camera.projection);
+        self.shader.set_int("tex", 0);
 
         println!("Drawing triangles: {}", elems_size);
         draw_triangles(elems_size, element_type);
