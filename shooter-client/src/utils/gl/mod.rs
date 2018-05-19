@@ -248,6 +248,7 @@ pub fn get_gl_version() -> String {
 }
 
 pub fn viewport(width: i32, height: i32) {
+    println!("Setting viewport to 0,0 - {},{}", width, height);
     unsafe { gl::Viewport(0, 0, width, height) };
 }
 

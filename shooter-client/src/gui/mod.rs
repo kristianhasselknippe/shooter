@@ -153,7 +153,7 @@ impl Gui {
         disable(Capability::CullFace);
         disable(Capability::DepthTest);
         enable(Capability::Blend);
-        enable(Capability::ScissorTest);
+        //enable(Capability::ScissorTest);
 
         enable_vertex_attribs(&[
             VertexAttribute::new(0, gl::FLOAT, 2, false),
@@ -177,6 +177,15 @@ impl Gui {
         vbo.delete();
         ebo.delete();
         vao.delete();
+    }
+
+    pub fn set_display_size(&mut self, size: (f32, f32)) {
+        unsafe {
+            let newSize = ImVec2::new(size.0, size.1);
+            (*self.io).display_size.x = newSize.x;
+            (*self.io).display_size.y = newSize.y;
+            igSetNextWindowSize(newSize, ImGuiCond::Always);
+        }
     }
 }
 

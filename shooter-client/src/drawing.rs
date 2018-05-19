@@ -86,11 +86,16 @@ impl DrawCall {
     }
 
     pub fn draw(&mut self) {
+        unsafe {
+            enable(Capability::CullFace);
+            enable(Capability::DepthTest);
+        }
         draw_triangles(self.model.num_indices, self.model.index_type);
     }
 
     pub fn bind(&mut self) {
         self.vao.bind();
+        self.program.use_program();
     }
 
     pub fn unbind(&mut self) {

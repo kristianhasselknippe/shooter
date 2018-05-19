@@ -43,6 +43,7 @@ use input::*;
 use fps_counter::*;
 use utils::gl::*;
 use drawing::{DrawCall, DrawContext};
+use alga::general::Inverse;
 
 use nc::{
     shape::{ShapeHandle},
@@ -53,7 +54,7 @@ use na::{Isometry3,Vector3,zero};
 use gui::*;
 
 fn main() {
-    let window_size = (800, 600);
+    let mut window_size = (800, 600);
 
     let mut events_loop = EventsLoop::new();
     let window = WindowBuilder::new()
@@ -138,7 +139,7 @@ fn main() {
 
     let mut input = Input::new();
 
-    let groups = CollisionGroups::new();
+    /*let groups = CollisionGroups::new();
     let contacts_query = GeometricQueryType::Contacts(0.0,0.0);
 
     let bow_handle = bow.trimesh.unwrap().clone();
@@ -146,7 +147,7 @@ fn main() {
 
     let mut world: CollisionWorld<f32, ()> = CollisionWorld::new(0.02);
     world.add(bow_iso, ShapeHandle::new(bow_handle), groups, contacts_query, ());
-    world.add(bow2_iso, ShapeHandle::new(bow2_handle), groups, contacts_query, ());
+    world.add(bow2_iso, ShapeHandle::new(bow2_handle), groups, contacts_query, ());*/
 
     //collision_world.
 
@@ -166,9 +167,21 @@ fn main() {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::Resized(w, h) => {
-                        gl_window.resize(w, h);
-                        println!("New Window size: {},{}", w, h);
-                        unsafe { gl::Viewport(0, 0, w as i32, h as i32) };
+                        println!("New Window size: {},{} - dpi: {}", w, h, dpi_factor);
+                        window_size = (w,h);
+
+                        gl_window.resize(
+                            (window_size.0 as f32 * dpi_factor) as u32,
+                            (window_size.1 as f32 * dpi_factor) as u32,
+                        );
+                        viewport(
+                            (window_size.0 as f32 * dpi_factor) as i32,
+                            (window_size.1 as f32 * dpi_factor) as i32,
+                        );
+                        gui.set_display_size(
+                            (window_size.0 as f32 * dpi_factor,
+                            window_size.1 as f32 * dpi_factor),
+                        );
                     },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                         input.update_glutin_keyboard_input(&i);
@@ -244,14 +257,7 @@ fn main() {
 
         clear(0.3, 0.0, 0.5, 1.0);
 
-        gui.update_input(&input, dt);
-
-        gui.new_frame();
-
-        gui.draw_test();
-
-        gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
-        /*for mut d in &mut draw_calls {
+        for mut d in &mut draw_calls {
             d.bind();
             let model = d.transform.matrix();
             let model_view = camera.view() * model;
@@ -276,8 +282,12 @@ fn main() {
             d.bind_texture("diffuseMap", &d.model.textures[0], 0);
             d.draw();
             d.unbind();
-        }*/
+        }
 
+        gui.update_input(&input, dt);
+        gui.new_frame();
+        gui.draw_test();
+        gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
 
         gl_window.swap_buffers().unwrap();
 
