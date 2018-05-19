@@ -3,12 +3,16 @@ use gl;
 use gl::types::*;
 use imgui::*;
 use input::Input;
+use na::Vector2;
 use shader::ShaderProgram;
 use std::os::raw::c_char;
-use std::ptr::{null_mut};
+use std::ptr::null_mut;
 use utils::gl::{*, texture::*};
 
 macro_rules! cstr {
+    ($i:ident) => {
+        format!("{}{}", $i, "\0").as_ptr() as *const c_char
+    };
     ($s:expr) => {
         concat!($s, "\0") as *const str as *const [c_char] as *const c_char
     };
@@ -56,7 +60,6 @@ impl Gui {
             font_texture.bind_to_texture_unit(0);
             font_texture.upload(pixels, width as u32, height as u32, bytes_per_pixel);
 
-
             ImFontAtlas_SetTexID((*io).fonts, font_texture.handle as _);
 
             Gui {
@@ -97,6 +100,27 @@ impl Gui {
             if igButton(cstr!("Save"), ImVec2::new(150.0, 80.0)) {}
             //igInputText(cstr("string"), buf, IM_ARRAYSIZE(buf));
             //igSliderFloat("float", &f, 0.0f, 1.0f);
+        }
+    }
+
+    pub fn text(&mut self, text: &str) {
+        unsafe { igText(cstr!(text)) };
+    }
+
+    pub fn button(&mut self, text: &str, width: f32, height: f32) -> bool {
+        unsafe { igButton(cstr!(text), ImVec2::new(width, height)) }
+    }
+
+    pub fn input_text(&mut self, label: &str, buf: &mut String) {
+        unsafe {
+            igInputText(
+                cstr!(label),
+                buf.as_ptr() as *mut c_char,
+                buf.len(),
+                ImGuiInputTextFlags::empty(),
+                None,
+                null_mut(),
+            );
         }
     }
 

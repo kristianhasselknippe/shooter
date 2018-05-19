@@ -286,7 +286,11 @@ fn main() {
 
         gui.update_input(&input, dt);
         gui.new_frame();
-        gui.draw_test();
+        gui.text("Foobar");
+        gui.text("HHei");
+        gui.button("HHei", 150.0,100.0);
+        let mut buffer = "here is a buffer".to_string();
+        gui.input_text("Some text:", &mut buffer);
         gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
 
         gl_window.swap_buffers().unwrap();
