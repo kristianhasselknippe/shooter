@@ -33,37 +33,22 @@ impl DrawContext {
     }
 }
 
-pub struct Transform {
-    pos: Vector3<f32>
-}
-
-impl Transform {
-    pub fn from_pos(pos: Vector3<f32>) -> Transform {
-        Transform {
-            pos: pos
-        }
-    }
-
-    pub fn matrix(&self) -> Matrix4<f32> {
-        let isom = Isometry3::new(self.pos, zero());
-        isom.to_homogeneous()
-    }
-}
-
 pub struct DrawCall {
+    pub name: String,
     vao: VertexArray,
     program: Rc<ShaderProgram>,
     pub model: Model,
-    pub transform: Transform,
+    pub position: Vector3<f32>,
     vertex_attributes: Vec<VertexAttribute>,
 }
 
 impl DrawCall {
     pub fn new<T: Fn(&DrawCall)>(
+        name: &str,
         program: Rc<ShaderProgram>,
         model: Model,
         vertex_attributes: Vec<VertexAttribute>,
-        transform: Transform,
+        position: Vector3<f32>,
         setup: T) -> DrawCall {
         let mut vao = gen_vertex_array();
         //println!("Genrated vao: {:?}", vao.handle);
@@ -74,10 +59,11 @@ impl DrawCall {
         enable_vertex_attribs(&vertex_attributes);
 
         let mut ret = DrawCall {
+            name: name.to_string(),
             vao: vao,
             program: program,
             model: model,
-            transform: transform,
+            position: position,
             vertex_attributes: vertex_attributes,
         };
 

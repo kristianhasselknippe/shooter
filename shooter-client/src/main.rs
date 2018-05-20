@@ -95,13 +95,11 @@ fn main() {
     //let al = Model::load_from_wavefront_file("al.obj").unwrap();
     //let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
     let bow = Model::load_from_wavefront_file("Bow/Bow.obj").unwrap();
-    let bow_iso = Isometry3::new(Vector3::new(0.0,0.0,-8.0), zero());
-
     let bow2 = Model::load_from_wavefront_file("Bow2/Bow.obj").unwrap();
-    let bow2_iso = Isometry3::new(Vector3::new(40.0,0.0,-8.0), zero());
 
     let mut draw_calls = Vec::new();
     draw_calls.push(DrawCall::new(
+        "Bow1",
         program.clone(),
         bow.clone(),
         vec![
@@ -109,11 +107,12 @@ fn main() {
             VertexAttribute::new(1, gl::FLOAT, 3, false),
             VertexAttribute::new(2, gl::FLOAT, 3, false),
         ],
-        drawing::Transform::from_pos(na::Vector3::new(0.0,0.0,-8.0)),
+        na::Vector3::new(0.0,0.0,-8.0),
         |_dc: &DrawCall| {
         }
     ));
     draw_calls.push(DrawCall::new(
+        "Bow2",
         program.clone(),
         bow2.clone(),
         vec![
@@ -121,7 +120,7 @@ fn main() {
             VertexAttribute::new(1, gl::FLOAT, 3, false),
             VertexAttribute::new(2, gl::FLOAT, 3, false),
         ],
-        drawing::Transform::from_pos(na::Vector3::new(40.0,0.0,-8.0)),
+        na::Vector3::new(40.0,0.0,-8.0),
         |_dc: &DrawCall| {
         }
     ));
@@ -258,16 +257,23 @@ fn main() {
         if input.escape {
             running = false;
         }
+        gui.update_input(&input, dt);
+        gui.new_frame();
+
+        gui.begin("Models", true);
 
         clear(0.3, 0.0, 0.5, 1.0);
 
         for mut d in &mut draw_calls {
-            d.bind();
-            let model = d.transform.matrix();
-            let model_view = camera.view() * model;
-            //let model_view_projection = camera.camera_matrix() * model;
+            gui.text(&format!("Model {}", d.name));
+            gui.drag_float3(&format!("Position##{}", d.name), &mut d.position, 0.2, -10000.0, 10000.0);
 
-            let m_inv = model
+            d.bind();
+            let model = d.position.to_homogeneous();
+            let model_isom = Isometry3::new(d.position, zero()).to_homogeneous();
+            let model_view = camera.view() * model_isom;
+
+            let m_inv = model_isom
                 .fixed_slice::<na::U3,na::U3>(0,0)
                 .clone_owned()
                 .inverse();
@@ -279,7 +285,7 @@ fn main() {
 
             d.set_mat3("m_inv", &m_inv);
             d.set_mat3("mv_inv", &mv_inv);
-            d.set_mat4("model", &d.transform.matrix());
+            d.set_mat4("model", &model_isom);
             d.set_mat4("view", &camera.view());
             d.set_mat4("projection", &camera.projection);
 
@@ -287,26 +293,9 @@ fn main() {
             d.draw();
             d.unbind();
         }
-
-        gui.update_input(&input, dt);
-        gui.new_frame();
-        gui.begin("Title here", true);
-        gui.text("Foobar");
-        gui.text("HHei");
-        gui.button("HHei", 150.0,100.0);
-        let mut color = Vector3::new(1.0, 0.0, 1.0);
-        gui.color_edit3("Colorzor", &mut color);
-        let mut slider_val = 2.0;
-        if gui.slider_float("Slids", &mut slider_val, 0.0, 10.0) {
-
-        }
-        let mut buffer = "here is a buffer".to_string();
-        if gui.input_text("Some text:", &mut buffer) {
-        }
-        let mut pos = Vector3::new(1.0,0.0,1.0);
-        if gui.drag_float3("Position", &mut pos, 1.0, -10000.0, 10000.0) {
-        }
         gui.end();
+
+
         gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
 
         gl_window.swap_buffers().unwrap();
