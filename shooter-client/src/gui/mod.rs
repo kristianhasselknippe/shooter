@@ -221,7 +221,7 @@ impl Gui {
         w: f32,
         h: f32,
     ) {
-        let mut vao = gen_vertex_array();
+        let mut vao = VertexArray::new();
         vao.bind();
 
         let mut vbo = Buffer::gen_vbo();
@@ -236,11 +236,12 @@ impl Gui {
         enable(Capability::Blend);
         //enable(Capability::ScissorTest);
 
-        enable_vertex_attribs(&[
+        let mut vertex_spec = VertexSpec::new(vec![
             VertexAttribute::new(0, gl::FLOAT, 2, false),
             VertexAttribute::new(1, gl::FLOAT, 2, false),
             VertexAttribute::new(2, gl::UNSIGNED_BYTE, 4, true),
         ]);
+        vertex_spec.enable();
 
         bind_texture_unit(0, texture_handle);
 

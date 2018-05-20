@@ -127,6 +127,7 @@ impl Model {
         })
     }
     pub fn bind(&mut self) {
+        println!("Binding model");
         self.ebo.bind();
         self.vbo.bind();
         let mut i = 0;

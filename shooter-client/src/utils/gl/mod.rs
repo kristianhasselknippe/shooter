@@ -115,29 +115,40 @@ impl Buffer {
     }
 }
 
-pub fn enable_vertex_attribs(attribs: &[VertexAttribute]) {
-    let mut stride = 0;
-    for a in attribs {
-        stride += a.num_comps * GL_TYPE_TO_SIZE[&a.data_type]
+pub struct VertexSpec {
+    attributes: Vec<VertexAttribute>,
+}
+
+impl VertexSpec {
+    pub fn new(attribs: Vec<VertexAttribute>) -> VertexSpec {
+        VertexSpec {
+            attributes: attribs
+        }
     }
 
-    let mut offset = 0;
-    for attrib in attribs {
-        unsafe {
-
-            gl::VertexAttribPointer(
-                attrib.location,
-                attrib.num_comps,
-                attrib.data_type,
-                if attrib.norm { gl::TRUE } else { gl::FALSE },
-                stride, // Tightly packed atm
-                offset as *const GLvoid,
-            );
-            gl_print_error("VertexAttribPointer");
-            gl::EnableVertexAttribArray(attrib.location);
-            gl_print_error("EnableVertexAttribArray");
+    pub fn enable(&mut self) {
+        let mut stride = 0;
+        for a in &self.attributes {
+            stride += a.num_comps * GL_TYPE_TO_SIZE[&a.data_type]
         }
-        offset += attrib.num_comps * GL_TYPE_TO_SIZE[&attrib.data_type]
+
+        let mut offset = 0;
+        for attrib in &self.attributes {
+            unsafe {
+                gl::VertexAttribPointer(
+                    attrib.location,
+                    attrib.num_comps,
+                    attrib.data_type,
+                    if attrib.norm { gl::TRUE } else { gl::FALSE },
+                    stride, // Tightly packed atm
+                    offset as *const GLvoid,
+                );
+                gl_print_error("VertexAttribPointer");
+                gl::EnableVertexAttribArray(attrib.location);
+                gl_print_error("EnableVertexAttribArray");
+            }
+            offset += attrib.num_comps * GL_TYPE_TO_SIZE[&attrib.data_type]
+        }
     }
 }
 
@@ -169,17 +180,17 @@ pub struct VertexArray {
     pub handle: GLuint,
 }
 
-pub fn gen_vertex_array() -> VertexArray {
-    unsafe {
-        let mut vao = 0;
-        gl::GenVertexArrays(1, &mut vao);
-        gl_print_error(&format!("GenVertexArrays {}", vao));
-        assert!(vao != 0);
-        VertexArray { handle: vao }
-    }
-}
-
 impl VertexArray {
+    pub fn new() -> VertexArray {
+        unsafe {
+            let mut vao = 0;
+            gl::GenVertexArrays(1, &mut vao);
+            gl_print_error(&format!("GenVertexArrays {}", vao));
+            assert!(vao != 0);
+            VertexArray { handle: vao }
+        }
+    }
+
     pub fn bind(&mut self) {
         unsafe {
             gl::BindVertexArray(self.handle);
@@ -200,6 +211,12 @@ impl VertexArray {
         }
     }
 }
+
+/*impl Drop for VertexArray {
+    fn drop(&mut self) {
+        unsafe { gl::DeleteVertexArrays(1, &self.handle as *const _); }
+    }
+}*/
 
 pub fn check_gl_errors() {
     unsafe {
