@@ -88,7 +88,7 @@ fn main() {
     );
 
     // let program = ShaderProgram::create_program("default");
-    let program = std::rc::Rc::new(ShaderProgram::create_program("default"));
+    let mut program = ShaderProgram::create_program("default");
 
     //let model = Model::load_from_wavefront_file("quad.obj").unwrap();
     //let al = Model::load_from_wavefront_file("al.obj").unwrap();
@@ -229,28 +229,11 @@ fn main() {
 
         clear(0.3, 0.0, 0.5, 1.0);
 
-        let mut vao = VertexArray::new();
-
-        let mut vertex_spec = VertexSpec::new(vec![
-            VertexAttribute::new(0, gl::FLOAT, 3, false),
-            VertexAttribute::new(1, gl::FLOAT, 3, false),
-            VertexAttribute::new(2, gl::FLOAT, 3, false),
-        ]);
-
-        vao.bind();
-
         for mut o in &mut game_objects {
             //GUI
-            let mut m = &mut o.model;
+
             gui.text(&format!("Model {}", o.name));
             gui.drag_float3(&format!("Position##{}", o.name), &mut o.position, 0.2, -10000.0, 10000.0);
-
-            m.bind();
-
-            //A vertex buffer has to be bound before enabling the vertex_spec!
-            vertex_spec.enable();
-
-            program.use_program();
 
             let model = o.position.to_homogeneous();
             let model_isom = Isometry3::new(o.position, zero()).to_homogeneous();
@@ -266,23 +249,18 @@ fn main() {
                 .clone_owned()
                 .inverse();
 
-            program.set_mat3("m_inv", &m_inv);
-            program.set_mat3("mv_inv", &mv_inv);
-            program.set_mat4("model", &model_isom);
-            program.set_mat4("view", &camera.view());
-            program.set_mat4("projection", &camera.projection);
-            program.set_int("diffuseMap", 0);
+            let mut dc = o.get_draw_call(&mut program);
+            let mut bound_dc = dc.bind();
+            bound_dc.set_mat3("m_inv", &m_inv);
+            bound_dc.set_mat3("mv_inv", &mv_inv);
+            bound_dc.set_mat4("model", &model_isom);
+            bound_dc.set_mat4("view", &camera.view());
+            bound_dc.set_mat4("projection", &camera.projection);
+            bound_dc.set_int("diffuseMap", 0);
 
-            unsafe {
-                enable(Capability::CullFace);
-                enable(Capability::DepthTest);
-            }
-
-            check_gl_errors();
-            draw_triangles(m.num_indices, m.index_type);
+            bound_dc.perform();
 
         }
-        vao.unbind();
         gui.end();
 
 

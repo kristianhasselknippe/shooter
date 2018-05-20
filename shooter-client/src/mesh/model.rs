@@ -32,8 +32,8 @@ pub struct Model {
 
     pub num_indices: i32,
     pub index_type: GLenum,
-    vbo: Buffer,
-    ebo: Buffer,
+    pub vbo: Buffer,
+    pub ebo: Buffer,
     pub textures: Vec<Texture>,
 
     pub trimesh: Option<TriMesh<f32>>,
