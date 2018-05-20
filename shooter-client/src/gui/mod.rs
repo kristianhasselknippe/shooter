@@ -8,6 +8,7 @@ use shader::ShaderProgram;
 use std::os::raw::c_char;
 use std::ptr::null_mut;
 use utils::gl::{*, texture::*};
+use glutin::*;
 
 macro_rules! cstr {
     ($i:ident) => {
@@ -42,6 +43,10 @@ impl Gui {
                 null_mut(),
                 null_mut(),
             );
+
+            (*io).key_map[ImGuiKey::Backspace as usize] = VirtualKeyCode::Back as _;
+            (*io).key_map[ImGuiKey::Escape as usize] = VirtualKeyCode::Escape as _;
+            (*io).key_map[ImGuiKey::Enter as usize] = VirtualKeyCode::Return as _;
 
             let mut pixels: *mut u8 = null_mut();
             let mut width: i32 = 0;
@@ -89,6 +94,9 @@ impl Gui {
             (*self.io).mouse_pos = ImVec2::new(input.mouse_pos.x, input.mouse_pos.y);
             (*self.io).mouse_down[0] = input.mouse_left;
             (*self.io).mouse_down[1] = input.mouse_right;
+            (*self.io).keys_down[VirtualKeyCode::Back as usize] = input.backspace;
+            (*self.io).keys_down[VirtualKeyCode::Escape as usize] = input.escape;
+            (*self.io).keys_down[VirtualKeyCode::Return as usize] = input.backspace;
         }
     }
 
@@ -119,7 +127,7 @@ impl Gui {
         unsafe { igButton(cstr!(text), ImVec2::new(width, height)) }
     }
 
-    pub fn input_text(&mut self, label: &str, buf: &mut String) {
+    pub fn input_text(&mut self, label: &str, buf: &mut String) -> bool {
         unsafe {
             igInputText(
                 cstr!(label),
@@ -128,7 +136,7 @@ impl Gui {
                 ImGuiInputTextFlags::empty(),
                 None,
                 null_mut(),
-            );
+            )
         }
     }
 

@@ -11,10 +11,12 @@ pub struct Input {
     pub down: bool,
 
     pub escape: bool,
+    pub enter: bool,
 
     pub shift: bool,
     pub ctrl: bool,
     pub alt: bool,
+    pub backspace: bool,
 
     pub mouse_left: bool,
     pub mouse_right: bool,
@@ -49,8 +51,10 @@ impl Input {
             shift: false,
             ctrl: false,
             alt: false,
+            backspace: false,
 
             escape: false,
+            enter: false,
 
             mouse_left: false,
             mouse_right: false,
@@ -114,6 +118,12 @@ impl Input {
                 }
                 glutin::VirtualKeyCode::Escape => {
                     self.escape = pressed_state_to_bool!(input.state);
+                },
+                glutin::VirtualKeyCode::Return => {
+                    self.enter = pressed_state_to_bool!(input.state);
+                },
+                glutin::VirtualKeyCode::Back => {
+                    self.backspace = pressed_state_to_bool!(input.state);
                 }
                 _ => {}
             }
