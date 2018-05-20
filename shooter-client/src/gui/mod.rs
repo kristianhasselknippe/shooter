@@ -92,6 +92,12 @@ impl Gui {
         }
     }
 
+    pub fn add_input_character(&mut self, codepoint: char) {
+        unsafe {
+            ImGuiIO_AddInputCharacter(codepoint as _);
+        }
+    }
+
     pub fn draw_test(&mut self) {
         unsafe {
             igText(cstr!("Hello, world"));
@@ -102,6 +108,8 @@ impl Gui {
             //igSliderFloat("float", &f, 0.0f, 1.0f);
         }
     }
+
+    //pub fn slider(&mut self, 
 
     pub fn text(&mut self, text: &str) {
         unsafe { igText(cstr!(text)) };

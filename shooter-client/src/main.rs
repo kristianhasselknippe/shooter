@@ -166,6 +166,10 @@ fn main() {
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
+                    glutin::WindowEvent::ReceivedCharacter(c) => {
+                        println!("Received char: {}", c);
+                        gui.add_input_character(c);
+                    },
                     glutin::WindowEvent::Resized(w, h) => {
                         println!("New Window size: {},{} - dpi: {}", w, h, dpi_factor);
                         window_size = (w,h);
