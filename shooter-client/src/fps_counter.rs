@@ -11,14 +11,16 @@ impl FpsCounter {
         }
     }
 
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32) -> Option<String> {
         self.frame_count += 1;
         self.accum_time += dt;
 
         if self.accum_time > 1.0 {
-            println!("FPS: {}", self.frame_count);
+            let ret = format!("FPS: {}", self.frame_count);
             self.frame_count = 0;
             self.accum_time -= 1.0;
+            return Some(ret)
         }
+        None
     }
 }

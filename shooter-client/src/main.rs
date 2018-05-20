@@ -45,10 +45,10 @@ use utils::gl::*;
 use drawing::*;
 use alga::general::Inverse;
 
-use nc::{
+/*use nc::{
     shape::{ShapeHandle},
     world::{CollisionWorld,CollisionGroups,GeometricQueryType}
-};
+};*/
 use na::{Isometry3,Vector3,zero};
 
 use gui::*;
@@ -126,6 +126,8 @@ fn main() {
     );
 
     let mut running = true;
+
+    let mut fps = "FPS: 0".to_string();
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -225,7 +227,12 @@ fn main() {
         gui.update_input(&input, dt);
         gui.new_frame();
 
-        gui.begin("Models", true);
+        gui.begin("Info", true);
+
+        if let Some(_fps) = fps_counter.update(dt as _) {
+            fps = _fps;
+        }
+        gui.text(&fps);
 
         clear(0.3, 0.0, 0.5, 1.0);
 
@@ -235,7 +242,6 @@ fn main() {
             gui.text(&format!("Model {}", o.name));
             gui.drag_float3(&format!("Position##{}", o.name), &mut o.position, 0.2, -10000.0, 10000.0);
 
-            let model = o.position.to_homogeneous();
             let model_isom = Isometry3::new(o.position, zero()).to_homogeneous();
             let model_view = camera.view() * model_isom;
 
@@ -269,6 +275,5 @@ fn main() {
         gl_window.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
-        fps_counter.update(dt as f32);
     }
 }

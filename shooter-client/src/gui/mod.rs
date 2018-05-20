@@ -263,10 +263,10 @@ impl Gui {
 
     pub fn set_display_size(&mut self, size: (f32, f32)) {
         unsafe {
-            let newSize = ImVec2::new(size.0, size.1);
-            (*self.io).display_size.x = newSize.x;
-            (*self.io).display_size.y = newSize.y;
-            igSetNextWindowSize(newSize, ImGuiCond::Always);
+            let new_size = ImVec2::new(size.0, size.1);
+            (*self.io).display_size.x = new_size.x;
+            (*self.io).display_size.y = new_size.y;
+            igSetNextWindowSize(new_size, ImGuiCond::Always);
         }
     }
 }

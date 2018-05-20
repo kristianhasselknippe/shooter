@@ -3,7 +3,6 @@ use gl::types::*;
 use mesh::model::Model;
 use na::*;
 use shader::ShaderProgram;
-use std::rc::Rc;
 use utils::gl::{*, texture::*};
 
 pub type Color4 = Vector4<f32>;
@@ -105,10 +104,8 @@ pub struct BoundDrawCall<'a> {
 
 impl<'a> BoundDrawCall<'a> {
     pub fn perform(&mut self) {
-        unsafe {
-            enable(Capability::CullFace);
-            enable(Capability::DepthTest);
-        }
+        enable(Capability::CullFace);
+        enable(Capability::DepthTest);
         draw_triangles(self.num_indices, self.index_type);
     }
 
