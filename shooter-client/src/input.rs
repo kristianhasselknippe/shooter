@@ -22,8 +22,6 @@ pub struct Input {
 
     pub mouse_delta: Vector2<f32>,
     pub mouse_pos: Vector2<f32>,
-
-    pub ascii_string: Vec<u8>,
 }
 
 macro_rules! pressed_state_to_bool {
@@ -60,8 +58,6 @@ impl Input {
 
             mouse_delta: Vector2::new(0.0, 0.0),
             mouse_pos: Vector2::new(0.0, 0.0),
-
-            ascii_string: Vec::new(),
         }
     }
 
@@ -83,40 +79,26 @@ impl Input {
         }
     }
 
-    fn push_asii_char(&mut self, c: char, m: &glutin::ModifiersState) {
-        if m.shift {
-            self.ascii_string.push(c as u8 + ('a' as u8 - 'A' as u8));
-        } else {
-            self.ascii_string.push(c as u8);
-        }
-    }
-
     pub fn update_glutin_keyboard_input(&mut self, input: &glutin::KeyboardInput) {
         if let Some(keycode) = input.virtual_keycode {
             match keycode {
                 glutin::VirtualKeyCode::A => {
                     self.left = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('a', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::D => {
                     self.right = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('d', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::W => {
                     self.forward = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('w', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::S => {
                     self.backward = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('s', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::Q => {
                     self.down = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('q', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::E => {
                     self.up = pressed_state_to_bool!(input.state);
-                    self.push_asii_char('e', &input.modifiers);
                 }
                 glutin::VirtualKeyCode::LShift |
                 glutin::VirtualKeyCode::RShift => {
