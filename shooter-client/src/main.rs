@@ -294,6 +294,8 @@ fn main() {
         gui.text("Foobar");
         gui.text("HHei");
         gui.button("HHei", 150.0,100.0);
+        let mut color = Vector3::new(1.0, 0.0, 1.0);
+        gui.color_edit3("Colorzor", &mut color);
         let mut slider_val = 2.0;
         if gui.slider_float("Slids", &mut slider_val, 0.0, 10.0) {
 

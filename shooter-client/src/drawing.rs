@@ -8,7 +8,8 @@ use na::*;
 use mesh::model::Model;
 use std::rc::Rc;
 
-pub struct Color(f32, f32, f32, f32);
+pub type Color4 = Vector4<f32>;
+pub type Color3 = Vector3<f32>;
 
 pub struct DrawContext {
     width: u32,
@@ -24,9 +25,9 @@ impl DrawContext {
         }
     }
 
-    pub fn clear(&mut self, color: Color) {
+    pub fn clear(&mut self, color: Color4) {
         unsafe {
-            gl::ClearColor(color.0, color.1, color.2, color.3);
+            gl::ClearColor(color.x, color.y, color.z, color.w);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }

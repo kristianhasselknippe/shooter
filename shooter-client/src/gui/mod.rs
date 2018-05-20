@@ -5,6 +5,7 @@ use imgui::*;
 use input::Input;
 use na::{Vector2,Vector3,Vector4};
 use shader::ShaderProgram;
+use drawing::{Color3,Color4};
 use std::os::raw::c_char;
 use std::ptr::{null_mut,null};
 use utils::gl::{*, texture::*};
@@ -145,6 +146,14 @@ impl Gui {
 
     pub fn drag_float4(&mut self, label: &str, value: &mut Vector4<f32>, speed: f32, min: f32, max: f32) -> bool {
         unsafe { igDragFloat4(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    }
+
+    pub fn color_edit3(&mut self, label: &str, value: &mut Color3) -> bool {
+        unsafe { igColorEdit3(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, ImGuiColorEditFlags::empty()) }
+    }
+
+    pub fn color_edit4(&mut self, label: &str, value: &mut Color4) -> bool {
+        unsafe { igColorEdit4(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, ImGuiColorEditFlags::empty()) }
     }
 
     pub fn same_line(&mut self, x: f32, spacing: f32) {
