@@ -5,28 +5,35 @@ pub struct Camera {
     pub pos: Point3<f32>,
     pub pitch: f32,
     pub yaw: f32,
+
+    pub aspect: f32,
+    pub fov: f32,
+    pub near: f32,
+    pub far: f32,
+
     pub projection: Matrix4<f32>,
 }
 
 
 impl Camera {
-    pub fn new_orthographic(width: f32, height: f32, pos: Point3<f32>) -> Camera {
-        let proj = Matrix4::new_orthographic(0.0, width, 0.0, height, -10.0, 1000.0);
+    pub fn new_perspective(aspect: f32, fov: f32, near: f32, far: f32, pos: Point3<f32>) -> Camera {
         Camera {
-            projection: proj,
+            projection: ::na::Perspective3::new(aspect, fov, near, far).as_matrix().clone(),
+
+            aspect: aspect,
+            fov: fov,
+            near: near,
+            far: far,
+
             pos: pos,
             pitch: 0.0,
             yaw: 0.0,
         }
     }
 
-    pub fn new_perspective(aspect: f32, fov: f32, near: f32, far: f32, pos: Point3<f32>) -> Camera {
-        Camera {
-            projection: ::na::Perspective3::new(aspect, fov, near, far).as_matrix().clone(),
-            pos: pos,
-            pitch: 0.0,
-            yaw: 0.0,
-        }
+    pub fn set_aspect(&mut self, aspect: f32) {
+        self.aspect = aspect;
+        self.projection = ::na::Perspective3::new(self.aspect, self.fov, self.near, self.far).as_matrix().clone();
     }
 
     pub fn rotation(&self) -> Rotation3<f32> {

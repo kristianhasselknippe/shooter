@@ -173,18 +173,13 @@ fn main() {
                         println!("New Window size: {},{} - dpi: {}", w, h, dpi_factor);
                         window_size = (w,h);
 
-                        gl_window.resize(
-                            (window_size.0 as f32 * dpi_factor) as u32,
-                            (window_size.1 as f32 * dpi_factor) as u32,
-                        );
-                        viewport(
-                            (window_size.0 as f32 * dpi_factor) as i32,
-                            (window_size.1 as f32 * dpi_factor) as i32,
-                        );
-                        gui.set_display_size(
-                            (window_size.0 as f32 * dpi_factor,
-                            window_size.1 as f32 * dpi_factor),
-                        );
+                        let width = window_size.0 as f32 * dpi_factor;
+                        let height = window_size.1 as f32 * dpi_factor;
+
+                        gl_window.resize(width as u32, height as u32);
+                        viewport(width as i32, height as i32);
+                        gui.set_display_size((width, height));
+                        camera.set_aspect(width/height);
                     },
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                         input.update_glutin_keyboard_input(&i);
