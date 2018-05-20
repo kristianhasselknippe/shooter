@@ -290,10 +290,14 @@ fn main() {
 
         gui.update_input(&input, dt);
         gui.new_frame();
-        gui.begin("Title here");
+        gui.begin("Title here", true);
         gui.text("Foobar");
         gui.text("HHei");
         gui.button("HHei", 150.0,100.0);
+        let mut slider_val = 2.0;
+        if gui.slider_float("Slids", &mut slider_val, 0.0, 10.0) {
+            
+        }
         let mut buffer = "here is a buffer".to_string();
         if gui.input_text("Some text:", &mut buffer) {
             

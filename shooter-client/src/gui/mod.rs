@@ -6,7 +6,7 @@ use input::Input;
 use na::Vector2;
 use shader::ShaderProgram;
 use std::os::raw::c_char;
-use std::ptr::null_mut;
+use std::ptr::{null_mut,null};
 use utils::gl::{*, texture::*};
 use glutin::*;
 
@@ -75,14 +75,6 @@ impl Gui {
         }
     }
 
-    pub fn begin(&mut self, name: &str, open: bool) -> bool {
-        unsafe { igBegin(cstr!(name), &mut open as *mut bool, ImGuiWindowFlags::empty()) }
-    }
-
-    pub fn end(&mut self) {
-        unsafe { igEnd(); }
-    }
-
     pub fn new_frame(&mut self) {
         unsafe {
             igNewFrame();
@@ -125,7 +117,23 @@ impl Gui {
         }
     }
 
-    //pub fn slider(&mut self, 
+    pub fn begin(&mut self, name: &str, mut open: bool) -> bool {
+        unsafe { igBegin(cstr!(name), &mut open as *mut bool, ImGuiWindowFlags::empty()) }
+    }
+
+    pub fn end(&mut self) {
+        unsafe { igEnd(); }
+    }
+
+    pub fn slider_float(&mut self, label: &str, value: &mut f32, min: f32, max: f32) -> bool {
+        unsafe {
+            igSliderFloat(cstr!(label), value as *mut _, min, max, null(), 1.0)
+        }
+    }
+
+    pub fn same_line(&mut self, x: f32, spacing: f32) {
+        unsafe { igSameLine(x as _, spacing as _); }
+    }
 
     pub fn text(&mut self, text: &str) {
         unsafe { igText(cstr!(text)) };
