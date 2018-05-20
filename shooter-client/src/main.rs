@@ -290,6 +290,7 @@ fn main() {
 
         gui.update_input(&input, dt);
         gui.new_frame();
+        gui.begin("Title here");
         gui.text("Foobar");
         gui.text("HHei");
         gui.button("HHei", 150.0,100.0);
@@ -297,6 +298,7 @@ fn main() {
         if gui.input_text("Some text:", &mut buffer) {
             
         }
+        gui.end();
         gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
 
         gl_window.swap_buffers().unwrap();

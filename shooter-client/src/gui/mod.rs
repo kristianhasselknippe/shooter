@@ -75,6 +75,14 @@ impl Gui {
         }
     }
 
+    pub fn begin(&mut self, name: &str, open: bool) -> bool {
+        unsafe { igBegin(cstr!(name), &mut open as *mut bool, ImGuiWindowFlags::empty()) }
+    }
+
+    pub fn end(&mut self) {
+        unsafe { igEnd(); }
+    }
+
     pub fn new_frame(&mut self) {
         unsafe {
             igNewFrame();
