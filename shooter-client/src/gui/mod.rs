@@ -3,7 +3,7 @@ use gl;
 use gl::types::*;
 use imgui::*;
 use input::Input;
-use na::Vector2;
+use na::{Vector2,Vector3,Vector4};
 use shader::ShaderProgram;
 use std::os::raw::c_char;
 use std::ptr::{null_mut,null};
@@ -129,6 +129,22 @@ impl Gui {
         unsafe {
             igSliderFloat(cstr!(label), value as *mut _, min, max, null(), 1.0)
         }
+    }
+
+    pub fn drag_float(&mut self, label: &str, value: &mut f32, speed: f32, min: f32, max: f32) -> bool {
+        unsafe { igDragFloat(cstr!(label), value as *mut _, speed, min, max, null(), 1.0) }
+    }
+
+    pub fn drag_float2(&mut self, label: &str, value: &mut Vector2<f32>, speed: f32, min: f32, max: f32) -> bool {
+        unsafe { igDragFloat2(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    }
+
+    pub fn drag_float3(&mut self, label: &str, value: &mut Vector3<f32>, speed: f32, min: f32, max: f32) -> bool {
+        unsafe { igDragFloat3(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    }
+
+    pub fn drag_float4(&mut self, label: &str, value: &mut Vector4<f32>, speed: f32, min: f32, max: f32) -> bool {
+        unsafe { igDragFloat4(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
     }
 
     pub fn same_line(&mut self, x: f32, spacing: f32) {
