@@ -51,7 +51,9 @@ use alga::general::Inverse;
 };*/
 use na::{Isometry3,Vector3,zero};
 
-use gui::*;
+use gui::{
+    imgui::*
+};
 
 fn main() {
     let mut window_size = (800, 600);
@@ -120,9 +122,9 @@ fn main() {
 
     let mut input = Input::new();
 
-    let mut gui = Gui::init_gui(
+    let mut gui = Gui::new(
         window_size.0 as f32 * dpi_factor,
-        window_size.1 as f32 * dpi_factor,
+        window_size.1 as f32 * dpi_factor
     );
 
     let mut running = true;
@@ -225,22 +227,24 @@ fn main() {
             running = false;
         }
         gui.update_input(&input, dt);
-        gui.new_frame();
+        //gui.new_frame();
 
-        gui.begin("Info", true);
+        //gui.begin("Info", true);
 
         if let Some(_fps) = fps_counter.update(dt as _) {
             fps = _fps;
         }
-        gui.text(&fps);
+        //gui.text(&fps);
 
         clear(0.3, 0.0, 0.5, 1.0);
+
+        gui.draw_object_list(game_objects.iter().map(|x| x.name.as_str()));
 
         for mut o in &mut game_objects {
             //GUI
 
-            gui.text(&format!("Model {}", o.name));
-            gui.drag_float3(&format!("Position##{}", o.name), &mut o.position, 0.2, -10000.0, 10000.0);
+            //gui.text(&format!("Model {}", o.name));
+            //gui.drag_float3(&format!("Position##{}", o.name), &mut o.position, 0.2, -10000.0, 10000.0);
 
             let model_isom = Isometry3::new(o.position, zero()).to_homogeneous();
             let model_view = camera.view() * model_isom;
@@ -267,7 +271,6 @@ fn main() {
             bound_dc.perform();
 
         }
-        gui.end();
 
 
         gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
