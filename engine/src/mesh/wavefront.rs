@@ -2,10 +2,10 @@
 
 use super::model::{MemModel, VertexData};
 use super::{Normal, TexCoord, Vertex3};
-use engine::utils::file::*;
 use gl::types::*;
 use na::*;
 use std::path::Path;
+use utils::file::*;
 
 struct FaceItem {
     vertex: i32,

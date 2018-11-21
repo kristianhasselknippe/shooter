@@ -1,0 +1,13 @@
+[package]
+name = "client"
+version = "0.1.0"
+authors = ["Haskellknippe <kristian_hasselknippe@outlook.com>"]
+
+[dependencies]
+engine = { path = "../engine" }
+gl = "0.6.0"
+nalgebra = "0.16"
+alga = "0.5.1"
+glutin = "0.15.0"
+specs = "*"
+specs-derive = "*"

@@ -1,26 +1,12 @@
 #![allow(dead_code)]
 
 extern crate alga;
+extern crate engine;
 extern crate gl;
 extern crate glutin;
-extern crate image as img;
-#[macro_use]
-extern crate lazy_static;
-extern crate libc;
-#[macro_use]
-extern crate maplit;
-extern crate imgui_sys as imgui;
-extern crate itertools;
 extern crate nalgebra as na;
-extern crate ncollide3d as nc;
-extern crate ordered_float as of;
-extern crate rusttype;
-extern crate time as t;
-
 extern crate specs;
 extern crate specs_derive;
-
-mod engine;
 
 use alga::general::Inverse;
 use engine::{

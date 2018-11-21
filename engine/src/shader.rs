@@ -1,10 +1,10 @@
-use engine::utils::file::read_file;
 use gl;
 use gl::types::*;
 use std::ffi::CString;
 use std::path::Path;
 use std::ptr;
 use std::str;
+use utils::file::read_file;
 
 use na::{Matrix3, Matrix4};
 

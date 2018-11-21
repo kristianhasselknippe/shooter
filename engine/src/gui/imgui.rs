@@ -1,16 +1,14 @@
-use engine::{
-    camera::OrthoCamera,
-    drawing::{Color3, Color4},
-    input::Input,
-    shader::ShaderProgram,
-    utils::gl::{texture::*, *},
-};
+use camera::OrthoCamera;
+use drawing::{Color3, Color4};
 use gl::types::*;
 use glutin::*;
 use imgui::*;
+use input::Input;
 use na::{Vector2, Vector3, Vector4};
+use shader::ShaderProgram;
 use std::os::raw::c_char;
 use std::ptr::{null, null_mut};
+use utils::gl::{texture::*, *};
 
 macro_rules! cstr {
     ($i:ident) => {

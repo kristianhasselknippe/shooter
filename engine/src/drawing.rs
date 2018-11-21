@@ -1,10 +1,8 @@
-use engine::{
-    mesh::model::Model,
-    shader::ShaderProgram,
-    utils::gl::{texture::*, *},
-};
 use gl::types::*;
+use mesh::model::Model;
 use na::*;
+use shader::ShaderProgram;
+use utils::gl::{texture::*, *};
 
 pub type Color4 = Vector4<f32>;
 pub type Color3 = Vector3<f32>;
