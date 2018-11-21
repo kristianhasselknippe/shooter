@@ -9,51 +9,32 @@ extern crate lazy_static;
 extern crate libc;
 #[macro_use]
 extern crate maplit;
+extern crate imgui_sys as imgui;
+extern crate itertools;
 extern crate nalgebra as na;
 extern crate ncollide3d as nc;
 extern crate ordered_float as of;
 extern crate rusttype;
 extern crate time as t;
-extern crate itertools;
-extern crate imgui_sys as imgui;
 
-mod utils;
-mod scene;
-mod shader;
-mod collision;
-mod mesh;
-mod transform;
-mod drawing;
-mod image;
-// mod text;
-mod camera;
-mod entities;
-mod time;
-mod input;
-mod fps_counter;
-mod gui;
+extern crate specs;
+extern crate specs_derive;
 
-use glutin::{GlContext,GlWindow,WindowBuilder,EventsLoop,ContextBuilder};
-use shader::*;
-// use text::*;
-use mesh::model::Model;
-use camera::*;
-use time::*;
-use input::*;
-use fps_counter::*;
-use utils::gl::*;
-use drawing::*;
+mod engine;
+
 use alga::general::Inverse;
+use engine::{
+    camera::*, drawing::*, fps_counter::*, gui::imgui::*, input::*, mesh::model::Model, shader::*,
+    time::*, utils::gl::*,
+};
+
+use glutin::{ContextBuilder, EventsLoop, GlContext, GlWindow, WindowBuilder};
 
 /*use nc::{
     shape::{ShapeHandle},
     world::{CollisionWorld,CollisionGroups,GeometricQueryType}
 };*/
-use na::{Isometry3,Vector3,zero};
-
-use gui::{
-    imgui::*
-};
+use na::{zero, Isometry3, Vector3};
 
 fn main() {
     let mut window_size = (800, 600);
@@ -99,12 +80,12 @@ fn main() {
     let bow = GameObject::new(
         "Bow",
         Model::load_from_wavefront_file("Bow/Bow.obj").unwrap(),
-        Vector3::new(0.0,0.0,0.0)
+        Vector3::new(0.0, 0.0, 0.0),
     );
     let bow2 = GameObject::new(
         "Bow2",
         Model::load_from_wavefront_file("Bow2/Bow.obj").unwrap(),
-        Vector3::new(40.0,0.0,0.0)
+        Vector3::new(40.0, 0.0, 0.0),
     );
 
     let mut game_objects = vec![bow, bow2];
@@ -117,19 +98,24 @@ fn main() {
 
     let dpi_factor = gl_window.hidpi_factor();
     println!("DPI: {}", dpi_factor);
-    viewport((window_size.0 as f32 * dpi_factor) as i32,
-             (window_size.1 as f32 * dpi_factor) as i32);
+    viewport(
+        (window_size.0 as f32 * dpi_factor) as i32,
+        (window_size.1 as f32 * dpi_factor) as i32,
+    );
 
     let mut input = Input::new();
 
     let mut gui = Gui::new(
         window_size.0 as f32 * dpi_factor,
-        window_size.1 as f32 * dpi_factor
+        window_size.1 as f32 * dpi_factor,
     );
 
     let mut running = true;
 
     let mut fps = "FPS: 0".to_string();
+
+    let mut world = specs::World::new();
+    //world.register::<Position>();
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -140,12 +126,11 @@ fn main() {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::ReceivedCharacter(c) => {
-                        println!("Received char: {}", c);
                         gui.add_input_character(c);
-                    },
+                    }
                     glutin::WindowEvent::Resized(w, h) => {
                         println!("New Window size: {},{} - dpi: {}", w, h, dpi_factor);
-                        window_size = (w,h);
+                        window_size = (w, h);
 
                         let width = window_size.0 as f32 * dpi_factor;
                         let height = window_size.1 as f32 * dpi_factor;
@@ -153,11 +138,11 @@ fn main() {
                         gl_window.resize(width as u32, height as u32);
                         viewport(width as i32, height as i32);
                         gui.set_display_size((width, height));
-                        camera.set_aspect(width/height);
-                    },
+                        camera.set_aspect(width / height);
+                    }
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
                         input.update_glutin_keyboard_input(&i);
-                    },
+                    }
                     glutin::WindowEvent::MouseInput {
                         state: s,
                         button: mb,
@@ -165,10 +150,9 @@ fn main() {
                         ..
                     } => {
                         input.update_mouse_buttons(&mb, &s, &m);
-                    },
+                    }
                     glutin::WindowEvent::CursorMoved {
-                        position: (x, y),
-                        ..
+                        position: (x, y), ..
                     } => {
                         input.update_mouse_pos(na::Vector2::new(x as _, y as _));
                     }
@@ -180,10 +164,10 @@ fn main() {
                             // axis == 0 is X, 1 is Y
                             // println!("Motion: axis: {} value: {}", axis, value);
                             input.update_glutin_mouse_delta(axis, value as _);
-                        },
+                        }
                         glutin::DeviceEvent::Key(ki) => {
                             println!("Key: {:#?}", ki.scancode);
-                        },
+                        }
                         _ => (),
                     }
                 }
@@ -250,12 +234,12 @@ fn main() {
             let model_view = camera.view() * model_isom;
 
             let m_inv = model_isom
-                .fixed_slice::<na::U3,na::U3>(0,0)
+                .fixed_slice::<na::U3, na::U3>(0, 0)
                 .clone_owned()
                 .inverse();
 
             let mv_inv = model_view
-                .fixed_slice::<na::U3,na::U3>(0,0)
+                .fixed_slice::<na::U3, na::U3>(0, 0)
                 .clone_owned()
                 .inverse();
 
@@ -269,11 +253,12 @@ fn main() {
             bound_dc.set_int("diffuseMap", 0);
 
             bound_dc.perform();
-
         }
 
-
-        gui.render(window_size.0 as f32 * dpi_factor, window_size.1 as f32 * dpi_factor);
+        gui.render(
+            window_size.0 as f32 * dpi_factor,
+            window_size.1 as f32 * dpi_factor,
+        );
 
         gl_window.swap_buffers().unwrap();
 

@@ -1,4 +1,4 @@
-use super::na::*;
+use na::*;
 
 #[derive(Debug)]
 pub struct Camera {
@@ -17,7 +17,9 @@ pub struct Camera {
 impl Camera {
     pub fn new_perspective(aspect: f32, fov: f32, near: f32, far: f32, pos: Point3<f32>) -> Camera {
         Camera {
-            projection: ::na::Perspective3::new(aspect, fov, near, far).as_matrix().clone(),
+            projection: ::na::Perspective3::new(aspect, fov, near, far)
+                .as_matrix()
+                .clone(),
 
             aspect: aspect,
             fov: fov,
@@ -32,12 +34,14 @@ impl Camera {
 
     pub fn set_aspect(&mut self, aspect: f32) {
         self.aspect = aspect;
-        self.projection = ::na::Perspective3::new(self.aspect, self.fov, self.near, self.far).as_matrix().clone();
+        self.projection = ::na::Perspective3::new(self.aspect, self.fov, self.near, self.far)
+            .as_matrix()
+            .clone();
     }
 
     pub fn rotation(&self) -> Rotation3<f32> {
-        Rotation3::from_axis_angle(&Vector3::x_axis(), self.pitch) *
-        Rotation3::from_axis_angle(&Vector3::y_axis(), self.yaw)
+        Rotation3::from_axis_angle(&Vector3::x_axis(), self.pitch)
+            * Rotation3::from_axis_angle(&Vector3::y_axis(), self.yaw)
     }
 
     pub fn move_forward(&mut self, d: f32) {
@@ -48,12 +52,13 @@ impl Camera {
         self.pos += self.rotation().inverse() * (Vector3::x() * d);
     }
 
-    pub fn move_up(&mut self, d: f32)  {
+    pub fn move_up(&mut self, d: f32) {
         self.pos += self.rotation().inverse() * (Vector3::y() * d);
     }
 
     pub fn view(&self) -> Matrix4<f32> {
-        let iso = self.rotation() * Translation3::from_vector(Vector3::new(-self.pos.x, -self.pos.y, -self.pos.z));
+        let iso = self.rotation()
+            * Translation3::from_vector(Vector3::new(-self.pos.x, -self.pos.y, -self.pos.z));
         iso.to_homogeneous()
     }
 
@@ -79,8 +84,6 @@ impl OrthoCamera {
         let o = Matrix4::new_orthographic(0.0, w, 0.0, h, -10.0, 1000.0);
         let s = Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, -1.0, 1.0));
 
-        OrthoCamera {
-            projection: s * o
-        }
+        OrthoCamera { projection: s * o }
     }
 }

@@ -3,14 +3,14 @@
 extern crate wavefront_obj;
 
 use super::{Normal, TexCoord, Vertex3};
+use engine::mesh::wavefront::{parse_wavefront, MtlItem};
+use engine::utils::file::path_of;
+use engine::utils::gl::{texture::*, *};
 use gl;
 use gl::types::*;
 use itertools::Itertools;
-use mesh::wavefront::{parse_wavefront, MtlItem};
-use na::{Point3};
+use na::Point3;
 use nc::shape::TriMesh;
-use utils::file::path_of;
-use utils::gl::{*, texture::*};
 
 #[repr(C)]
 pub struct VertexData {
@@ -88,7 +88,7 @@ impl Model {
                 pb.pop();
                 pb.push(m.map_Kd.unwrap());
                 println!("Loading image: {:?}", pb);
-                let img = ::image::load_texture(&pb);
+                let img = ::engine::image::load_texture(&pb);
                 let mut tex = Texture::new();
                 tex.upload(img.data.as_ptr() as _, img.width, img.height, 4);
                 textures.push(tex);
@@ -97,12 +97,14 @@ impl Model {
 
         println!("Done uploading textures");
 
-        let mesh_vertices = mm.vertex_data
+        let mesh_vertices = mm
+            .vertex_data
             .iter()
             .map(|vd| Point3::new(vd.vertex.x, vd.vertex.y, vd.vertex.z))
             .collect();
 
-        let mesh_indices = mm.indices
+        let mesh_indices = mm
+            .indices
             .iter()
             .chunks(3)
             .into_iter()
@@ -112,8 +114,7 @@ impl Model {
                     *c.next().unwrap() as usize,
                     *c.next().unwrap() as usize,
                 )
-            })
-            .collect();
+            }).collect();
 
         Ok(Model {
             name: "Named not handled".to_string(),

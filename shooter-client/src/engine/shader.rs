@@ -1,12 +1,12 @@
-use std::path::Path;
+use engine::utils::file::read_file;
+use gl;
+use gl::types::*;
 use std::ffi::CString;
-use super::gl;
-use super::gl::types::*;
+use std::path::Path;
 use std::ptr;
 use std::str;
-use utils::file::read_file;
 
-use na::{Matrix4, Matrix3};
+use na::{Matrix3, Matrix4};
 
 pub struct Shader {
     handle: GLuint,
@@ -19,6 +19,8 @@ impl Drop for Shader {
         }
     }
 }
+
+const SHADERS_PATH: &'static str = "src/engine/shaders";
 
 impl Shader {
     pub fn create_vertex_shader(vs: &str) -> Shader {
@@ -41,18 +43,25 @@ impl Shader {
                 for _ in 0..len {
                     buf.push(0);
                 }
-                gl::GetShaderInfoLog(vertex_shader,
-                                     len,
-                                     ptr::null_mut(),
-                                     buf.as_mut_ptr() as *mut GLchar);
-                panic!("{}",
-                       str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8"));
+                gl::GetShaderInfoLog(
+                    vertex_shader,
+                    len,
+                    ptr::null_mut(),
+                    buf.as_mut_ptr() as *mut GLchar,
+                );
+                panic!(
+                    "{}",
+                    str::from_utf8(buf.as_slice())
+                        .ok()
+                        .expect("ShaderInfoLog not valid utf8")
+                );
             }
             vertex_shader
         };
-        Shader { handle: vertex_shader }
+        Shader {
+            handle: vertex_shader,
+        }
     }
-
 
     pub fn create_fragment_shader(fs: &str) -> Shader {
         let fragment_shader = unsafe {
@@ -72,22 +81,26 @@ impl Shader {
                 let mut len = 0;
                 gl::GetShaderiv(fragment_shader, gl::INFO_LOG_LENGTH, &mut len);
                 // println!("Shader info log len. {:?}", len);
-                let mut buf: Vec<u8> = vec![0;len as usize];
+                let mut buf: Vec<u8> = vec![0; len as usize];
                 let mut actual_len = -1;
-                gl::GetShaderInfoLog(fragment_shader,
-                                     len,
-                                     &mut actual_len as *mut GLsizei,
-                                     buf.as_mut_ptr() as *mut GLchar);
+                gl::GetShaderInfoLog(
+                    fragment_shader,
+                    len,
+                    &mut actual_len as *mut GLsizei,
+                    buf.as_mut_ptr() as *mut GLchar,
+                );
                 // println!("Actual len: {}", actual_len);
-                let error =
-                    str::from_utf8(buf.as_slice()).ok().expect("ShaderInfoLog not valid utf8");
+                let error = str::from_utf8(buf.as_slice())
+                    .ok()
+                    .expect("ShaderInfoLog not valid utf8");
                 println!("Error: {}", error);
                 panic!("{}", error);
-
             }
             fragment_shader
         };
-        Shader { handle: fragment_shader }
+        Shader {
+            handle: fragment_shader,
+        }
     }
 
     pub fn create_fragment_shader_from_path(path: &Path) -> Shader {
@@ -137,12 +150,18 @@ impl ShaderProgram {
                 gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
                 let mut buf = Vec::new();
                 buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-                gl::GetProgramInfoLog(program,
-                                      len,
-                                      ptr::null_mut(),
-                                      buf.as_mut_ptr() as *mut GLchar);
-                panic!("{}",
-                       str::from_utf8(buf.as_slice()).ok().expect("ProgramInfoLog not valid utf8"));
+                gl::GetProgramInfoLog(
+                    program,
+                    len,
+                    ptr::null_mut(),
+                    buf.as_mut_ptr() as *mut GLchar,
+                );
+                panic!(
+                    "{}",
+                    str::from_utf8(buf.as_slice())
+                        .ok()
+                        .expect("ProgramInfoLog not valid utf8")
+                );
             }
 
             program
@@ -151,7 +170,8 @@ impl ShaderProgram {
     }
 
     pub fn from_fragments(vs: &str, fs: &str) -> ShaderProgram {
-        let vs = format!("#version 330 core\n
+        let vs = format!(
+            "#version 330 core\n
                           layout (location = 0) in vec3 position;\n
                           layout (location = 1) in vec2 tex_coord;\n
                           out vec2 TexCoord;\n
@@ -159,9 +179,11 @@ impl ShaderProgram {
                           {{\n
                           {}\n
                           }}",
-                         vs);
+            vs
+        );
 
-        let fs = format!("#version 330 core\n
+        let fs = format!(
+            "#version 330 core\n
                           uniform sampler2D tex0;\n
                           in vec2 TexCoord;\n
                           out vec4 color;\n
@@ -169,7 +191,8 @@ impl ShaderProgram {
                           {{\n
                           {}\n
                           }}",
-                         fs);
+            fs
+        );
 
         // println!("vs: {}", vs);
         // println!("fs: {}", fs);
@@ -180,28 +203,38 @@ impl ShaderProgram {
     }
 
     pub fn create_program(name: &str) -> ShaderProgram {
-        let vertex_shader =
-            Shader::create_vertex_shader_from_path(Path::new(&format!("src/shaders/{}.vs", name)));
-        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!("src/shaders/{}.\
-                                                                                           fs",
-                                                                                          name)));
+        let vertex_shader = Shader::create_vertex_shader_from_path(Path::new(&format!(
+            "{}/{}.vs",
+            SHADERS_PATH, name
+        )));
+        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!(
+            "{}/{}.\
+             fs",
+            SHADERS_PATH, name
+        )));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 
     pub fn create_program_from_vert_frag(vert: &str, frag: &str) -> ShaderProgram {
-        let vertex_shader =
-            Shader::create_vertex_shader_from_path(Path::new(&format!("src/shaders/{}.vs", vert)));
-        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!("src/shaders/{}.\
-                                                                                           fs",
-                                                                                          frag)));
+        let vertex_shader = Shader::create_vertex_shader_from_path(Path::new(&format!(
+            "{}/{}.vs",
+            SHADERS_PATH, vert
+        )));
+        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!(
+            "{}/{}.\
+             fs",
+            frag, SHADERS_PATH
+        )));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 
     pub fn set_bool(&self, name: &str, val: bool) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::Uniform1i(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                          val as i32);
+            gl::Uniform1i(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                val as i32,
+            );
         }
     }
 
@@ -222,50 +255,60 @@ impl ShaderProgram {
     pub fn set_float2(&self, name: &str, val: (f32, f32)) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::Uniform2f(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                          val.0,
-                          val.1);
+            gl::Uniform2f(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                val.0,
+                val.1,
+            );
         }
     }
 
     pub fn set_float3(&self, name: &str, val: (f32, f32, f32)) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::Uniform3f(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                          val.0,
-                          val.1,
-                          val.2);
+            gl::Uniform3f(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                val.0,
+                val.1,
+                val.2,
+            );
         }
     }
 
     pub fn set_float4(&self, name: &str, val: (f32, f32, f32, f32)) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::Uniform4f(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                          val.0,
-                          val.1,
-                          val.2,
-                          val.3);
+            gl::Uniform4f(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                val.0,
+                val.1,
+                val.2,
+                val.3,
+            );
         }
     }
 
     pub fn set_mat3(&self, name: &str, val: &Matrix3<f32>) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::UniformMatrix3fv(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                                 1,
-                                 gl::FALSE,
-                                 val.as_slice().as_ptr());
+            gl::UniformMatrix3fv(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                1,
+                gl::FALSE,
+                val.as_slice().as_ptr(),
+            );
         }
     }
 
     pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
-            gl::UniformMatrix4fv(gl::GetUniformLocation(self.handle, c_name.as_ptr()),
-                                 1,
-                                 gl::FALSE,
-                                 val.as_slice().as_ptr());
+            gl::UniformMatrix4fv(
+                gl::GetUniformLocation(self.handle, c_name.as_ptr()),
+                1,
+                gl::FALSE,
+                val.as_slice().as_ptr(),
+            );
         }
     }
 }

@@ -1,10 +1,10 @@
 #![allow(dead_code, unused_variables)]
 
-use gl::types::*;
-use utils::file::*;
-use super::{Normal, TexCoord, Vertex3};
-use na::*;
 use super::model::{MemModel, VertexData};
+use super::{Normal, TexCoord, Vertex3};
+use engine::utils::file::*;
+use gl::types::*;
+use na::*;
 use std::path::Path;
 
 struct FaceItem {
@@ -54,8 +54,7 @@ fn split_parts_f32(content: &str) -> Vec<f32> {
                     );
                 }
             }
-        })
-        .collect()
+        }).collect()
 }
 
 impl WavefrontParser {
@@ -159,8 +158,7 @@ impl WavefrontParser {
                         panic!("Faces can't have more than 3 items per value");
                     }
                 }
-            })
-            .collect();
+            }).collect();
         self.current_group().faces.push(Face { items: face_items })
     }
 
@@ -344,14 +342,14 @@ pub struct MtlItem {
 }
 
 struct MtlParser {
-    items: Vec<MtlItem>
+    items: Vec<MtlItem>,
 }
 
 impl MtlParser {
     fn current_item(&mut self) -> &mut MtlItem {
         if self.items.len() > 0 {
             let i = self.items.len() - 1;
-            return &mut self.items[i]
+            return &mut self.items[i];
         } else {
             panic!("Asked for current item, but items len is 0");
         }
@@ -420,28 +418,36 @@ impl MtlParser {
                             })
                         }
                         "Ns" => {
-                            self.current_item().Ns = Some(self.parse_f32(&line[end..line.len() as usize]));
+                            self.current_item().Ns =
+                                Some(self.parse_f32(&line[end..line.len() as usize]));
                         }
                         "Ka" => {
-                            self.current_item().Ka = Some(self.parse_vector3(&line[end..line.len() as usize]));
+                            self.current_item().Ka =
+                                Some(self.parse_vector3(&line[end..line.len() as usize]));
                         }
                         "Kd" => {
-                            self.current_item().Kd = Some(self.parse_vector3(&line[end..line.len() as usize]));
+                            self.current_item().Kd =
+                                Some(self.parse_vector3(&line[end..line.len() as usize]));
                         }
                         "Ks" => {
-                            self.current_item().Ks = Some(self.parse_vector3(&line[end..line.len() as usize]));
+                            self.current_item().Ks =
+                                Some(self.parse_vector3(&line[end..line.len() as usize]));
                         }
                         "Ni" => {
-                            self.current_item().Ni = Some(self.parse_f32(&line[end..line.len() as usize]));
-                        },
+                            self.current_item().Ni =
+                                Some(self.parse_f32(&line[end..line.len() as usize]));
+                        }
                         "d" => {
-                            self.current_item().d = Some(self.parse_f32(&line[end..line.len() as usize]));
+                            self.current_item().d =
+                                Some(self.parse_f32(&line[end..line.len() as usize]));
                         }
                         "illum" => {
-                            self.current_item().illum = Some(self.parse_f32(&line[end..line.len() as usize]));
+                            self.current_item().illum =
+                                Some(self.parse_f32(&line[end..line.len() as usize]));
                         }
                         "map_Kd" => {
-                            self.current_item().map_Kd = Some(self.parse_name(&line[end..line.len() as usize]));
+                            self.current_item().map_Kd =
+                                Some(self.parse_name(&line[end..line.len() as usize]));
                         }
                         &_ => {
                             //println!("[Wavefront]: Unrecognized line qualifier: {}", subline);
@@ -463,9 +469,7 @@ pub fn parse_mtl(obj_name: &str, mtl_path: &str) -> Vec<MtlItem> {
     pb.push(mtl_p);
     let content = read_file(&pb).unwrap();
 
-    let mut parser = MtlParser {
-        items: Vec::new()
-    };
+    let mut parser = MtlParser { items: Vec::new() };
 
     let mut line_start: usize = 0;
     let mut line_end: usize = 0;

@@ -1,15 +1,16 @@
-use camera::OrthoCamera;
-use gl;
+use engine::{
+    camera::OrthoCamera,
+    drawing::{Color3, Color4},
+    input::Input,
+    shader::ShaderProgram,
+    utils::gl::{texture::*, *},
+};
 use gl::types::*;
-use imgui::*;
-use input::Input;
-use na::{Vector2,Vector3,Vector4};
-use shader::ShaderProgram;
-use drawing::{Color3,Color4};
-use std::os::raw::c_char;
-use std::ptr::{null_mut,null};
-use utils::gl::{*, texture::*};
 use glutin::*;
+use imgui::*;
+use na::{Vector2, Vector3, Vector4};
+use std::os::raw::c_char;
+use std::ptr::{null, null_mut};
 
 macro_rules! cstr {
     ($i:ident) => {
@@ -108,43 +109,123 @@ impl ImGui {
     }
 
     pub fn begin(&mut self, name: &str, mut open: bool) -> bool {
-        unsafe { igBegin(cstr!(name), &mut open as *mut bool, ImGuiWindowFlags::empty()) }
+        unsafe {
+            igBegin(
+                cstr!(name),
+                &mut open as *mut bool,
+                ImGuiWindowFlags::empty(),
+            )
+        }
     }
 
     pub fn end(&mut self) {
-        unsafe { igEnd(); }
+        unsafe {
+            igEnd();
+        }
     }
 
     pub fn slider_float(&mut self, label: &str, value: &mut f32, min: f32, max: f32) -> bool {
         unsafe { igSliderFloat(cstr!(label), value as *mut _, min, max, null(), 1.0) }
     }
 
-    pub fn drag_float(&mut self, label: &str, value: &mut f32, speed: f32, min: f32, max: f32) -> bool {
+    pub fn drag_float(
+        &mut self,
+        label: &str,
+        value: &mut f32,
+        speed: f32,
+        min: f32,
+        max: f32,
+    ) -> bool {
         unsafe { igDragFloat(cstr!(label), value as *mut _, speed, min, max, null(), 1.0) }
     }
 
-    pub fn drag_float2(&mut self, label: &str, value: &mut Vector2<f32>, speed: f32, min: f32, max: f32) -> bool {
-        unsafe { igDragFloat2(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    pub fn drag_float2(
+        &mut self,
+        label: &str,
+        value: &mut Vector2<f32>,
+        speed: f32,
+        min: f32,
+        max: f32,
+    ) -> bool {
+        unsafe {
+            igDragFloat2(
+                cstr!(label),
+                value.as_mut_slice().as_mut_ptr() as *mut _,
+                speed,
+                min,
+                max,
+                null(),
+                1.0,
+            )
+        }
     }
 
-    pub fn drag_float3(&mut self, label: &str, value: &mut Vector3<f32>, speed: f32, min: f32, max: f32) -> bool {
-        unsafe { igDragFloat3(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    pub fn drag_float3(
+        &mut self,
+        label: &str,
+        value: &mut Vector3<f32>,
+        speed: f32,
+        min: f32,
+        max: f32,
+    ) -> bool {
+        unsafe {
+            igDragFloat3(
+                cstr!(label),
+                value.as_mut_slice().as_mut_ptr() as *mut _,
+                speed,
+                min,
+                max,
+                null(),
+                1.0,
+            )
+        }
     }
 
-    pub fn drag_float4(&mut self, label: &str, value: &mut Vector4<f32>, speed: f32, min: f32, max: f32) -> bool {
-        unsafe { igDragFloat4(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, speed, min, max, null(), 1.0) }
+    pub fn drag_float4(
+        &mut self,
+        label: &str,
+        value: &mut Vector4<f32>,
+        speed: f32,
+        min: f32,
+        max: f32,
+    ) -> bool {
+        unsafe {
+            igDragFloat4(
+                cstr!(label),
+                value.as_mut_slice().as_mut_ptr() as *mut _,
+                speed,
+                min,
+                max,
+                null(),
+                1.0,
+            )
+        }
     }
 
     pub fn color_edit3(&mut self, label: &str, value: &mut Color3) -> bool {
-        unsafe { igColorEdit3(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, ImGuiColorEditFlags::empty()) }
+        unsafe {
+            igColorEdit3(
+                cstr!(label),
+                value.as_mut_slice().as_mut_ptr() as *mut _,
+                ImGuiColorEditFlags::empty(),
+            )
+        }
     }
 
     pub fn color_edit4(&mut self, label: &str, value: &mut Color4) -> bool {
-        unsafe { igColorEdit4(cstr!(label), value.as_mut_slice().as_mut_ptr() as *mut _, ImGuiColorEditFlags::empty()) }
+        unsafe {
+            igColorEdit4(
+                cstr!(label),
+                value.as_mut_slice().as_mut_ptr() as *mut _,
+                ImGuiColorEditFlags::empty(),
+            )
+        }
     }
 
     pub fn same_line(&mut self, x: f32, spacing: f32) {
-        unsafe { igSameLine(x as _, spacing as _); }
+        unsafe {
+            igSameLine(x as _, spacing as _);
+        }
     }
 
     pub fn text(&mut self, text: &str) {
@@ -266,7 +347,6 @@ impl Drop for ImGui {
     }
 }
 
-
 pub struct Gui {
     imgui: ImGui,
 }
@@ -274,9 +354,7 @@ pub struct Gui {
 impl Gui {
     pub fn new(width: f32, height: f32) -> Gui {
         let imgui = ImGui::init_gui(width, height);
-        Gui {
-            imgui: imgui
-        }
+        Gui { imgui: imgui }
     }
 
     pub fn update_input(&mut self, input: &Input, dt: f32) {
@@ -287,7 +365,7 @@ impl Gui {
         self.imgui.add_input_character(codepoint);
     }
 
-    pub fn set_display_size(&mut self, size: (f32,f32)) {
+    pub fn set_display_size(&mut self, size: (f32, f32)) {
         self.imgui.set_display_size(size);
     }
 
