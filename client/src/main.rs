@@ -8,10 +8,6 @@ extern crate nalgebra_glm as glm;
 extern crate specs;
 extern crate specs_derive;
 
-/*use nc::{
-    shape::{ShapeHandle},
-    world::{CollisionWorld,CollisionGroups,GeometricQueryType}
-};*/
 use engine::start_event_loop;
 use glm::*;
 use glutin::{ContextBuilder, EventsLoop, GlContext, GlWindow, WindowBuilder};
