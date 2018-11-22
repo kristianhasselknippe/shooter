@@ -1,8 +1,7 @@
 pub mod model;
 pub mod wavefront;
-use gl::types::*;
-use na::Vector3;
+use glm::Vec3;
 
-pub type Vertex3 = Vector3<GLfloat>;
-pub type Normal = Vertex3;
-pub type TexCoord = Vector3<GLfloat>;
+pub type Vertex3 = Vec3;
+pub type Normal = Vec3;
+pub type TexCoord = Vec3;

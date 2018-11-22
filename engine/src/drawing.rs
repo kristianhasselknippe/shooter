@@ -1,20 +1,20 @@
 use gl::types::*;
+use glm::*;
 use mesh::model::Model;
-use na::*;
 use shader::ShaderProgram;
 use utils::gl::{texture::*, *};
 
-pub type Color4 = Vector4<f32>;
-pub type Color3 = Vector3<f32>;
+pub type Color4 = Vec4;
+pub type Color3 = Vec3;
 
 pub struct GameObject {
     pub name: String,
-    pub position: Vector3<f32>,
+    pub position: Vec3,
     pub model: Model,
 }
 
 impl GameObject {
-    pub fn new(name: &str, model: Model, pos: Vector3<f32>) -> GameObject {
+    pub fn new(name: &str, model: Model, pos: Vec3) -> GameObject {
         GameObject {
             name: name.to_string(),
             model: model,
@@ -132,11 +132,11 @@ impl<'a> BoundDrawCall<'a> {
         self.dc.program.set_float4(name, val);
     }
 
-    pub fn set_mat3(&self, name: &str, val: &Matrix3<f32>) {
+    pub fn set_mat3(&self, name: &str, val: &Mat3) {
         self.dc.program.set_mat3(name, val);
     }
 
-    pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
+    pub fn set_mat4(&self, name: &str, val: &Mat4) {
         self.dc.program.set_mat4(name, val);
     }
 }

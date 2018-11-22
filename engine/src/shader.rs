@@ -3,9 +3,9 @@ use std::ffi::CString;
 use std::path::Path;
 use std::ptr;
 use std::str;
-use utils::file::read_file;
+use utils::file::{abolute_path_from_relative, read_file};
 
-use na::{Matrix3, Matrix4};
+use glm::{Mat3, Mat4};
 
 pub struct Shader {
     handle: GLuint,
@@ -19,7 +19,7 @@ impl Drop for Shader {
     }
 }
 
-const SHADERS_PATH: &'static str = "src/engine/shaders";
+const SHADERS_PATH: &'static str = "../engine/src/shaders";
 
 impl Shader {
     pub fn create_vertex_shader(vs: &str) -> Shader {
@@ -202,15 +202,19 @@ impl ShaderProgram {
     }
 
     pub fn create_program(name: &str) -> ShaderProgram {
-        let vertex_shader = Shader::create_vertex_shader_from_path(Path::new(&format!(
-            "{}/{}.vs",
-            SHADERS_PATH, name
-        )));
-        let fragment_shader = Shader::create_fragment_shader_from_path(Path::new(&format!(
-            "{}/{}.\
-             fs",
-            SHADERS_PATH, name
-        )));
+        let vertex_shader_path = format!("{}/{}.vs", SHADERS_PATH, name);
+        println!(
+            "Loading vertex shader from: {:?}",
+            abolute_path_from_relative(Path::new(&vertex_shader_path))
+        );
+        let vertex_shader = Shader::create_vertex_shader_from_path(&Path::new(&vertex_shader_path));
+        let fragment_shader_path = format!("{}/{}.fs", SHADERS_PATH, name);
+        println!(
+            "Loading fragment shader from: {:?}",
+            abolute_path_from_relative(Path::new(&fragment_shader_path))
+        );
+        let fragment_shader =
+            Shader::create_fragment_shader_from_path(&Path::new(&fragment_shader_path));
         ShaderProgram::new(&vertex_shader, &fragment_shader)
     }
 
@@ -287,7 +291,7 @@ impl ShaderProgram {
         }
     }
 
-    pub fn set_mat3(&self, name: &str, val: &Matrix3<f32>) {
+    pub fn set_mat3(&self, name: &str, val: &Mat3) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
             gl::UniformMatrix3fv(
@@ -299,7 +303,7 @@ impl ShaderProgram {
         }
     }
 
-    pub fn set_mat4(&self, name: &str, val: &Matrix4<f32>) {
+    pub fn set_mat4(&self, name: &str, val: &Mat4) {
         unsafe {
             let c_name = CString::new(name.as_bytes()).unwrap();
             gl::UniformMatrix4fv(

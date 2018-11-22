@@ -1,5 +1,5 @@
+use glm::*;
 use glutin::KeyboardInput;
-use na::Vector2;
 
 #[derive(Debug)]
 pub struct Input {
@@ -22,8 +22,8 @@ pub struct Input {
     pub mouse_right: bool,
     pub mouse_middle: bool,
 
-    pub mouse_delta: Vector2<f32>,
-    pub mouse_pos: Vector2<f32>,
+    pub mouse_delta: Vec2,
+    pub mouse_pos: Vec2,
 }
 
 macro_rules! pressed_state_to_bool {
@@ -58,8 +58,8 @@ impl Input {
             mouse_right: false,
             mouse_middle: false,
 
-            mouse_delta: Vector2::new(0.0, 0.0),
-            mouse_pos: Vector2::new(0.0, 0.0),
+            mouse_delta: vec2(0.0, 0.0),
+            mouse_pos: vec2(0.0, 0.0),
         }
     }
 
@@ -127,19 +127,19 @@ impl Input {
         }
     }
 
-    pub fn update_mouse_pos(&mut self, pos: Vector2<f32>) {
+    pub fn update_mouse_pos(&mut self, pos: Vec2) {
         self.mouse_pos = pos;
     }
 
     pub fn reset_mouse_delta(&mut self) {
-        self.mouse_delta = Vector2::new(0.0, 0.0);
+        self.mouse_delta = vec2(0.0, 0.0);
     }
 
     pub fn update_glutin_mouse_delta(&mut self, axis: u32, value: f32) {
         if axis == 0 {
-            self.mouse_delta += Vector2::new(value, 0.0);
+            self.mouse_delta += vec2(value, 0.0);
         } else {
-            self.mouse_delta -= Vector2::new(0.0, value);
+            self.mouse_delta -= vec2(0.0, value);
         }
     }
 }

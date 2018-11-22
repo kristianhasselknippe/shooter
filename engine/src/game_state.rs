@@ -1,5 +1,5 @@
+use super::glm::Vector2;
 use entities::*;
-use super::na::Vector2;
 
 #[derive(Debug)]
 pub struct GameState {
@@ -16,7 +16,8 @@ impl GameState {
     }
 
     pub fn new_entity(&mut self, name: &str) -> EntityRef {
-        self.ecs.add_entity(Entity::new(name, Vector2::new(0.0,0.0)))
+        self.ecs
+            .add_entity(Entity::new(name, Vector2::new(0.0, 0.0)))
     }
 
     pub fn new_entity_with_pos(&mut self, name: &str, pos: Vector2<f32>) -> EntityRef {

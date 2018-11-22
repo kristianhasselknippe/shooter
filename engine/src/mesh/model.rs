@@ -4,10 +4,9 @@ extern crate wavefront_obj;
 
 use super::{Normal, TexCoord, Vertex3};
 use gl::types::*;
+use glm::*;
 use itertools::Itertools;
 use mesh::wavefront::{parse_wavefront, MtlItem};
-use na::Point3;
-use nc::shape::TriMesh;
 use utils::file::path_of;
 use utils::gl::{texture::*, *};
 
@@ -34,8 +33,6 @@ pub struct Model {
     pub vbo: Buffer,
     pub ebo: Buffer,
     pub textures: Vec<Texture>,
-
-    pub trimesh: Option<TriMesh<f32>>,
 }
 
 impl Model {
@@ -96,22 +93,22 @@ impl Model {
 
         println!("Done uploading textures");
 
-        let mesh_vertices: Vec<Point3<f32>> = mm
+        let mesh_vertices: Vec<Vec3> = mm
             .vertex_data
             .iter()
-            .map(|vd| Point3::new(vd.vertex.x, vd.vertex.y, vd.vertex.z))
+            .map(|vd| vec3(vd.vertex.x, vd.vertex.y, vd.vertex.z))
             .collect();
 
-        let mesh_indices = mm
+        let mesh_indices: Vec<U8Vec3> = mm
             .indices
             .iter()
             .chunks(3)
             .into_iter()
             .map(|mut c| {
-                Point3::new(
-                    *c.next().unwrap() as usize,
-                    *c.next().unwrap() as usize,
-                    *c.next().unwrap() as usize,
+                vec3(
+                    *c.next().unwrap() as u8,
+                    *c.next().unwrap() as u8,
+                    *c.next().unwrap() as u8,
                 )
             }).collect();
 
@@ -122,8 +119,6 @@ impl Model {
             vbo: vbo,
             ebo: ebo,
             textures: textures,
-
-            trimesh: Some(TriMesh::new(mesh_vertices, mesh_indices, None)),
         })
     }
     pub fn bind(&mut self) {

@@ -3,7 +3,7 @@
 use super::model::{MemModel, VertexData};
 use super::{Normal, TexCoord, Vertex3};
 use gl::types::*;
-use na::*;
+use glm::*;
 use std::path::Path;
 use utils::file::*;
 
@@ -332,9 +332,9 @@ pub fn parse_wavefront(name: &str) -> MemModel {
 pub struct MtlItem {
     pub name: String,
     pub Ns: Option<f32>,
-    pub Ka: Option<Vector3<f32>>,
-    pub Kd: Option<Vector3<f32>>,
-    pub Ks: Option<Vector3<f32>>,
+    pub Ka: Option<Vec3>,
+    pub Kd: Option<Vec3>,
+    pub Ks: Option<Vec3>,
     pub Ni: Option<f32>,
     pub d: Option<f32>,
     pub illum: Option<f32>,
@@ -363,20 +363,20 @@ impl MtlParser {
         parts[0]
     }
 
-    fn parse_vector2(&mut self, line: &str) -> Vector2<f32> {
+    fn parse_vector2(&mut self, line: &str) -> Vec2 {
         let parts = split_parts_f32(line);
         if parts.len() != 2 {
             panic!("Error parsing vec2: actual len: {}", parts.len());
         }
-        Vector2::new(parts[0], parts[1])
+        vec2(parts[0], parts[1])
     }
 
-    fn parse_vector3(&mut self, line: &str) -> Vector3<f32> {
+    fn parse_vector3(&mut self, line: &str) -> Vec3 {
         let parts = split_parts_f32(line);
         if parts.len() != 3 {
             panic!("Error parsing vec3: actual len: {}", parts.len());
         }
-        Vector3::new(parts[0], parts[1], parts[2])
+        vec3(parts[0], parts[1], parts[2])
     }
 
     fn parse_name(&mut self, line: &str) -> String {

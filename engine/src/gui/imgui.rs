@@ -1,10 +1,10 @@
 use camera::OrthoCamera;
 use drawing::{Color3, Color4};
 use gl::types::*;
+use glm::{Vec2, Vec3, Vec4};
 use glutin::*;
 use imgui::*;
 use input::Input;
-use na::{Vector2, Vector3, Vector4};
 use shader::ShaderProgram;
 use std::os::raw::c_char;
 use std::ptr::{null, null_mut};
@@ -140,7 +140,7 @@ impl ImGui {
     pub fn drag_float2(
         &mut self,
         label: &str,
-        value: &mut Vector2<f32>,
+        value: &mut Vec2,
         speed: f32,
         min: f32,
         max: f32,
@@ -161,7 +161,7 @@ impl ImGui {
     pub fn drag_float3(
         &mut self,
         label: &str,
-        value: &mut Vector3<f32>,
+        value: &mut Vec3,
         speed: f32,
         min: f32,
         max: f32,
@@ -182,7 +182,7 @@ impl ImGui {
     pub fn drag_float4(
         &mut self,
         label: &str,
-        value: &mut Vector4<f32>,
+        value: &mut Vec4,
         speed: f32,
         min: f32,
         max: f32,
