@@ -3,7 +3,6 @@
 extern crate wavefront_obj;
 
 use super::{Normal, TexCoord, Vertex3};
-use gl;
 use gl::types::*;
 use itertools::Itertools;
 use mesh::wavefront::{parse_wavefront, MtlItem};

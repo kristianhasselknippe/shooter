@@ -1,8 +1,7 @@
 pub mod texture;
 
-use std::collections::HashMap;
-use gl;
 use gl::types::*;
+use std::collections::HashMap;
 use std::mem::size_of;
 
 lazy_static! {
@@ -17,18 +16,18 @@ lazy_static! {
 
 type BufferHandle = GLuint;
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct BufferData {
     target: GLenum,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub enum BufferType {
     VertexArrayBuffer,
     ElementArrayBuffer,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     buffer_type: BufferType,
     handle: BufferHandle,
@@ -122,7 +121,7 @@ pub struct VertexSpec {
 impl VertexSpec {
     pub fn new(attribs: Vec<VertexAttribute>) -> VertexSpec {
         VertexSpec {
-            attributes: attribs
+            attributes: attribs,
         }
     }
 
@@ -166,7 +165,12 @@ pub struct VertexAttribute {
 }
 
 impl VertexAttribute {
-    pub fn new(location: GLuint, data_type: GLenum, num_comps: GLsizei, normalize: bool) -> VertexAttribute {
+    pub fn new(
+        location: GLuint,
+        data_type: GLenum,
+        num_comps: GLsizei,
+        normalize: bool,
+    ) -> VertexAttribute {
         VertexAttribute {
             location: location,
             data_type: data_type,

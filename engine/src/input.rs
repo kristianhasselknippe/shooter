@@ -1,5 +1,5 @@
+use glutin::KeyboardInput;
 use na::Vector2;
-use glutin;
 
 #[derive(Debug)]
 pub struct Input {
@@ -27,15 +27,13 @@ pub struct Input {
 }
 
 macro_rules! pressed_state_to_bool {
-    ($e:expr) => {
-        {
-            if $e == glutin::ElementState::Pressed {
-                true
-            } else {
-                false
-            }
+    ($e:expr) => {{
+        if $e == glutin::ElementState::Pressed {
+            true
+        } else {
+            false
         }
-    }
+    }};
 }
 
 impl Input {
@@ -65,10 +63,12 @@ impl Input {
         }
     }
 
-    pub fn update_mouse_buttons(&mut self,
-                                button: &glutin::MouseButton,
-                                state: &glutin::ElementState,
-                                _modifiers: &glutin::ModifiersState) {
+    pub fn update_mouse_buttons(
+        &mut self,
+        button: &glutin::MouseButton,
+        state: &glutin::ElementState,
+        _modifiers: &glutin::ModifiersState,
+    ) {
         match button {
             &glutin::MouseButton::Left => {
                 self.mouse_left = pressed_state_to_bool!(*state);
@@ -83,7 +83,7 @@ impl Input {
         }
     }
 
-    pub fn update_glutin_keyboard_input(&mut self, input: &glutin::KeyboardInput) {
+    pub fn update_glutin_keyboard_input(&mut self, input: &KeyboardInput) {
         if let Some(keycode) = input.virtual_keycode {
             match keycode {
                 glutin::VirtualKeyCode::A => {
@@ -104,24 +104,21 @@ impl Input {
                 glutin::VirtualKeyCode::E => {
                     self.up = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LShift |
-                glutin::VirtualKeyCode::RShift => {
+                glutin::VirtualKeyCode::LShift | glutin::VirtualKeyCode::RShift => {
                     self.shift = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LAlt |
-                glutin::VirtualKeyCode::RAlt => {
+                glutin::VirtualKeyCode::LAlt | glutin::VirtualKeyCode::RAlt => {
                     self.alt = pressed_state_to_bool!(input.state);
                 }
-                glutin::VirtualKeyCode::LControl |
-                glutin::VirtualKeyCode::RControl => {
+                glutin::VirtualKeyCode::LControl | glutin::VirtualKeyCode::RControl => {
                     self.ctrl = pressed_state_to_bool!(input.state);
                 }
                 glutin::VirtualKeyCode::Escape => {
                     self.escape = pressed_state_to_bool!(input.state);
-                },
+                }
                 glutin::VirtualKeyCode::Return => {
                     self.enter = pressed_state_to_bool!(input.state);
-                },
+                }
                 glutin::VirtualKeyCode::Back => {
                     self.backspace = pressed_state_to_bool!(input.state);
                 }
