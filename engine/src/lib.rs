@@ -26,12 +26,14 @@ pub mod transform;
 pub mod utils;
 // mod text;
 pub mod camera;
+pub mod default_init;
 pub mod fps_counter;
 pub mod gui;
 pub mod input;
 pub mod time;
 
 use camera::*;
+use default_init::{init_defaults, EngineContext};
 use drawing::*;
 use fps_counter::*;
 use glm::*;
@@ -46,9 +48,7 @@ use shader::*;
 use time::*;
 use utils::gl::*;
 
-pub fn start_event_loop() {
-    let mut window_size = (800, 600);
-
+pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, GlWindow) {
     let mut events_loop = EventsLoop::new();
     let window = WindowBuilder::new()
         .with_title("Hello, world!")
@@ -72,40 +72,14 @@ pub fn start_event_loop() {
         gl::CullFace(gl::BACK);
     };
 
-    let mut camera = Camera::new_perspective(
-        16.0 / 9.0,
-        3.14 / 4.0,
-        1.0,
-        1000.0,
-        glm::vec3(0.0, 0.0, 8.0),
-    );
+    (events_loop, gl_window)
+}
 
-    // let program = ShaderProgram::create_program("default");
-    let mut program = ShaderProgram::create_program("default");
-
-    //let model = Model::load_from_wavefront_file("quad.obj").unwrap();
-    //let al = Model::load_from_wavefront_file("al.obj").unwrap();
-    //let sphere = Model::load_from_wavefront_file("sphere.obj").unwrap();
-
-    let bow = GameObject::new(
-        "Bow",
-        Model::load_from_wavefront_file("Bow/Bow.obj").unwrap(),
-        vec3(0.0, 0.0, 0.0),
-    );
-    let bow2 = GameObject::new(
-        "Bow2",
-        Model::load_from_wavefront_file("Bow2/Bow.obj").unwrap(),
-        vec3(40.0, 0.0, 0.0),
-    );
-
-    let mut game_objects = vec![bow, bow2];
-
-    let mut time = Time::new(60);
+pub fn start_event_loop() {
+    let mut window_size = (800, 600);
+    let (mut events_loop, gl_window) = init_gl_window(window_size);
 
     println!("Window size: {},{}", window_size.0, window_size.1);
-
-    let mut fps_counter = FpsCounter::new();
-
     let dpi_factor = gl_window.get_hidpi_factor();
     println!("DPI: {}", dpi_factor);
     viewport(
@@ -113,12 +87,15 @@ pub fn start_event_loop() {
         (window_size.1 as f32 * dpi_factor as f32) as i32,
     );
 
-    let mut input = Input::new();
-
-    let mut gui = Gui::new(
-        window_size.0 as f32 * dpi_factor as f32,
-        window_size.1 as f32 * dpi_factor as f32,
-    );
+    let EngineContext {
+        mut camera,
+        mut program,
+        mut game_objects,
+        mut time,
+        mut fps_counter,
+        mut input,
+        mut gui,
+    } = init_defaults(window_size, dpi_factor as f32);
 
     let mut running = true;
 
