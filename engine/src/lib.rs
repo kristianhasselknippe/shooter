@@ -38,16 +38,16 @@ use drawing::*;
 use fps_counter::*;
 use glm::*;
 use glutin::{
-    dpi::LogicalPosition, dpi::LogicalSize, dpi::PhysicalSize, ContextBuilder, EventsLoop,
-    Context, Window, WindowBuilder, WindowedContext, ContextCurrentState, PossiblyCurrent
+    dpi::LogicalPosition, dpi::LogicalSize, dpi::PhysicalSize, Context, ContextBuilder,
+    ContextCurrentState, EventsLoop, PossiblyCurrent, Window, WindowBuilder, WindowedContext,
 };
 //use gui::imgui::*;
 use input::*;
 use mesh::model::Model;
 use shader::*;
+use specs::prelude::*;
 use time::*;
 use utils::gl::*;
-use specs::prelude::*;
 
 pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, WindowedContext<PossiblyCurrent>) {
     let el = EventsLoop::new();
@@ -128,7 +128,6 @@ pub fn start_event_loop() {
                         let width = window_size.0 as f32 * dpi_factor as f32;
                         let height = window_size.1 as f32 * dpi_factor as f32;
 
-
                         //window.set_inner_size(LogicalSize::new(width as f64, height as f64));
                         viewport(width as i32, height as i32);
                         //gui.set_display_size((width, height));
@@ -205,7 +204,7 @@ pub fn start_event_loop() {
         if input.escape {
             running = false;
         }
-        
+
         //gui.new_frame();
 
         //gui.begin("Info", true);
