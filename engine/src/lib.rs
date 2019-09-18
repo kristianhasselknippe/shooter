@@ -28,7 +28,7 @@ pub mod utils;
 pub mod camera;
 pub mod default_init;
 pub mod fps_counter;
-pub mod gui;
+//pub mod gui;
 pub mod input;
 pub mod time;
 
@@ -39,26 +39,28 @@ use fps_counter::*;
 use glm::*;
 use glutin::{
     dpi::LogicalPosition, dpi::LogicalSize, dpi::PhysicalSize, ContextBuilder, EventsLoop,
-    GlContext, GlWindow, WindowBuilder,
+    Context, Window, WindowBuilder, WindowedContext, ContextCurrentState, PossiblyCurrent
 };
-use gui::imgui::*;
+//use gui::imgui::*;
 use input::*;
 use mesh::model::Model;
 use shader::*;
 use time::*;
 use utils::gl::*;
+use specs::prelude::*;
 
-pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, GlWindow) {
-    let mut events_loop = EventsLoop::new();
-    let window = WindowBuilder::new()
-        .with_title("Hello, world!")
-        .with_dimensions(LogicalSize::new(window_size.0 as f64, window_size.1 as f64));
-    let context = ContextBuilder::new().with_vsync(true);
-    let gl_window = GlWindow::new(window, context, &events_loop).unwrap();
+pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, WindowedContext<PossiblyCurrent>) {
+    let el = EventsLoop::new();
+    let wb = WindowBuilder::new()
+        .with_title("Hello world!")
+        .with_dimensions(glutin::dpi::LogicalSize::new(1024.0, 768.0));
+    let windowed_context = glutin::ContextBuilder::new()
+        .build_windowed(wb, &el)
+        .unwrap();
+    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
+
     unsafe {
-        gl_window.make_current().unwrap();
-
-        gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
+        gl::load_with(|symbol| windowed_context.get_proc_address(symbol) as *const _);
         gl::ClearColor(0.0, 1.0, 0.0, 1.0);
     }
 
@@ -72,15 +74,17 @@ pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, GlWindow) {
         gl::CullFace(gl::BACK);
     };
 
-    (events_loop, gl_window)
+    (el, windowed_context)
 }
 
 pub fn start_event_loop() {
     let mut window_size = (800, 600);
-    let (mut events_loop, gl_window) = init_gl_window(window_size);
+    let (mut events_loop, gl_context) = init_gl_window(window_size);
+
+    let window = gl_context.window();
 
     println!("Window size: {},{}", window_size.0, window_size.1);
-    let dpi_factor = gl_window.get_hidpi_factor();
+    let dpi_factor = window.get_hidpi_factor();
     println!("DPI: {}", dpi_factor);
     viewport(
         (window_size.0 as f32 * dpi_factor as f32) as i32,
@@ -94,14 +98,13 @@ pub fn start_event_loop() {
         mut time,
         mut fps_counter,
         mut input,
-        mut gui,
     } = init_defaults(window_size, dpi_factor as f32);
 
     let mut running = true;
 
     let mut fps = "FPS: 0".to_string();
 
-    let mut world = specs::World::new();
+    let mut world = World::new();
     //world.register::<Position>();
 
     'running: while running {
@@ -113,7 +116,7 @@ pub fn start_event_loop() {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::ReceivedCharacter(c) => {
-                        gui.add_input_character(c);
+                        //gui.add_input_character(c);
                     }
                     glutin::WindowEvent::Resized(LogicalSize {
                         width: w,
@@ -125,9 +128,10 @@ pub fn start_event_loop() {
                         let width = window_size.0 as f32 * dpi_factor as f32;
                         let height = window_size.1 as f32 * dpi_factor as f32;
 
-                        gl_window.resize(PhysicalSize::new(width as f64, height as f64));
+
+                        //window.set_inner_size(LogicalSize::new(width as f64, height as f64));
                         viewport(width as i32, height as i32);
-                        gui.set_display_size((width, height));
+                        //gui.set_display_size((width, height));
                         camera.set_aspect(width / height);
                     }
                     glutin::WindowEvent::KeyboardInput { input: i, .. } => {
@@ -171,7 +175,7 @@ pub fn start_event_loop() {
             speed *= 2.0;
         }
         if input.mouse_right {
-            //gl_window.set_cursor_state(glutin::CursorState::Grab);
+            //gl_context.set_cursor_icon(glutin::CursorIcon::Grab);
 
             camera.yaw += input.mouse_delta.x / 125.0;
             camera.pitch -= input.mouse_delta.y / 150.0;
@@ -195,13 +199,13 @@ pub fn start_event_loop() {
                 camera.move_up(dt * -speed);
             }
         } else {
-            //gl_window.set_cursor_state(glutin::CursorState::Normal);
+            //gl_context.set_cursor_icon(glutin::CursorIcon::Normal);
         }
 
         if input.escape {
             running = false;
         }
-        gui.update_input(&input, dt);
+        
         //gui.new_frame();
 
         //gui.begin("Info", true);
@@ -212,8 +216,6 @@ pub fn start_event_loop() {
         //gui.text(&fps);
 
         clear(0.3, 0.0, 0.5, 1.0);
-
-        gui.draw_object_list(game_objects.iter().map(|x| x.name.as_str()));
 
         for mut o in &mut game_objects {
             //GUI
@@ -248,12 +250,7 @@ pub fn start_event_loop() {
             bound_dc.perform();
         }
 
-        gui.render(
-            window_size.0 as f32 * dpi_factor as f32,
-            window_size.1 as f32 * dpi_factor as f32,
-        );
-
-        gl_window.swap_buffers().unwrap();
+        gl_context.swap_buffers().unwrap();
 
         time.wait_until_frame_target();
     }

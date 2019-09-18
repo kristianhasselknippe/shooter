@@ -91,7 +91,7 @@ impl ImGui {
     pub fn update_input(&mut self, input: &Input, dt: f32) {
         unsafe {
             (*self.io).delta_time = dt;
-            (*self.io).mouse_pos = ImVec2::new(input.mouse_pos.x, input.mouse_pos.y);
+            //(*self.io).mouse_pos = InputFloat2::new(input.mouse_pos.x, input.mouse_pos.y);
             (*self.io).mouse_down[0] = input.mouse_left;
             (*self.io).mouse_down[1] = input.mouse_right;
             (*self.io).keys_down[VirtualKeyCode::Back as usize] = input.backspace;
@@ -231,7 +231,7 @@ impl ImGui {
     }
 
     pub fn button(&mut self, text: &str, width: f32, height: f32) -> bool {
-        unsafe { igButton(cstr!(text), ImVec2::new(width, height)) }
+        unsafe { igButton(cstr!(text), InputFloat2::new(width, height)) }
     }
 
     pub fn input_text(&mut self, label: &str, buf: &mut String) -> bool {
