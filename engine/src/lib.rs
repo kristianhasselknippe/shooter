@@ -173,6 +173,7 @@ pub fn start_event_loop() {
         if input.shift {
             speed *= 2.0;
         }
+
         if input.mouse_right {
             //gl_context.set_cursor_icon(glutin::CursorIcon::Grab);
 

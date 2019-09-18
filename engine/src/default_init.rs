@@ -36,7 +36,7 @@ pub fn init_defaults(window_size: (i32, i32), dpi_factor: f32) -> EngineContext 
     //    vec3(40.0, 0.0, 0.0),
     //);
 
-    let mut game_objects = vec![];// vec![bow, bow2];
+    let mut game_objects = vec![]; // vec![bow, bow2];
 
     let mut time = Time::new(60);
 

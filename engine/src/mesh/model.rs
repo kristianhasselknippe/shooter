@@ -110,7 +110,8 @@ impl Model {
                     *c.next().unwrap() as u8,
                     *c.next().unwrap() as u8,
                 )
-            }).collect();
+            })
+            .collect();
 
         Ok(Model {
             name: "Named not handled".to_string(),

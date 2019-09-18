@@ -19,7 +19,7 @@ impl FpsCounter {
             let ret = format!("FPS: {}", self.frame_count);
             self.frame_count = 0;
             self.accum_time -= 1.0;
-            return Some(ret)
+            return Some(ret);
         }
         None
     }

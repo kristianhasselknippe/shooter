@@ -54,7 +54,8 @@ fn split_parts_f32(content: &str) -> Vec<f32> {
                     );
                 }
             }
-        }).collect()
+        })
+        .collect()
 }
 
 impl WavefrontParser {
@@ -158,7 +159,8 @@ impl WavefrontParser {
                         panic!("Faces can't have more than 3 items per value");
                     }
                 }
-            }).collect();
+            })
+            .collect();
         self.current_group().faces.push(Face { items: face_items })
     }
 
