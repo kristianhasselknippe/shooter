@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use gl::types::*;
 
 struct TextureBinding<'a> {

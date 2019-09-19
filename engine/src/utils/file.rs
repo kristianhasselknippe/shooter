@@ -46,7 +46,7 @@ pub fn path_of(asset_name: &str) -> PathBuf {
 }
 
 pub fn abolute_path_from_relative(path: &Path) -> std::io::Result<PathBuf> {
-    let mut path_buf = path.to_path_buf();
+    let path_buf = path.to_path_buf();
     let mut current_dir = current_dir()?;
     current_dir.push(path_buf);
     Ok(current_dir)

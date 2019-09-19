@@ -74,7 +74,7 @@ impl<'a> DrawCall<'a> {
         }
     }
 
-    pub fn bind(&'a mut self) -> BoundDrawCall<'a> {
+    pub fn bind(&'a mut self) {
         self.vao.bind();
         self.vbo.bind();
         self.ebo.bind();
@@ -86,22 +86,8 @@ impl<'a> DrawCall<'a> {
             t.bind_to_texture_unit(i);
             i += 1;
         }
-
-        BoundDrawCall {
-            num_indices: self.num_indices,
-            index_type: self.index_type,
-            dc: self,
-        }
     }
-}
 
-pub struct BoundDrawCall<'a> {
-    num_indices: i32,
-    index_type: GLenum,
-    dc: &'a mut DrawCall<'a>,
-}
-
-impl<'a> BoundDrawCall<'a> {
     pub fn perform(&mut self) {
         enable(Capability::CullFace);
         enable(Capability::DepthTest);
@@ -109,34 +95,34 @@ impl<'a> BoundDrawCall<'a> {
     }
 
     pub fn set_bool(&self, name: &str, val: bool) {
-        self.dc.program.set_bool(name, val);
+        self.program.set_bool(name, val);
     }
 
     pub fn set_int(&self, name: &str, val: i32) {
-        self.dc.program.set_int(name, val);
+        self.program.set_int(name, val);
     }
 
     pub fn set_float(&self, name: &str, val: f32) {
-        self.dc.program.set_float(name, val);
+        self.program.set_float(name, val);
     }
 
     pub fn set_float2(&self, name: &str, val: (f32, f32)) {
-        self.dc.program.set_float2(name, val);
+        self.program.set_float2(name, val);
     }
 
     pub fn set_float3(&self, name: &str, val: (f32, f32, f32)) {
-        self.dc.program.set_float3(name, val);
+        self.program.set_float3(name, val);
     }
 
     pub fn set_float4(&self, name: &str, val: (f32, f32, f32, f32)) {
-        self.dc.program.set_float4(name, val);
+        self.program.set_float4(name, val);
     }
 
     pub fn set_mat3(&self, name: &str, val: &Mat3) {
-        self.dc.program.set_mat3(name, val);
+        self.program.set_mat3(name, val);
     }
 
     pub fn set_mat4(&self, name: &str, val: &Mat4) {
-        self.dc.program.set_mat4(name, val);
+        self.program.set_mat4(name, val);
     }
 }

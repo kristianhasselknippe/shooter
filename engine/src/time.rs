@@ -1,9 +1,9 @@
+#![allow(dead_code)]
 use std::thread::sleep;
 use std::time::Duration;
 use t::precise_time_s;
 
 pub struct Time {
-    target_fps: i32,
     epoc: f64,
 
     last_time: f64,
@@ -12,11 +12,9 @@ pub struct Time {
 const MILLIS_IN_60_FPS: f64 = 16.66;
 
 impl Time {
-    pub fn new(target_fps: i32) -> Time {
+    pub fn new() -> Time {
         let e = precise_time_s();
         Time {
-            target_fps: target_fps,
-
             epoc: e,
             last_time: e,
         }

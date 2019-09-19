@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 extern crate gl;
 extern crate glutin;
 extern crate image as img;
@@ -17,65 +18,28 @@ extern crate time as t;
 extern crate specs;
 extern crate specs_derive;
 
+pub mod camera;
 pub mod drawing;
+pub mod fps_counter;
 pub mod image;
+pub mod input;
 pub mod mesh;
-pub mod scene;
 pub mod shader;
+pub mod time;
 pub mod transform;
 pub mod utils;
-// mod text;
-pub mod camera;
-pub mod default_init;
-pub mod fps_counter;
-//pub mod gui;
-pub mod input;
-pub mod time;
+pub mod window;
 
 use camera::*;
-use default_init::{init_defaults, EngineContext};
 use drawing::*;
-use fps_counter::*;
 use glm::*;
-use glutin::{
-    dpi::LogicalPosition, dpi::LogicalSize, dpi::PhysicalSize, Context, ContextBuilder,
-    ContextCurrentState, EventsLoop, PossiblyCurrent, Window, WindowBuilder, WindowedContext,
-};
-//use gui::imgui::*;
+use glutin::dpi::*;
 use input::*;
-use mesh::model::Model;
 use shader::*;
 use specs::prelude::*;
 use time::*;
 use utils::gl::*;
-
-pub fn init_gl_window(window_size: (i32, i32)) -> (EventsLoop, WindowedContext<PossiblyCurrent>) {
-    let el = EventsLoop::new();
-    let wb = WindowBuilder::new()
-        .with_title("Hello world!")
-        .with_dimensions(glutin::dpi::LogicalSize::new(1024.0, 768.0));
-    let windowed_context = glutin::ContextBuilder::new()
-        .build_windowed(wb, &el)
-        .unwrap();
-    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
-
-    unsafe {
-        gl::load_with(|symbol| windowed_context.get_proc_address(symbol) as *const _);
-        gl::ClearColor(0.0, 1.0, 0.0, 1.0);
-    }
-
-    println!("GL version: {}", get_gl_version());
-
-    unsafe {
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Enable(gl::DEPTH_TEST);
-        // gl::Enable(gl::CULL_FACE);
-        gl::CullFace(gl::BACK);
-    };
-
-    (el, windowed_context)
-}
+use window::init_gl_window;
 
 pub fn start_event_loop() {
     let mut window_size = (800, 600);
@@ -91,21 +55,19 @@ pub fn start_event_loop() {
         (window_size.1 as f32 * dpi_factor as f32) as i32,
     );
 
-    let EngineContext {
-        mut camera,
-        mut program,
-        mut game_objects,
-        mut time,
-        mut fps_counter,
-        mut input,
-    } = init_defaults(window_size, dpi_factor as f32);
-
     let mut running = true;
 
-    let mut fps = "FPS: 0".to_string();
-
-    let mut world = World::new();
+    //let world = World::new();
     //world.register::<Position>();
+
+    let mut time = Time::new();
+    let mut input = Input::new();
+    let mut camera =
+        Camera::new_perspective(16.0 / 9.0, 3.14 / 4.0, 1.0, 1000.0, vec3(0.0, 0.0, 8.0));
+
+    let mut game_objects: Vec<GameObject> = vec![];
+
+    let mut program = ShaderProgram::create_program("default");
 
     'running: while running {
         let dt = time.delta_time() as f32;
@@ -115,9 +77,6 @@ pub fn start_event_loop() {
         events_loop.poll_events(|event| {
             match event {
                 glutin::Event::WindowEvent { event, .. } => match event {
-                    glutin::WindowEvent::ReceivedCharacter(c) => {
-                        //gui.add_input_character(c);
-                    }
                     glutin::WindowEvent::Resized(LogicalSize {
                         width: w,
                         height: h,
@@ -206,23 +165,9 @@ pub fn start_event_loop() {
             running = false;
         }
 
-        //gui.new_frame();
-
-        //gui.begin("Info", true);
-
-        if let Some(_fps) = fps_counter.update(dt as _) {
-            fps = _fps;
-        }
-        //gui.text(&fps);
-
         clear(0.3, 0.0, 0.5, 1.0);
 
-        for mut o in &mut game_objects {
-            //GUI
-
-            //gui.text(&format!("Model {}", o.name));
-            //gui.drag_float3(&format!("Position##{}", o.name), &mut o.position, 0.2, -10000.0, 10000.0);
-
+        for o in &mut game_objects {
             let model_isom = translation(&o.position);
             let model_view = camera.view() * model_isom;
 
@@ -239,15 +184,14 @@ pub fn start_event_loop() {
             );
 
             let mut dc = o.get_draw_call(&mut program);
-            let mut bound_dc = dc.bind();
-            bound_dc.set_mat3("m_inv", &m_inv);
-            bound_dc.set_mat3("mv_inv", &mv_inv);
-            bound_dc.set_mat4("model", &model_isom);
-            bound_dc.set_mat4("view", &camera.view());
-            bound_dc.set_mat4("projection", &camera.projection);
-            bound_dc.set_int("diffuseMap", 0);
+            dc.set_mat3("m_inv", &m_inv);
+            dc.set_mat3("mv_inv", &mv_inv);
+            dc.set_mat4("model", &model_isom);
+            dc.set_mat4("view", &camera.view());
+            dc.set_mat4("projection", &camera.projection);
+            dc.set_int("diffuseMap", 0);
 
-            bound_dc.perform();
+            dc.perform();
         }
 
         gl_context.swap_buffers().unwrap();

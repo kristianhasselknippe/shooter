@@ -1,9 +1,10 @@
+#![allow(dead_code)]
 use glm::*;
 
 pub struct Transform {
-    position: DVec2,
-    rotation: DVec2,
-    scale: DVec2,
+    position: Vec2,
+    rotation: Vec2,
+    scale: Vec2,
 }
 
 impl Transform {
