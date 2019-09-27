@@ -319,6 +319,7 @@ dependencies = [
  "nalgebra-glm 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ncollide3d 0.20.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "ordered-float 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusttype 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",

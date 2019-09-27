@@ -1,21 +1,22 @@
 use glm::*;
+use num_traits::*;
 
 #[derive(Debug)]
-pub struct Camera {
-    pub pos: Vec3,
-    pub pitch: f32,
-    pub yaw: f32,
+pub struct Camera<T: Scalar + FromPrimitive> {
+    pub pos: TVec3<T>,
+    pub pitch: T,
+    pub yaw: T,
 
-    pub aspect: f32,
-    pub fov: f32,
-    pub near: f32,
-    pub far: f32,
+    pub aspect: T,
+    pub fov: T,
+    pub near: T,
+    pub far: T,
 
-    pub projection: Mat4,
+    pub projection: TMat4<T>,
 }
 
-impl Camera {
-    pub fn new_perspective(aspect: f32, fov: f32, near: f32, far: f32, pos: Vec3) -> Camera {
+impl<T: RealField + FromPrimitive> Camera<T> {
+    pub fn new_perspective(aspect: T, fov: T, near: T, far: T, pos: TVec3<T>) -> Camera<T> {
         Camera {
             projection: perspective(aspect, fov, near, far),
 
@@ -25,66 +26,70 @@ impl Camera {
             far: far,
 
             pos: pos,
-            pitch: 0.0,
-            yaw: 0.0,
+            pitch: T::from_f64(0.0).unwrap(),
+            yaw: T::from_f64(0.0).unwrap(),
         }
     }
 
-    pub fn set_aspect(&mut self, aspect: f32) {
+    pub fn set_aspect(&mut self, aspect: T) {
         self.aspect = aspect;
         self.projection = perspective(self.aspect, self.fov, self.near, self.far);
     }
 
-    pub fn rotation(&self) -> Quat {
-        let ret = quat_angle_axis(self.pitch, &vec3(1.0, 0.0, 0.0))
-            * quat_angle_axis(self.yaw, &vec3(0.0, 1.0, 0.0));
+    pub fn rotation(&self) -> Qua<T> {
+        let ret = quat_angle_axis(
+            self.pitch,
+            &vec3(
+                T::from_f64(1.0).unwrap(),
+                T::from_f64(0.0).unwrap(),
+                T::from_f64(0.0).unwrap(),
+            ),
+        ) * quat_angle_axis(
+            self.yaw,
+            &vec3(
+                T::from_f64(0.0).unwrap(),
+                T::from_f64(1.0).unwrap(),
+                T::from_f64(0.0).unwrap(),
+            ),
+        );
         quat_normalize(&ret)
     }
 
-    pub fn move_dir(&mut self, dir: Vec3) {
+    pub fn move_dir(&mut self, dir: TVec3<T>) {
         let scaled_vec = dir;
         let rotated = quat_rotate_vec3(&self.rotation(), &scaled_vec);
         self.pos += rotated;
     }
 
-    pub fn move_forward(&mut self, d: f32) {
-        self.move_dir(vec3(0.0, 0.0, d));
+    pub fn move_forward(&mut self, d: T) {
+        self.move_dir(vec3(
+            T::from_f64(0.0).unwrap(),
+            T::from_f64(0.0).unwrap(),
+            d,
+        ));
     }
 
-    pub fn move_right(&mut self, d: f32) {
-        self.move_dir(vec3(d, 0.0, 0.0));
+    pub fn move_right(&mut self, d: T) {
+        self.move_dir(vec3(
+            d,
+            T::from_f64(0.0).unwrap(),
+            T::from_f64(0.0).unwrap(),
+        ));
     }
 
-    pub fn move_up(&mut self, d: f32) {
-        self.move_dir(vec3(0.0, d, 0.0));
+    pub fn move_up(&mut self, d: T) {
+        self.move_dir(vec3(
+            T::from_f64(0.0).unwrap(),
+            d,
+            T::from_f64(0.0).unwrap(),
+        ));
     }
 
-    pub fn view(&self) -> Mat4 {
+    pub fn view(&self) -> TMat4<T> {
         quat_cast(&self.rotation())
     }
 
-    pub fn camera_matrix(&self) -> Mat4 {
+    pub fn camera_matrix(&self) -> TMat4<T> {
         self.projection * self.view()
-    }
-}
-
-pub struct OrthoCamera {
-    pub projection: Mat4,
-}
-
-/*
-Matrix4::new(
-                2.0/w,    0.0,  0.0, 0.0,
-                0.0,   2.0/-h,  0.0, 0.0,
-                0.0,      0.0, -1.0, 0.0,
-                -1.0,      1.0,  0.0, 1.0,
-            )
-*/
-impl OrthoCamera {
-    pub fn new(w: f32, h: f32) -> OrthoCamera {
-        let o = ortho(0.0, w, 0.0, h, -10.0, 1000.0);
-        let s = scaling(&vec3(1.0, -1.0, 1.0));
-
-        OrthoCamera { projection: s * o }
     }
 }
