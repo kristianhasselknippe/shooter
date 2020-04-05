@@ -5,6 +5,7 @@ authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
 vulkano = "*"
+vulkano-shaders = "*"
 num-traits = "*"
 glutin = "*"
 nalgebra-glm = "*"
