@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
+image = "*"
 vulkano = "*"
 vulkano-shaders = "*"
 num-traits = "*"
@@ -11,7 +12,6 @@ glutin = "*"
 nalgebra-glm = "*"
 ncollide3d = "*"
 itertools = "*"
-image = "*"
 alga = "*"
 rusttype = "*"
 time = "*"
