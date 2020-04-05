@@ -2,7 +2,6 @@
 
 extern crate alga;
 extern crate engine;
-extern crate gl;
 extern crate glutin;
 extern crate nalgebra_glm as glm;
 extern crate specs;
@@ -18,7 +17,7 @@ fn main() {
     let mut game_objects: Vec<GameObject> = vec![];
 
     // TODO: This must be run after GL is initialized
-    let mut program = ShaderProgram::create_program("default");
+    //let mut program = ShaderProgram::create_program("default");
 
     start_event_loop(&mut |dt, input: &Input, camera: &mut Camera<f64>| {
         let mut speed = 10.0;

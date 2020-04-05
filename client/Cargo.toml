@@ -5,7 +5,6 @@ authors = ["Haskellknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
 engine = { path = "../engine" }
-gl = "*"
 nalgebra-glm = "*"
 alga = "*"
 glutin = "*"

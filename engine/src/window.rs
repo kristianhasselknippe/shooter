@@ -5,6 +5,7 @@ use vulkano::instance::{
 };
 
 pub fn init_vulkano_window(_window_size: (i32, i32)) -> (EventsLoop, WindowedContext<PossiblyCurrent>) {
-    let _instance = Instance::new(None, &InstanceExtensions::none(), None).expect("Failed to create vulkan instance");
-    unimplemented!();
+    let instance = Instance::new(None, &InstanceExtensions::none(), None).expect("Failed to create vulkan instance");
+    println!("{:?}", instance);
+    panic!();
 }
