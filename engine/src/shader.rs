@@ -57,27 +57,19 @@ impl ShaderProgram {
         panic!();
     }
 
-    pub fn set_bool(&self, _name: &str, _val: bool) {
-    }
+    pub fn set_bool(&self, _name: &str, _val: bool) {}
 
-    pub fn set_int(&self, _name: &str, _val: i32) {
-    }
+    pub fn set_int(&self, _name: &str, _val: i32) {}
 
-    pub fn set_float(&self, _name: &str, _val: f32) {
-    }
+    pub fn set_float(&self, _name: &str, _val: f32) {}
 
-    pub fn set_float2(&self, _name: &str, _val: (f32, f32)) {
-    }
+    pub fn set_float2(&self, _name: &str, _val: (f32, f32)) {}
 
-    pub fn set_float3(&self, _name: &str, _val: (f32, f32, f32)) {
-    }
+    pub fn set_float3(&self, _name: &str, _val: (f32, f32, f32)) {}
 
-    pub fn set_float4(&self, _name: &str, _val: (f32, f32, f32, f32)) {
-    }
+    pub fn set_float4(&self, _name: &str, _val: (f32, f32, f32, f32)) {}
 
-    pub fn set_mat3(&self, _name: &str, _val: &Mat3) {
-    }
+    pub fn set_mat3(&self, _name: &str, _val: &Mat3) {}
 
-    pub fn set_mat4(&self, _name: &str, _val: &Mat4) {
-    }
+    pub fn set_mat4(&self, _name: &str, _val: &Mat4) {}
 }
