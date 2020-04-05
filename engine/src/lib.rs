@@ -40,11 +40,11 @@ use specs::prelude::*;
 use time::*;
 use window::init_vulkano_window;
 
-fn viewport(wl: i32, h: i32) {
+fn viewport(_wl: i32, _h: i32) {
     unimplemented!();
 }
 
-fn clear(a: f32, b: f32, c: f32, d: f32) {
+fn clear(_a: f32, _b: f32, _c: f32, _d: f32) {
     unimplemented!();
 }
 

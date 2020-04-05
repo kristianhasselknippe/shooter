@@ -13,11 +13,11 @@ pub struct Shader<THandle = u32> {
 const SHADERS_PATH: &'static str = "../engine/src/shaders";
 
 impl Shader {
-    pub fn create_vertex_shader(vs: &str) -> Shader {
+    pub fn create_vertex_shader(_vs: &str) -> Shader {
         panic!();
     }
 
-    pub fn create_fragment_shader(fs: &str) -> Shader {
+    pub fn create_fragment_shader(_fs: &str) -> Shader {
         panic!();
     }
 
@@ -41,43 +41,43 @@ impl ShaderProgram {
         panic!();
     }
 
-    pub fn new(vs: &Shader, fs: &Shader) -> ShaderProgram {
+    pub fn new(_vs: &Shader, _fs: &Shader) -> ShaderProgram {
         panic!();
     }
 
-    pub fn from_fragments(vs: &str, fs: &str) -> ShaderProgram {
+    pub fn from_fragments(_vs: &str, _fs: &str) -> ShaderProgram {
         panic!();
     }
 
-    pub fn create_program(name: &str) -> ShaderProgram {
+    pub fn create_program(_name: &str) -> ShaderProgram {
         panic!();
     }
 
-    pub fn create_program_from_vert_frag(vert: &str, frag: &str) -> ShaderProgram {
+    pub fn create_program_from_vert_frag(_vert: &str, _frag: &str) -> ShaderProgram {
         panic!();
     }
 
-    pub fn set_bool(&self, name: &str, val: bool) {
+    pub fn set_bool(&self, _name: &str, _val: bool) {
     }
 
-    pub fn set_int(&self, name: &str, val: i32) {
+    pub fn set_int(&self, _name: &str, _val: i32) {
     }
 
-    pub fn set_float(&self, name: &str, val: f32) {
+    pub fn set_float(&self, _name: &str, _val: f32) {
     }
 
-    pub fn set_float2(&self, name: &str, val: (f32, f32)) {
+    pub fn set_float2(&self, _name: &str, _val: (f32, f32)) {
     }
 
-    pub fn set_float3(&self, name: &str, val: (f32, f32, f32)) {
+    pub fn set_float3(&self, _name: &str, _val: (f32, f32, f32)) {
     }
 
-    pub fn set_float4(&self, name: &str, val: (f32, f32, f32, f32)) {
+    pub fn set_float4(&self, _name: &str, _val: (f32, f32, f32, f32)) {
     }
 
-    pub fn set_mat3(&self, name: &str, val: &Mat3) {
+    pub fn set_mat3(&self, _name: &str, _val: &Mat3) {
     }
 
-    pub fn set_mat4(&self, name: &str, val: &Mat4) {
+    pub fn set_mat4(&self, _name: &str, _val: &Mat4) {
     }
 }
