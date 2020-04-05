@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
+vulkano = "*"
 num-traits = "*"
-gl = "*"
 glutin = "*"
 nalgebra-glm = "*"
 ncollide3d = "*"

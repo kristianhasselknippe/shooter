@@ -2,7 +2,6 @@
 
 use super::model::{MemModel, VertexData};
 use super::{Normal, TexCoord, Vertex3};
-use gl::types::*;
 use glm::*;
 use std::path::Path;
 use utils::file::*;
@@ -259,7 +258,7 @@ pub fn parse_wavefront(name: &str) -> MemModel {
     }
 
     let mut vertex_data = Vec::new();
-    let mut indices: Vec<GLuint> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
 
     let mut index_offset = 0;
 
@@ -286,9 +285,9 @@ pub fn parse_wavefront(name: &str) -> MemModel {
                 }
             }
             for i in 0..f.items.len() - 2 {
-                indices.push((index_offset) as GLuint);
-                indices.push((index_offset + i + 1) as GLuint);
-                indices.push((index_offset + i + 2) as GLuint);
+                indices.push((index_offset) as u32);
+                indices.push((index_offset + i + 1) as u32);
+                indices.push((index_offset + i + 2) as u32);
             }
             index_offset += f.items.len();
         }
@@ -323,9 +322,6 @@ pub fn parse_wavefront(name: &str) -> MemModel {
 
     MemModel {
         name: "No name yet".to_string(),
-        vertex_data: vertex_data,
-        indices: indices,
-        materials: mtl,
     }
 }
 

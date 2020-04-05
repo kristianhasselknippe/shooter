@@ -1,5 +1,4 @@
 #![allow(unused_imports)]
-extern crate gl;
 extern crate glutin;
 extern crate image as img;
 #[macro_use]
@@ -38,12 +37,19 @@ use input::*;
 use shader::*;
 use specs::prelude::*;
 use time::*;
-use utils::gl::*;
-use window::init_gl_window;
+use window::init_vulkano_window;
+
+fn viewport(wl: i32, h: i32) {
+    unimplemented!();
+}
+
+fn clear(a: f32, b: f32, c: f32, d: f32) {
+    unimplemented!();
+}
 
 pub fn start_event_loop<F: Fn(f64, &Input, &mut Camera<f64>)>(perform_frame: &mut F) {
     let mut window_size = (800, 600);
-    let (mut events_loop, gl_context) = init_gl_window(window_size);
+    let (mut events_loop, gl_context) = init_vulkano_window(window_size);
 
     let window = gl_context.window();
 
