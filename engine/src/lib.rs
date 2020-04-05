@@ -16,6 +16,7 @@ extern crate rusttype;
 extern crate specs;
 extern crate specs_derive;
 extern crate time as t;
+extern crate vulkano;
 
 pub mod camera;
 pub mod drawing;
@@ -63,7 +64,7 @@ pub fn start_event_loop<F: Fn(f64, &Input, &mut Camera<f64>)>(perform_frame: &mu
     let mut input = Input::new();
     let mut camera = Camera::new_perspective(
         16.0 / 9.0,
-        3.14 / 4.0,
+        std::f64::consts::PI / 4.0,
         1.0,
         1000.0,
         vec3::<f64>(0.0, 0.0, 8.0),
