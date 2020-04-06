@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Kristian Fjeld Hasselknippe <kristian_hasselknippe@outlook.com>"]
 
 [dependencies]
+winit = "*"
+vulkano-win = "*"
 image = "*"
 vulkano = "*"
 vulkano-shaders = "*"

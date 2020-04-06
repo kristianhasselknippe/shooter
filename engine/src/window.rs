@@ -1,4 +1,3 @@
-use glutin::{EventsLoop, PossiblyCurrent, WindowBuilder, WindowedContext};
 use img::ImageBuffer;
 use img::Rgba;
 use std::sync::Arc;
@@ -19,7 +18,28 @@ use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice};
 use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::ComputePipeline;
 use vulkano::pipeline::GraphicsPipeline;
-use vulkano::sync::GpuFuture;
+use vulkano::{swapchain::Surface, sync::GpuFuture};
+use vulkano_win::VkSurfaceBuild;
+use winit::{
+	event_loop::EventLoop,
+	window::{
+	    WindowBuilder, 
+		Window
+	}
+};
+
+pub fn init_vulkano_window(window_size: (i32, i32)) -> (EventLoop<()>, Arc<Surface<Window>>) {
+	let instance = {
+		let extensions = vulkano_win::required_extensions();
+		Instance::new(None, &extensions, None).expect("failed to create Vulkan instance")
+	};
+    let instance = Instance::new(None, &InstanceExtensions::none(), None)
+        .expect("Failed to create vulkan instance");
+
+	let mut events_loop = EventLoop::new();
+	let surface = WindowBuilder::new().build_vk_surface(&events_loop, instance.clone()).unwrap();
+	(events_loop, surface)
+}
 
 mod cs {
     vulkano_shaders::shader! {
@@ -294,9 +314,7 @@ void main() {
     image.save("image.png").unwrap();
 }
 
-pub fn init_vulkano_window(
-    _window_size: (i32, i32),
-) -> (EventsLoop, WindowedContext<PossiblyCurrent>) {
+pub fn vulkano_tests() {
     let instance = Instance::new(None, &InstanceExtensions::none(), None)
         .expect("Failed to create vulkan instance");
     println!("Instance {:?}", instance);
@@ -427,6 +445,4 @@ pub fn init_vulkano_window(
 
     //make_fractal(device.clone(), queue.clone());
     graphics_pipeline(device.clone(), queue.clone());
-
-    panic!();
 }
