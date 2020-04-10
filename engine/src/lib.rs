@@ -52,8 +52,8 @@ fn clear(_a: f32, _b: f32, _c: f32, _d: f32) {
 }
 
 pub fn start_event_loop() {
-    let mut window_size = (800, 600);
-    let (mut events_loop, gl_context) = init_vulkano_window(window_size);
+    let window_size = (800, 600);
+    let (events_loop, gl_context) = init_vulkano_window(window_size);
 
 	events_loop.run(|event, _event_loop_window_target, control_flow| {
 		match event {

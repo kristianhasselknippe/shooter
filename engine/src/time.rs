@@ -5,7 +5,6 @@ use std::time::{UNIX_EPOCH, SystemTime};
 
 pub struct Time {
     epoc: f64,
-
     last_time: f64,
 }
 
@@ -14,6 +13,7 @@ const MILLIS_IN_60_FPS: f64 = 16.66;
 impl Time {
     pub fn new() -> Time {
         let e = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+
         Time {
             epoc: e,
             last_time: e,
