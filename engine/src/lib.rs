@@ -40,17 +40,29 @@ use window::init_vulkano_window;
 
 use std::sync::Arc;
 use vulkano::{
+    buffer::{BufferUsage, CpuAccessibleBuffer},
+    command_buffer::{AutoCommandBufferBuilder, DynamicState},
     device::{Device, DeviceExtensions, Features},
     format::FormatDesc,
+    framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass},
+    image::SwapchainImage,
     instance::PhysicalDevice,
+    pipeline::{viewport::Viewport, GraphicsPipeline},
+	swapchain,
     swapchain::{
         acquire_next_image, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform,
-        Swapchain,
+        Swapchain, SwapchainCreationError,
     },
-    sync::SharingMode, buffer::{BufferUsage, CpuAccessibleBuffer}, pipeline::GraphicsPipeline,
+    sync::{self, FlushError, SharingMode},
 };
 use vulkano_win::VkSurfaceBuild;
-use winit::{event::WindowEvent, event_loop::ControlFlow, window::WindowBuilder};
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::ControlFlow,
+    window::{Window, WindowBuilder},
+};
+use sync::GpuFuture;
+use swapchain::AcquireError;
 
 fn viewport(_wl: i32, _h: i32) {
     unimplemented!();
@@ -62,9 +74,9 @@ fn clear(_a: f32, _b: f32, _c: f32, _d: f32) {
 
 pub fn start_event_loop() {
     let window_size = (800, 600);
-    let (events_loop, instance) = init_vulkano_window(window_size);
+    let (event_loop, instance) = init_vulkano_window(window_size);
     let surface = WindowBuilder::new()
-        .build_vk_surface(&events_loop, instance.clone())
+        .build_vk_surface(&event_loop, instance.clone())
         .unwrap();
 
     let device = PhysicalDevice::enumerate(&instance)
@@ -95,11 +107,13 @@ pub fn start_event_loop() {
         .expect("Failed to create device")
     };
 
+    let queue = queues.next().unwrap();
+
     let dimensions = caps.current_extent.unwrap_or([1280, 1024]);
     let alpha = caps.supported_composite_alpha.iter().next().unwrap();
     let format = caps.supported_formats[0].0;
 
-    let (swapchain, images) = Swapchain::new(
+    let (mut swapchain, images) = Swapchain::new(
         device.clone(),
         surface.clone(),
         caps.min_image_count,
@@ -445,22 +459,27 @@ pub fn start_event_loop() {
 fn window_size_dependent_setup(
     images: &[Arc<SwapchainImage<Window>>],
     render_pass: Arc<dyn RenderPassAbstract + Send + Sync>,
-    dynamic_state: &mut DynamicState
+    dynamic_state: &mut DynamicState,
 ) -> Vec<Arc<dyn FramebufferAbstract + Send + Sync>> {
     let dimensions = images[0].dimensions();
 
     let viewport = Viewport {
         origin: [0.0, 0.0],
         dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-        depth_range: 0.0 .. 1.0,
+        depth_range: 0.0..1.0,
     };
-    dynamic_state.viewports = Some(vec!(viewport));
+    dynamic_state.viewports = Some(vec![viewport]);
 
-    images.iter().map(|image| {
-        Arc::new(
-            Framebuffer::start(render_pass.clone())
-                .add(image.clone()).unwrap()
-                .build().unwrap()
-        ) as Arc<dyn FramebufferAbstract + Send + Sync>
-    }).collect::<Vec<_>>()
+    images
+        .iter()
+        .map(|image| {
+            Arc::new(
+                Framebuffer::start(render_pass.clone())
+                    .add(image.clone())
+                    .unwrap()
+                    .build()
+                    .unwrap(),
+            ) as Arc<dyn FramebufferAbstract + Send + Sync>
+        })
+        .collect::<Vec<_>>()
 }
