@@ -28,7 +28,7 @@ use winit::{
 	}
 };
 
-pub fn init_vulkano_window(window_size: (i32, i32)) -> (EventLoop<()>, Arc<Surface<Window>>) {
+pub fn init_vulkano_window(window_size: (i32, i32)) -> (EventLoop<()>, Arc<Instance>) {
 	let instance = {
 		let extensions = vulkano_win::required_extensions();
 		Instance::new(None, &extensions, None).expect("failed to create Vulkan instance")
@@ -36,7 +36,7 @@ pub fn init_vulkano_window(window_size: (i32, i32)) -> (EventLoop<()>, Arc<Surfa
 
 	let mut events_loop = EventLoop::new();
 	let surface = WindowBuilder::new().build_vk_surface(&events_loop, instance.clone()).unwrap();
-	(events_loop, surface)
+	(events_loop, instance)
 }
 
 mod cs {

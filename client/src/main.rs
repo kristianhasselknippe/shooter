@@ -2,7 +2,6 @@
 
 extern crate alga;
 extern crate engine;
-extern crate glutin;
 extern crate nalgebra_glm as glm;
 extern crate specs;
 extern crate specs_derive;

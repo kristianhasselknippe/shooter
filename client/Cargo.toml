@@ -7,6 +7,6 @@ authors = ["Haskellknippe <kristian_hasselknippe@outlook.com>"]
 engine = { path = "../engine" }
 nalgebra-glm = "*"
 alga = "*"
-glutin = "*"
+winit = "*"
 specs = "*"
 specs-derive = "*"

@@ -156,10 +156,10 @@ version = "0.1.0"
 dependencies = [
  "alga",
  "engine",
- "glutin",
  "nalgebra-glm",
  "specs",
  "specs-derive",
+ "winit",
 ]
 
 [[package]]
