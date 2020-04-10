@@ -64,14 +64,6 @@ use winit::{
 use sync::GpuFuture;
 use swapchain::AcquireError;
 
-fn viewport(_wl: i32, _h: i32) {
-    unimplemented!();
-}
-
-fn clear(_a: f32, _b: f32, _c: f32, _d: f32) {
-    unimplemented!();
-}
-
 pub fn start_event_loop() {
     let window_size = (800, 600);
     let (event_loop, instance) = init_vulkano_window(window_size);
