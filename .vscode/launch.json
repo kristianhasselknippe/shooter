@@ -9,11 +9,7 @@
       "type": "lldb",
       "request": "launch",
       "name": "Launch client",
-	  "cargo": {
-		  "args": [
-			  "run"
-		  ]
-	  },
+	  "program": "${workspaceFolder}/target/debug/client",
       "cwd": "${workspaceFolder}",
       "env": {
         "RUST_BACKTRACE": "1"
