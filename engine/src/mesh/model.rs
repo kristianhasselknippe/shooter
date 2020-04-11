@@ -1,6 +1,9 @@
 #![allow(dead_code, unused_variables)]
 
-use genmesh::{Vertex, Triangulate, generators::{IndexedPolygon, SphereUv}};
+use genmesh::{
+    generators::{IndexedPolygon, SphereUv},
+    Triangulate, Vertex,
+};
 use glm::*;
 use itertools::Itertools;
 use utils::file::path_of;
@@ -23,10 +26,6 @@ pub struct Model {
 }
 
 impl Model {
-	pub fn plane() {
-		
-	}
-	pub fn create_box() {
-		
-	}
+    pub fn plane() {}
+    pub fn create_box() {}
 }

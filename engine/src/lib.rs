@@ -38,7 +38,6 @@ use mesh::{mesh::Mesh, model};
 use shader::*;
 use specs::prelude::*;
 
-
 use std::sync::Arc;
 use swapchain::AcquireError;
 use sync::GpuFuture;
@@ -58,15 +57,12 @@ use vulkano::{
     },
     sync::{self, FlushError, SharingMode},
 };
-use window::init_vulkano_window;
 use vulkano_win::VkSurfaceBuild;
+use window::init_vulkano_window;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::ControlFlow,
-    window::{
-        WindowBuilder,
-        Window,
-    }
+    window::{Window, WindowBuilder},
 };
 
 pub fn start_event_loop() {
@@ -128,6 +124,8 @@ pub fn start_event_loop() {
     )
     .expect("failed to create swapchain");
 
+    let mesh = Mesh::create_square();
+
     // We now create a buffer that will store the shape of our triangle.
     let vertex_buffer = {
         #[derive(Default, Debug, Clone)]
@@ -140,19 +138,9 @@ pub fn start_event_loop() {
             device.clone(),
             BufferUsage::all(),
             false,
-            [
-                Vertex {
-                    position: [-0.5, -0.25],
-                },
-                Vertex {
-                    position: [0.0, 0.5],
-                },
-                Vertex {
-                    position: [0.25, -0.1],
-                },
-            ]
-            .iter()
-            .cloned(),
+            mesh.vertices.iter().map(|v| Vertex {
+                position: [v.x, v.y]
+            })
         )
         .unwrap()
     };

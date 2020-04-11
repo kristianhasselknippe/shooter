@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::thread::sleep;
 use std::time::Duration;
-use std::time::{UNIX_EPOCH, SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Time {
     epoc: f64,
@@ -12,7 +12,10 @@ const MILLIS_IN_60_FPS: f64 = 16.66;
 
 impl Time {
     pub fn new() -> Time {
-        let e = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        let e = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
 
         Time {
             epoc: e,
@@ -28,7 +31,7 @@ impl Time {
     }
 
     pub fn wait_until_frame_target(&self) {
-        let t =  Time::new().epoc;
+        let t = Time::new().epoc;
         let dt = t - self.last_time;
 
         let diff = MILLIS_IN_60_FPS - dt;

@@ -21,22 +21,21 @@ use vulkano::pipeline::GraphicsPipeline;
 use vulkano::{swapchain::Surface, sync::GpuFuture};
 use vulkano_win::VkSurfaceBuild;
 use winit::{
-	event_loop::EventLoop,
-	window::{
-	    WindowBuilder, 
-		Window
-	}
+    event_loop::EventLoop,
+    window::{Window, WindowBuilder},
 };
 
 pub fn init_vulkano_window(window_size: (i32, i32)) -> (EventLoop<()>, Arc<Instance>) {
-	let instance = {
-		let extensions = vulkano_win::required_extensions();
-		Instance::new(None, &extensions, None).expect("failed to create Vulkan instance")
-	};
+    let instance = {
+        let extensions = vulkano_win::required_extensions();
+        Instance::new(None, &extensions, None).expect("failed to create Vulkan instance")
+    };
 
-	let mut events_loop = EventLoop::new();
-	let surface = WindowBuilder::new().build_vk_surface(&events_loop, instance.clone()).unwrap();
-	(events_loop, instance)
+    let mut events_loop = EventLoop::new();
+    let surface = WindowBuilder::new()
+        .build_vk_surface(&events_loop, instance.clone())
+        .unwrap();
+    (events_loop, instance)
 }
 
 mod cs {
@@ -204,12 +203,12 @@ void main() {
             )
             .unwrap()
             .end_render_pass()
-        .unwrap()
-    // Render to image
-        .copy_image_to_buffer(image.clone(), buf.clone())
-        .unwrap()
-        .build()
-        .unwrap();
+            .unwrap()
+            // Render to image
+            .copy_image_to_buffer(image.clone(), buf.clone())
+            .unwrap()
+            .build()
+            .unwrap();
 
     let finished = command_buffer.execute(queue.clone()).unwrap();
     finished
