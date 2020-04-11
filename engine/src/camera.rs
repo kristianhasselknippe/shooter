@@ -1,9 +1,9 @@
-use glm::*;
-use num_traits::*;
+/*use num::Num;
+use glm::Vec3;
 
 #[derive(Debug)]
-pub struct Camera<T: Scalar + FromPrimitive> {
-    pub pos: TVec3<T>,
+pub struct Camera<T: Num> {
+    pub pos: Vec3<T>,
     pub pitch: T,
     pub yaw: T,
 
@@ -12,10 +12,10 @@ pub struct Camera<T: Scalar + FromPrimitive> {
     pub near: T,
     pub far: T,
 
-    pub projection: TMat4<T>,
+    pub projection: Mat4<T>,
 }
 
-impl<T: RealField + FromPrimitive> Camera<T> {
+impl<T: Num> Camera<T> {
     pub fn new_perspective(aspect: T, fov: T, near: T, far: T, pos: TVec3<T>) -> Camera<T> {
         Camera {
             projection: perspective(aspect, fov, near, far),
@@ -93,3 +93,4 @@ impl<T: RealField + FromPrimitive> Camera<T> {
         self.projection * self.view()
     }
 }
+*/

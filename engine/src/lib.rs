@@ -5,11 +5,12 @@ extern crate lazy_static;
 extern crate libc;
 #[macro_use]
 extern crate maplit;
+extern crate genmesh;
 extern crate imgui_sys as imgui;
 extern crate itertools;
 extern crate nalgebra_glm as glm;
 extern crate ncollide3d as nc;
-extern crate num_traits;
+extern crate num;
 extern crate ordered_float as of;
 extern crate rusttype;
 extern crate specs;
@@ -33,10 +34,10 @@ pub mod window;
 use camera::*;
 use drawing::*;
 use glm::*;
+use mesh::{mesh::Mesh, model};
 use shader::*;
 use specs::prelude::*;
-use time::*;
-use window::init_vulkano_window;
+
 
 use std::sync::Arc;
 use swapchain::AcquireError;
@@ -57,12 +58,14 @@ use vulkano::{
     },
     sync::{self, FlushError, SharingMode},
 };
+use window::init_vulkano_window;
 use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::ControlFlow,
-    window::{Window, WindowBuilder},
-};
+   
+use window::init_vulkano_window;
+
 
 pub fn start_event_loop() {
     let window_size = (800, 600);
