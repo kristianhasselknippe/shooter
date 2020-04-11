@@ -39,6 +39,8 @@ use time::*;
 use window::init_vulkano_window;
 
 use std::sync::Arc;
+use swapchain::AcquireError;
+use sync::GpuFuture;
 use vulkano::{
     buffer::{BufferUsage, CpuAccessibleBuffer},
     command_buffer::{AutoCommandBufferBuilder, DynamicState},
@@ -48,7 +50,7 @@ use vulkano::{
     image::SwapchainImage,
     instance::PhysicalDevice,
     pipeline::{viewport::Viewport, GraphicsPipeline},
-	swapchain,
+    swapchain,
     swapchain::{
         acquire_next_image, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform,
         Swapchain, SwapchainCreationError,
@@ -61,8 +63,6 @@ use winit::{
     event_loop::ControlFlow,
     window::{Window, WindowBuilder},
 };
-use sync::GpuFuture;
-use swapchain::AcquireError;
 
 pub fn start_event_loop() {
     let window_size = (800, 600);
@@ -85,7 +85,7 @@ pub fn start_event_loop() {
         .expect("coulnd't find a graphical queue family");
 
     let (device, mut queues) = {
-        let deviceExtensions = DeviceExtensions {
+        let device_extensions = DeviceExtensions {
             khr_swapchain: true,
             khr_storage_buffer_storage_class: true,
             ..DeviceExtensions::none()
@@ -93,7 +93,7 @@ pub fn start_event_loop() {
         Device::new(
             device,
             &Features::none(),
-            &deviceExtensions,
+            &device_extensions,
             [(queue_family, 0.5)].iter().cloned(),
         )
         .expect("Failed to create device")
@@ -122,9 +122,6 @@ pub fn start_event_loop() {
         ColorSpace::SrgbNonLinear,
     )
     .expect("failed to create swapchain");
-
-    let (image_num, is_suboptimal, acquire_future) = acquire_next_image(swapchain.clone(), None)
-        .expect("failed to acquire image from swapchain");
 
     // We now create a buffer that will store the shape of our triangle.
     let vertex_buffer = {
@@ -353,10 +350,14 @@ pub fn start_event_loop() {
                     match swapchain::acquire_next_image(swapchain.clone(), None) {
                         Ok(r) => r,
                         Err(AcquireError::OutOfDate) => {
+                            println!("AcquireError: out of date");
                             recreate_swapchain = true;
                             return;
                         }
-                        Err(e) => panic!("Failed to acquire next image: {:?}", e),
+                        Err(e) => {
+                            println!("Swapchain acquireerror: {:?}", e);
+                            panic!("Failed to acquire next image: {:?}", e)
+                        }
                     };
 
                 // acquire_next_image can be successful, but suboptimal. This means that the swapchain image
