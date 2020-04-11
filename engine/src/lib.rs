@@ -63,9 +63,11 @@ use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::ControlFlow,
-   
-use window::init_vulkano_window;
-
+    window::{
+        WindowBuilder,
+        Window,
+    }
+};
 
 pub fn start_event_loop() {
     let window_size = (800, 600);
