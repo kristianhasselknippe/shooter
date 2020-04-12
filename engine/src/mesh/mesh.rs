@@ -2,6 +2,7 @@ use glm::{vec3, Vec3, rotate_vec3};
 use num::Num;
 use std::f32::consts::PI;
 
+#[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
@@ -9,6 +10,16 @@ pub struct Mesh {
 }
 
 impl Mesh {
+    fn scaled(&self, x: f32, y: f32, z: f32) -> Mesh {
+        Mesh {
+            vertices: self.vertices.iter().map(|v| {
+                vec3(v.x * x, v.y * y, v.z * z)
+            }).collect(),
+            normals: self.normals.iter().cloned().collect(),
+            indices: self.indices.iter().cloned().collect(),
+
+        }
+    }
 
     fn rotated_around_z(&self, angle: f32) -> Mesh {
         Mesh {
@@ -17,6 +28,30 @@ impl Mesh {
             }).collect(),
             normals: self.normals.iter().cloned().collect(),
             indices: self.indices.iter().cloned().collect(),
+        }
+    }
+
+    pub fn translated(&self, x: f32, y: f32, z: f32) -> Mesh {
+        Mesh
+{
+            vertices: self.vertices.iter().map(|v| {
+                vec3(v.x + x, v.y + y, v.z + z)
+            }).collect(),
+            normals: self.normals.iter().cloned().collect(),
+            indices: self.indices.iter().cloned().collect(),
+        }
+    }
+
+    pub fn combine(&self, other: &Mesh) -> Mesh {
+        let m1 = self.clone();
+        let m2 = other.clone();
+
+        let m1_indices_len = m1.indices.len() as u32;
+
+        return Mesh {
+            vertices: [m1.vertices, m2.vertices].concat(),
+            normals: [m1.normals, m2.normals].concat(),
+            indices: [m1.indices, m2.indices.iter().map(|e| (e + m1_indices_len) as u32).collect()].concat(),
         }
     }
 
@@ -38,15 +73,8 @@ impl Mesh {
 
     pub fn create_square() -> Mesh {
         let t1 = Self::create_triangle();
-        let t2 = Self::create_triangle().rotated_around_z(PI / 2.0);
-
-        let t1_indices_len = t1.indices.len() as u32;
-
-        return Mesh {
-            vertices: [t1.vertices, t2.vertices].concat(),
-            normals: [t1.normals, t2.normals].concat(),
-            indices: [t1.indices, t2.indices.iter().map(|e| (e + t1_indices_len) as u32).collect()].concat(),
-        }
+        let t2 = Self::create_triangle().rotated_around_z(PI / 2.0).scaled(-1.0, 1.0, 1.0);
+        t1.combine(&t2)
     }
 
     pub fn create_box() -> Mesh {
