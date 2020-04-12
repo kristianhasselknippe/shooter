@@ -47,9 +47,9 @@ use vulkano::{
     command_buffer::{AutoCommandBufferBuilder, DynamicState},
     descriptor::{descriptor_set::PersistentDescriptorSet, PipelineLayoutAbstract},
     device::{Device, DeviceExtensions, Features},
-    format::FormatDesc,
+    format::{Format, FormatDesc},
     framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass},
-    image::SwapchainImage,
+    image::{AttachmentImage, SwapchainImage},
     instance::PhysicalDevice,
     pipeline::{viewport::Viewport, GraphicsPipeline},
     swapchain,
@@ -126,25 +126,32 @@ pub fn start_event_loop() {
     )
     .expect("failed to create swapchain");
 
-    let mesh = Mesh::create_square();
+    let mesh = Mesh::create_box(&Some(vec3(1.0, 0.0, 1.0)));
 
     // We now create a buffer that will store the shape of our triangle.
     let vertex_buffer = {
         #[derive(Default, Debug, Clone)]
         struct Vertex {
-            position: [f32; 2],
+            position: [f32; 3],
+            color: [f32; 3],
         }
-        vulkano::impl_vertex!(Vertex, position);
+        vulkano::impl_vertex!(Vertex, position, color);
 
-        CpuAccessibleBuffer::from_iter(
-            device.clone(),
-            BufferUsage::all(),
-            false,
-            mesh.vertices.iter().map(|v| Vertex {
-                position: [v.x, v.y],
-            }),
-        )
-        .unwrap()
+        println!("Mesh vertices: {}", mesh.vertices.len());
+        println!("Mesh colors: {}", mesh.colors.len());
+
+        let vertices = mesh
+            .vertices
+            .iter()
+            .zip(mesh.colors.iter())
+            .map(|(v, c)| Vertex {
+                position: [v.x, v.y, v.z],
+                color: [c.x, c.y, c.z],
+            });
+
+        println!("Vertices: {:?}", vertices.len());
+
+        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices).unwrap()
     };
 
     // The next step is to create the shaders.
@@ -165,10 +172,14 @@ pub fn start_event_loop() {
                     mat4 view;
                     mat4 projection;
                 } ubo;
-                layout(location = 0) in vec2 position;
+                layout(location = 0) in vec3 position;
+                layout(location = 1) in vec3 color;
+
+                layout(location = 0) out vec3 v_color;
                 void main() {
                     mat4 mvp = ubo.projection * ubo.view * ubo.model;
-                    gl_Position = mvp * vec4(position, 0.0, 1.0);
+                    v_color = color;
+                    gl_Position = mvp * vec4(position, 1.0);
                 }
             "
         }
@@ -179,9 +190,10 @@ pub fn start_event_loop() {
             ty: "fragment",
             src: "
                 #version 450
+                layout(location = 0) in vec3 v_color;
                 layout(location = 0) out vec4 f_color;
                 void main() {
-                    f_color = vec4(1.0, 0.0, 0.0, 1.0);
+                    f_color = vec4(v_color, 1.0);
                 }
             "
         }
@@ -216,13 +228,19 @@ pub fn start_event_loop() {
                     format: swapchain.format(),
                     // TODO:
                     samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: Format::D16Unorm,
+                    samples: 1,
                 }
             },
             pass: {
                 // We use the attachment named `color` as the one and only color attachment.
                 color: [color],
                 // No depth-stencil attachment is indicated with empty brackets.
-                depth_stencil: {}
+                depth_stencil: {depth}
             }
         )
         .unwrap(),
@@ -244,8 +262,14 @@ pub fn start_event_loop() {
             .triangle_list()
             // Use a resizable viewport set to draw over the entire window
             .viewports_dynamic_scissors_irrelevant(1)
+            .viewports(std::iter::once(Viewport {
+                origin: [0.0, 0.0],
+                dimensions: [dimensions[0] as f32, dimensions[1] as f32],
+                depth_range: 0.0 .. 1.0,
+            }))
             // See `vertex_shader`.
             .fragment_shader(fs.main_entry_point(), ())
+            .depth_stencil_simple_depth()
             // We have to indicate which subpass of which render pass this pipeline is going to be used
             // in. The pipeline will only be usable from this particular subpass.
             .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
@@ -296,8 +320,12 @@ pub fn start_event_loop() {
     //
     // Since we need to draw to multiple images, we are going to create a different framebuffer for
     // each image.
-    let mut framebuffers =
-        window_size_dependent_setup(&images, render_pass.clone(), &mut dynamic_state);
+    let mut framebuffers = window_size_dependent_setup(
+        device.clone(),
+        &images,
+        render_pass.clone(),
+        &mut dynamic_state,
+    );
 
     // Initialization is finally finished!
 
@@ -361,6 +389,7 @@ pub fn start_event_loop() {
                     // Because framebuffers contains an Arc on the old swapchain, we need to
                     // recreate framebuffers as well.
                     framebuffers = window_size_dependent_setup(
+                        device.clone(),
                         &new_images,
                         render_pass.clone(),
                         &mut dynamic_state,
@@ -397,12 +426,15 @@ pub fn start_event_loop() {
                 }
 
                 // Specify the color to clear the framebuffer with i.e. blue
-                let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
+                let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into(), vulkano::format::ClearValue::Depth(1.0)];
 
                 let uniforms = Uniforms {
                     model: rotate(&identity(), rotation, &vec3(1.0, 1.0, 0.0)),
-                    view: translate(&identity(), &vec3(rotation.cos() * 0.1, rotation.sin() * 0.1, -10.0)),
-                    projection: perspective(1.6, 1.0, 0.0, 1000.0)
+                    view: translate(
+                        &identity(),
+                        &vec3(rotation.cos() * 0.1, rotation.sin() * 0.1, -10.0),
+                    ),
+                    projection: perspective(1.6, 1.0, 0.0, 1000.0),
                 };
 
                 rotation += 0.01;
@@ -438,7 +470,8 @@ pub fn start_event_loop() {
                 // Since we used an `EmptyPipeline` object, the objects have to be `()`.
                 .draw(
                     pipeline.clone(),
-                    &dynamic_state,
+                    &DynamicState::none(),
+                    //&dynamic_state,
                     vertex_buffer.clone(),
                     uniforms_descriptor_set.clone(),
                     (),
@@ -489,11 +522,15 @@ pub fn start_event_loop() {
 
 /// This method is called once during initialization, then again whenever the window is resized
 fn window_size_dependent_setup(
+    device: Arc<Device>,
     images: &[Arc<SwapchainImage<Window>>],
     render_pass: Arc<dyn RenderPassAbstract + Send + Sync>,
     dynamic_state: &mut DynamicState,
 ) -> Vec<Arc<dyn FramebufferAbstract + Send + Sync>> {
     let dimensions = images[0].dimensions();
+
+    let depth_buffer =
+        AttachmentImage::transient(device.clone(), dimensions, Format::D16Unorm).unwrap();
 
     let viewport = Viewport {
         origin: [0.0, 0.0],
@@ -508,6 +545,8 @@ fn window_size_dependent_setup(
             Arc::new(
                 Framebuffer::start(render_pass.clone())
                     .add(image.clone())
+                    .unwrap()
+                    .add(depth_buffer.clone())
                     .unwrap()
                     .build()
                     .unwrap(),
