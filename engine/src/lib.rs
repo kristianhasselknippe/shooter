@@ -67,8 +67,6 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use glm::{identity, Mat4};
-
 pub fn start_event_loop() {
     let window_size = (800, 600);
     let (event_loop, instance) = init_vulkano_window(window_size);
@@ -162,14 +160,15 @@ pub fn start_event_loop() {
             ty: "vertex",
             src: "
                 #version 450
-                layout(binding = 0) uniform UniformBufferObject {
+                layout(set = 0, binding = 0) uniform Data {
                     mat4 model;
                     mat4 view;
                     mat4 projection;
                 } ubo;
                 layout(location = 0) in vec2 position;
                 void main() {
-                    gl_Position = vec4(position, 0.0, 1.0);
+                    mat4 mvp = ubo.projection * ubo.view * ubo.model;
+                    gl_Position = mvp * vec4(position, 0.0, 1.0);
                 }
             "
         }
@@ -262,11 +261,12 @@ pub fn start_event_loop() {
         projection: Mat4,
     }
 
-    let uniforms = Arc::new(Uniforms {
-        model: identity(),
-        view: identity(),
-        projection: identity(),
-    });
+    let uniforms = Uniforms {
+        model: translate(&
+identity(), &vec3(0.0, 0.0, 0.0)),
+        view: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
+        projection: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
+    };
 
     let uniforms_buffer =
         CpuAccessibleBuffer::from_data(device.clone(), BufferUsage::all(), false, uniforms)
@@ -320,6 +320,8 @@ pub fn start_event_loop() {
     // Destroying the `GpuFuture` blocks until the GPU is finished executing it. In order to avoid
     // that, we store the submission of the previous frame here.
     let mut previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<dyn GpuFuture>);
+
+    let mut rotation = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -398,6 +400,14 @@ pub fn start_event_loop() {
                 // Specify the color to clear the framebuffer with i.e. blue
                 let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
 
+                let uniforms = Uniforms {
+                    model: rotate_z(&identity(), rotation),
+                    view: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
+                    projection: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
+                };
+
+                rotation += 0.01;
+
                 // In order to draw, we have to build a *command buffer*. The command buffer object holds
                 // the list of commands that are going to be executed.
                 //
@@ -411,6 +421,8 @@ pub fn start_event_loop() {
                     device.clone(),
                     queue.family(),
                 )
+                .unwrap()
+                .update_buffer(uniforms_buffer.clone(), uniforms)
                 .unwrap()
                 // Before we can draw, we have to *enter a render pass*. There are two methods to do
                 // this: `draw_inline` and `draw_secondary`. The latter is a bit more advanced and is
