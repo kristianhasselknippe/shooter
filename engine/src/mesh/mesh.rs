@@ -1,4 +1,4 @@
-use glm::{vec3, Vec3, rotate_vec3};
+use glm::{rotate_vec3, vec3, Vec3};
 use num::Num;
 use std::f32::consts::PI;
 
@@ -12,31 +12,35 @@ pub struct Mesh {
 impl Mesh {
     fn scaled(&self, x: f32, y: f32, z: f32) -> Mesh {
         Mesh {
-            vertices: self.vertices.iter().map(|v| {
-                vec3(v.x * x, v.y * y, v.z * z)
-            }).collect(),
+            vertices: self
+                .vertices
+                .iter()
+                .map(|v| vec3(v.x * x, v.y * y, v.z * z))
+                .collect(),
             normals: self.normals.iter().cloned().collect(),
             indices: self.indices.iter().cloned().collect(),
-
         }
     }
 
     fn rotated_around_z(&self, angle: f32) -> Mesh {
         Mesh {
-            vertices: self.vertices.iter().map(|v| {
-                rotate_vec3(v, angle, &vec3(0.0,0.0,1.0))
-            }).collect(),
+            vertices: self
+                .vertices
+                .iter()
+                .map(|v| rotate_vec3(v, angle, &vec3(0.0, 0.0, 1.0)))
+                .collect(),
             normals: self.normals.iter().cloned().collect(),
             indices: self.indices.iter().cloned().collect(),
         }
     }
 
     pub fn translated(&self, x: f32, y: f32, z: f32) -> Mesh {
-        Mesh
-{
-            vertices: self.vertices.iter().map(|v| {
-                vec3(v.x + x, v.y + y, v.z + z)
-            }).collect(),
+        Mesh {
+            vertices: self
+                .vertices
+                .iter()
+                .map(|v| vec3(v.x + x, v.y + y, v.z + z))
+                .collect(),
             normals: self.normals.iter().cloned().collect(),
             indices: self.indices.iter().cloned().collect(),
         }
@@ -51,8 +55,15 @@ impl Mesh {
         return Mesh {
             vertices: [m1.vertices, m2.vertices].concat(),
             normals: [m1.normals, m2.normals].concat(),
-            indices: [m1.indices, m2.indices.iter().map(|e| (e + m1_indices_len) as u32).collect()].concat(),
-        }
+            indices: [
+                m1.indices,
+                m2.indices
+                    .iter()
+                    .map(|e| (e + m1_indices_len) as u32)
+                    .collect(),
+            ]
+            .concat(),
+        };
     }
 
     pub fn create_triangle() -> Mesh {
@@ -73,7 +84,9 @@ impl Mesh {
 
     pub fn create_square() -> Mesh {
         let t1 = Self::create_triangle();
-        let t2 = Self::create_triangle().rotated_around_z(PI / 2.0).scaled(-1.0, 1.0, 1.0);
+        let t2 = Self::create_triangle()
+            .rotated_around_z(PI / 2.0)
+            .scaled(-1.0, 1.0, 1.0);
         t1.combine(&t2)
     }
 

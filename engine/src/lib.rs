@@ -139,8 +139,8 @@ pub fn start_event_loop() {
             BufferUsage::all(),
             false,
             mesh.vertices.iter().map(|v| Vertex {
-                position: [v.x, v.y]
-            })
+                position: [v.x, v.y],
+            }),
         )
         .unwrap()
     };
