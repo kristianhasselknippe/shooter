@@ -8,6 +8,7 @@ extern crate maplit;
 extern crate genmesh;
 extern crate imgui_sys as imgui;
 extern crate itertools;
+
 extern crate nalgebra_glm as glm;
 extern crate ncollide3d as nc;
 extern crate num;
@@ -44,6 +45,7 @@ use sync::GpuFuture;
 use vulkano::{
     buffer::{BufferUsage, CpuAccessibleBuffer},
     command_buffer::{AutoCommandBufferBuilder, DynamicState},
+    descriptor::{descriptor_set::PersistentDescriptorSet, PipelineLayoutAbstract},
     device::{Device, DeviceExtensions, Features},
     format::FormatDesc,
     framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass},
@@ -64,6 +66,8 @@ use winit::{
     event_loop::ControlFlow,
     window::{Window, WindowBuilder},
 };
+
+use glm::{identity, Mat4};
 
 pub fn start_event_loop() {
     let window_size = (800, 600);
@@ -157,12 +161,17 @@ pub fn start_event_loop() {
         vulkano_shaders::shader! {
             ty: "vertex",
             src: "
-				#version 450
-				layout(location = 0) in vec2 position;
-				void main() {
-					gl_Position = vec4(position, 0.0, 1.0);
-				}
-			"
+                #version 450
+                layout(binding = 0) uniform UniformBufferObject {
+                    mat4 model;
+                    mat4 view;
+                    mat4 projection;
+                } ubo;
+                layout(location = 0) in vec2 position;
+                void main() {
+                    gl_Position = vec4(position, 0.0, 1.0);
+                }
+            "
         }
     }
 
@@ -245,6 +254,32 @@ pub fn start_event_loop() {
             .build(device.clone())
             .unwrap(),
     );
+
+    #[derive(Debug, Clone)]
+    struct Uniforms {
+        model: Mat4,
+        view: Mat4,
+        projection: Mat4,
+    }
+
+    let uniforms = Arc::new(Uniforms {
+        model: identity(),
+        view: identity(),
+        projection: identity(),
+    });
+
+    let uniforms_buffer =
+        CpuAccessibleBuffer::from_data(device.clone(), BufferUsage::all(), false, uniforms)
+            .unwrap();
+
+    let uniforms_descriptor_set = Arc::new({
+        let layout = pipeline.descriptor_set_layout(0).unwrap();
+        PersistentDescriptorSet::start(layout.clone())
+            .add_buffer(uniforms_buffer.clone())
+            .unwrap()
+            .build()
+            .unwrap()
+    });
 
     // Dynamic viewports allow us to recreate just the viewport when the window is resized
     // Otherwise we would have to recreate the whole pipeline.
@@ -394,7 +429,7 @@ pub fn start_event_loop() {
                     pipeline.clone(),
                     &dynamic_state,
                     vertex_buffer.clone(),
-                    (),
+                    uniforms_descriptor_set.clone(),
                     (),
                 )
                 .unwrap()
