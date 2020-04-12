@@ -10,7 +10,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    fn scaled(&self, x: f32, y: f32, z: f32) -> Mesh {
+    pub fn scaled(&self, x: f32, y: f32, z: f32) -> Mesh {
         Mesh {
             vertices: self
                 .vertices
@@ -22,16 +22,28 @@ impl Mesh {
         }
     }
 
-    fn rotated_around_z(&self, angle: f32) -> Mesh {
+    pub fn rotated(&self, angle: f32, axis: &Vec3) -> Mesh {
         Mesh {
             vertices: self
                 .vertices
                 .iter()
-                .map(|v| rotate_vec3(v, angle, &vec3(0.0, 0.0, 1.0)))
+                .map(|v| rotate_vec3(v, angle, axis))
                 .collect(),
             normals: self.normals.iter().cloned().collect(),
             indices: self.indices.iter().cloned().collect(),
         }
+    }
+
+    pub fn rotated_around_x(&self, angle: f32) -> Mesh {
+        self.rotated(angle, &vec3(1.0, 0.0, 0.0))
+    }
+
+    pub fn rotated_around_y(&self, angle: f32) -> Mesh {
+        self.rotated(angle, &vec3(0.0, 1.0, 0.0))
+    }
+
+    pub fn rotated_around_z(&self, angle: f32) -> Mesh {
+        self.rotated(angle, &vec3(0.0, 0.0, 1.0))
     }
 
     pub fn translated(&self, x: f32, y: f32, z: f32) -> Mesh {
