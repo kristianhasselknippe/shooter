@@ -262,8 +262,7 @@ pub fn start_event_loop() {
     }
 
     let uniforms = Uniforms {
-        model: translate(&
-identity(), &vec3(0.0, 0.0, 0.0)),
+        model: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
         view: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
         projection: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
     };
@@ -401,9 +400,9 @@ identity(), &vec3(0.0, 0.0, 0.0)),
                 let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
 
                 let uniforms = Uniforms {
-                    model: rotate_z(&identity(), rotation),
-                    view: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
-                    projection: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
+                    model: rotate(&identity(), rotation, &vec3(1.0, 1.0, 0.0)),
+                    view: translate(&identity(), &vec3(rotation.cos() * 0.1, rotation.sin() * 0.1, -10.0)),
+                    projection: perspective(1.6, 1.0, 0.0, 1000.0)
                 };
 
                 rotation += 0.01;
