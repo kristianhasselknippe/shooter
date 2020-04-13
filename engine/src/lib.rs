@@ -149,9 +149,10 @@ pub fn start_event_loop() {
     let vertices = mesh
         .vertices
         .iter()
-        .map(|v| Vertex {
+        .zip(mesh.colors.iter())
+        .map(|( v, c )| Vertex {
             position: [v.x, v.y, v.z],
-            color: [1.0, 0.0, 0.0],
+            color: [c.x, c.y, c.z]
         });
     let vertex_buffer =
         CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices)
