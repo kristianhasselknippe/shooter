@@ -251,7 +251,7 @@ pub fn start_event_loop() {
                 let uniform_data = Uniforms {
                     model: rotate(&identity(), rotation, &vec3(1.0, 1.0, 0.0)),
                     view: translate(&identity(), &vec3(0.0, 0.0, -10.0)),
-                    projection: perspective(1.6, 1.0, 0.0, 1000.0)
+                    projection: perspective(1.6, 1.0, 0.01, 1000.0)
                 };
 
                 uniform_buffer.next(uniform_data).unwrap()
