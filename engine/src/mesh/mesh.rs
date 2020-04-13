@@ -128,8 +128,9 @@ impl Mesh {
             //.combine(&Self::create_square().translated(0.0, 0.0, 1.0))
             .combine(&Self::create_square(&Some(vec3(0.0, 1.0, 0.0))).rotated_around_y(PI / 2.0))
             .combine(&Self::create_square(&Some(vec3(1.0, 1.0, 0.0))).rotated_around_x(-PI / 2.0))
-        // .combine(&Self::create_square().translated(1.0, 0.0, 0.0).rotated_around_y(PI / 2.0))
-        // .combine(&Self::create_square().rotated_around_x(PI / 2.0))
-        // .combine(&Self::create_square().translated(0.0, 1.0, 0.0).rotated_around_x(PI / 2.0))
+
+            .combine(&Self::create_square(&Some(vec3(1.0, 0.0, 0.0))).translated(0.0, 0.0, -1.0))
+            .combine(&Self::create_square(&Some(vec3(0.0, 1.0, 1.0))).translated(0.0,0.0,1.0).rotated_around_y(PI / 2.0))
+            .combine(&Self::create_square(&Some(vec3(1.0, 1.0, 1.0))).translated(0.0,0.0,1.0).rotated_around_x(-PI / 2.0))
     }
 }
