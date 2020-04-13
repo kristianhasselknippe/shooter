@@ -108,7 +108,7 @@ impl Mesh {
                 if let &Some(color) = color {
                     std::vec::from_elem(color, 3)
                 } else {
-                    std::vec::from_elem(vec3(1.0, 0.0, 0.0), 3)
+                    std::vec::from_elem(vec3(1.0, 0.0, 1.0), 3)
                 }
             },
             indices: vec![0, 1, 2],

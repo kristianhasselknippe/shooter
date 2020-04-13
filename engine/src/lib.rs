@@ -54,6 +54,7 @@ use vulkano::image::attachment::AttachmentImage;
 use vulkano::image::SwapchainImage;
 use vulkano::instance::Instance;
 use vulkano::instance::PhysicalDevice;
+use vulkano::pipeline::depth_stencil::*;
 use vulkano::pipeline::vertex::SingleBufferDefinition;
 use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
@@ -380,9 +381,15 @@ fn window_size_dependent_setup(
             .viewports(std::iter::once(Viewport {
                 origin: [0.0, 0.0],
                 dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-                depth_range: 0.0..100.0,
+                depth_range: 0.0..1.0,
             }))
-            .cull_mode_disabled()
+            .depth_stencil(DepthStencil {
+                depth_write: true,
+                depth_compare: Compare::LessOrEqual,
+                depth_bounds_test: DepthBounds::Disabled,
+                stencil_front: Default::default(),
+                stencil_back: Default::default(),
+            })
             .fragment_shader(fs.main_entry_point(), ())
             .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
             .build(device.clone())
