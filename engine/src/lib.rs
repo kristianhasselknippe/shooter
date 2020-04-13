@@ -40,6 +40,8 @@ use mesh::{mesh::Mesh, model};
 use shader::*;
 use specs::prelude::*;
 
+use std::f32::consts::*;
+
 use std::sync::Arc;
 use vulkano::buffer::cpu_pool::CpuBufferPool;
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
@@ -154,18 +156,18 @@ pub fn start_event_loop() {
         CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices)
             .unwrap();
 
-    let normals = mesh.normals.iter().cloned();
-    let normals_buffer =
-        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, normals).unwrap();
+    // let normals = mesh.normals.iter().cloned();
+    // let normals_buffer =
+    //     CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, normals).unwrap();
 
     let indices = mesh.indices.iter().cloned();
     let index_buffer =
         CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, indices).unwrap();
 
     struct Uniforms {
-        model: Mat4,
-        view: Mat4,
-        projection: Mat4,
+        pub model: Mat4,
+        pub view: Mat4,
+        pub projection: Mat4,
     }
 
     let uniform_buffer = CpuBufferPool::<Uniforms>::new(device.clone(), BufferUsage::all());
@@ -202,7 +204,8 @@ pub fn start_event_loop() {
     let mut recreate_swapchain = false;
 
     let mut previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<dyn GpuFuture>);
-    let rotation_start = 0.0;
+
+    let mut rotation = 0.0;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -244,13 +247,15 @@ pub fn start_event_loop() {
 
             let uniform_buffer_subbuffer = {
                 let uniform_data = Uniforms {
-                    model: identity(),
-                    view: identity(),
-                    projection: identity(),
+                    model: rotate(&identity(), rotation, &vec3(1.0, 1.0, 0.0)),
+                    view: translate(&identity(), &vec3(0.0, 0.0, -10.0)),
+                    projection: perspective(1.6, 1.0, 0.0, 1000.0)
                 };
 
                 uniform_buffer.next(uniform_data).unwrap()
             };
+
+            rotation += 0.01;
 
             let layout = pipeline.descriptor_set_layout(0).unwrap();
             let set = Arc::new(
@@ -375,10 +380,10 @@ fn window_size_dependent_setup(
             .viewports(std::iter::once(Viewport {
                 origin: [0.0, 0.0],
                 dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-                depth_range: 0.0..1.0,
+                depth_range: 0.0..100.0,
             }))
+            .cull_mode_disabled()
             .fragment_shader(fs.main_entry_point(), ())
-            .depth_stencil_simple_depth()
             .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
             .build(device.clone())
             .unwrap(),
