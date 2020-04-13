@@ -7,7 +7,7 @@ pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub colors: Vec<Vec3>,
-    pub indices: Vec<u32>,
+    pub indices: Vec<u16>,
 }
 
 impl Mesh {
@@ -66,7 +66,7 @@ impl Mesh {
         let m1 = self.clone();
         let m2 = other.clone();
 
-        let m1_indices_len = m1.indices.len() as u32;
+        let m1_indices_len = m1.indices.len() as u16;
 
         Mesh {
             vertices: [m1.vertices, m2.vertices].concat(),
@@ -76,7 +76,7 @@ impl Mesh {
                 m1.indices,
                 m2.indices
                     .iter()
-                    .map(|e| (e + m1_indices_len) as u32)
+                    .map(|e| (e + m1_indices_len) as u16)
                     .collect(),
             ]
             .concat(),

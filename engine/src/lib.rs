@@ -7,6 +7,7 @@ extern crate libc;
 extern crate maplit;
 extern crate genmesh;
 extern crate imgui_sys as imgui;
+
 extern crate itertools;
 
 extern crate nalgebra_glm as glm;
@@ -40,132 +41,356 @@ use shader::*;
 use specs::prelude::*;
 
 use std::sync::Arc;
-use swapchain::AcquireError;
-use sync::GpuFuture;
-use vulkano::{
-    buffer::{BufferUsage, CpuAccessibleBuffer},
-    command_buffer::{AutoCommandBufferBuilder, DynamicState},
-    descriptor::{descriptor_set::PersistentDescriptorSet, PipelineLayoutAbstract},
-    device::{Device, DeviceExtensions, Features},
-    format::{Format, FormatDesc},
-    framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass},
-    image::{AttachmentImage, SwapchainImage},
-    instance::PhysicalDevice,
-    pipeline::{viewport::Viewport, GraphicsPipeline},
-    swapchain,
-    swapchain::{
-        acquire_next_image, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform,
-        Swapchain, SwapchainCreationError,
-    },
-    sync::{self, FlushError, SharingMode},
+use vulkano::buffer::cpu_pool::CpuBufferPool;
+use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
+use vulkano::descriptor::{descriptor_set::PersistentDescriptorSet, PipelineLayoutAbstract};
+use vulkano::device::{Device, DeviceExtensions};
+use vulkano::format::Format;
+use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass};
+use vulkano::image::attachment::AttachmentImage;
+use vulkano::image::SwapchainImage;
+use vulkano::instance::Instance;
+use vulkano::instance::PhysicalDevice;
+use vulkano::pipeline::vertex::SingleBufferDefinition;
+use vulkano::pipeline::viewport::Viewport;
+use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
+use vulkano::swapchain;
+use vulkano::swapchain::{
+    AcquireError, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform, Swapchain,
+    SwapchainCreationError,
 };
+use vulkano::sync;
+use vulkano::sync::{FlushError, GpuFuture};
 use vulkano_win::VkSurfaceBuild;
 use window::init_vulkano_window;
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::ControlFlow,
+    event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
 
+#[derive(Default, Clone, Debug)]
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
+}
+vulkano::impl_vertex!(Vertex, position, color);
+
 pub fn start_event_loop() {
-    let window_size = (800, 600);
-    let (event_loop, instance) = init_vulkano_window(window_size);
+    // The start of this example is exactly the same as `triangle`. You should read the
+    // `triangle` example if you haven't done so yet.
+
+    let required_extensions = vulkano_win::required_extensions();
+    let instance = Instance::new(None, &required_extensions, None).unwrap();
+    let physical = PhysicalDevice::enumerate(&instance).next().unwrap();
+    println!(
+        "Using device: {} (type: {:?})",
+        physical.name(),
+        physical.ty()
+    );
+
+    let event_loop = EventLoop::new();
     let surface = WindowBuilder::new()
         .build_vk_surface(&event_loop, instance.clone())
         .unwrap();
+    let dimensions: [u32; 2] = surface.window().inner_size().into();
 
-    let device = PhysicalDevice::enumerate(&instance)
-        .next()
-        .expect("no device available");
-
-    let caps = surface
-        .capabilities(device.clone())
-        .expect("failed to get surface capabilities");
-
-    let queue_family = device
+    let queue_family = physical
         .queue_families()
-        .find(|&q| q.supports_graphics())
-        .expect("coulnd't find a graphical queue family");
+        .find(|&q| q.supports_graphics() && surface.is_supported(q).unwrap_or(false))
+        .unwrap();
 
-    let (device, mut queues) = {
-        let device_extensions = DeviceExtensions {
-            khr_swapchain: true,
-            khr_storage_buffer_storage_class: true,
-            ..DeviceExtensions::none()
-        };
-        Device::new(
-            device,
-            &Features::none(),
-            &device_extensions,
-            [(queue_family, 0.5)].iter().cloned(),
-        )
-        .expect("Failed to create device")
+    let device_ext = DeviceExtensions {
+        khr_swapchain: true,
+        ..DeviceExtensions::none()
     };
+
+    let (device, mut queues) = Device::new(
+        physical,
+        physical.supported_features(),
+        &device_ext,
+        [(queue_family, 0.5)].iter().cloned(),
+    )
+    .unwrap();
 
     let queue = queues.next().unwrap();
 
-    let dimensions = caps.current_extent.unwrap_or([1280, 1024]);
-    let alpha = caps.supported_composite_alpha.iter().next().unwrap();
-    let format = caps.supported_formats[0].0;
+    let (mut swapchain, images) = {
+        let caps = surface.capabilities(physical).unwrap();
+        let usage = caps.supported_usage_flags;
+        let format = caps.supported_formats[0].0;
+        let alpha = caps.supported_composite_alpha.iter().next().unwrap();
 
-    let (mut swapchain, images) = Swapchain::new(
-        device.clone(),
-        surface.clone(),
-        caps.min_image_count,
-        format,
-        dimensions,
-        1,
-        caps.supported_usage_flags,
-        SharingMode::Exclusive,
-        SurfaceTransform::Identity,
-        alpha,
-        PresentMode::Fifo,
-        FullscreenExclusive::Default,
-        false,
-        ColorSpace::SrgbNonLinear,
-    )
-    .expect("failed to create swapchain");
-
-    let mesh = Mesh::create_box(&Some(vec3(1.0, 0.0, 1.0)));
-
-    // We now create a buffer that will store the shape of our triangle.
-    let vertex_buffer = {
-        #[derive(Default, Debug, Clone)]
-        struct Vertex {
-            position: [f32; 3],
-            color: [f32; 3],
-        }
-        vulkano::impl_vertex!(Vertex, position, color);
-
-        println!("Mesh vertices: {}", mesh.vertices.len());
-        println!("Mesh colors: {}", mesh.colors.len());
-
-        let vertices = mesh
-            .vertices
-            .iter()
-            .zip(mesh.colors.iter())
-            .map(|(v, c)| Vertex {
-                position: [v.x, v.y, v.z],
-                color: [c.x, c.y, c.z],
-            });
-
-        println!("Vertices: {:?}", vertices.len());
-
-        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices).unwrap()
+        Swapchain::new(
+            device.clone(),
+            surface.clone(),
+            caps.min_image_count,
+            format,
+            dimensions,
+            1,
+            usage,
+            &queue,
+            SurfaceTransform::Identity,
+            alpha,
+            PresentMode::Fifo,
+            FullscreenExclusive::Default,
+            true,
+            ColorSpace::SrgbNonLinear,
+        )
+        .unwrap()
     };
 
-    // The next step is to create the shaders.
-    //
-    // The raw shader creation API provided by the vulkano library is unsafe, for various reasons.
-    //
-    // An overview of what the `vulkano_shaders::shader!` macro generates can be found in the
-    // `vulkano-shaders` crate docs. You can view them at https://docs.rs/vulkano-shaders/
-    //
-    // TODO: explain this in details
-    mod vs {
-        vulkano_shaders::shader! {
-            ty: "vertex",
-            src: "
+    let mesh = Mesh::create_box(&None);
+
+    let vertices = mesh
+        .vertices
+        .iter()
+        .map(|v| Vertex {
+            position: [v.x, v.y, v.z],
+            color: [1.0, 0.0, 0.0],
+        });
+    let vertex_buffer =
+        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, vertices)
+            .unwrap();
+
+    let normals = mesh.normals.iter().cloned();
+    let normals_buffer =
+        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, normals).unwrap();
+
+    let indices = mesh.indices.iter().cloned();
+    let index_buffer =
+        CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(), false, indices).unwrap();
+
+    struct Uniforms {
+        model: Mat4,
+        view: Mat4,
+        projection: Mat4,
+    }
+
+    let uniform_buffer = CpuBufferPool::<Uniforms>::new(device.clone(), BufferUsage::all());
+
+    let vs = vs::Shader::load(device.clone()).unwrap();
+    let fs = fs::Shader::load(device.clone()).unwrap();
+
+    let render_pass = Arc::new(
+        vulkano::single_pass_renderpass!(device.clone(),
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: swapchain.format(),
+                    samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: Format::D16Unorm,
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {depth}
+            }
+        )
+        .unwrap(),
+    );
+
+    let (mut pipeline, mut framebuffers) =
+        window_size_dependent_setup(device.clone(), &vs, &fs, &images, render_pass.clone());
+    let mut recreate_swapchain = false;
+
+    let mut previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<dyn GpuFuture>);
+    let rotation_start = 0.0;
+
+    event_loop.run(move |event, _, control_flow| match event {
+        Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            ..
+        } => {
+            *control_flow = ControlFlow::Exit;
+        }
+        Event::WindowEvent {
+            event: WindowEvent::Resized(_),
+            ..
+        } => {
+            recreate_swapchain = true;
+        }
+        Event::RedrawEventsCleared => {
+            previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+            if recreate_swapchain {
+                let dimensions: [u32; 2] = surface.window().inner_size().into();
+                let (new_swapchain, new_images) =
+                    match swapchain.recreate_with_dimensions(dimensions) {
+                        Ok(r) => r,
+                        Err(SwapchainCreationError::UnsupportedDimensions) => return,
+                        Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+                    };
+
+                swapchain = new_swapchain;
+                let (new_pipeline, new_framebuffers) = window_size_dependent_setup(
+                    device.clone(),
+                    &vs,
+                    &fs,
+                    &new_images,
+                    render_pass.clone(),
+                );
+                pipeline = new_pipeline;
+                framebuffers = new_framebuffers;
+                recreate_swapchain = false;
+            }
+
+            let uniform_buffer_subbuffer = {
+                let uniform_data = Uniforms {
+                    model: identity(),
+                    view: identity(),
+                    projection: identity(),
+                };
+
+                uniform_buffer.next(uniform_data).unwrap()
+            };
+
+            let layout = pipeline.descriptor_set_layout(0).unwrap();
+            let set = Arc::new(
+                PersistentDescriptorSet::start(layout.clone())
+                    .add_buffer(uniform_buffer_subbuffer)
+                    .unwrap()
+                    .build()
+                    .unwrap(),
+            );
+
+            let (image_num, suboptimal, acquire_future) =
+                match swapchain::acquire_next_image(swapchain.clone(), None) {
+                    Ok(r) => r,
+                    Err(AcquireError::OutOfDate) => {
+                        recreate_swapchain = true;
+                        return;
+                    }
+                    Err(e) => panic!("Failed to acquire next image: {:?}", e),
+                };
+
+            if suboptimal {
+                recreate_swapchain = true;
+            }
+
+            let command_buffer =
+                AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family())
+                    .unwrap()
+                    .begin_render_pass(
+                        framebuffers[image_num].clone(),
+                        false,
+                        vec![[0.0, 0.0, 1.0, 1.0].into(), 1f32.into()],
+                    )
+                    .unwrap()
+                    .draw_indexed(
+                        pipeline.clone(),
+                        &DynamicState::none(),
+                        vertex_buffer.clone(),
+                        index_buffer.clone(),
+                        set.clone(),
+                        (),
+                    )
+                    .unwrap()
+                    .end_render_pass()
+                    .unwrap()
+                    .build()
+                    .unwrap();
+
+            let future = previous_frame_end
+                .take()
+                .unwrap()
+                .join(acquire_future)
+                .then_execute(queue.clone(), command_buffer)
+                .unwrap()
+                .then_swapchain_present(queue.clone(), swapchain.clone(), image_num)
+                .then_signal_fence_and_flush();
+
+            match future {
+                Ok(future) => {
+                    previous_frame_end = Some(Box::new(future) as Box<_>);
+                }
+                Err(FlushError::OutOfDate) => {
+                    recreate_swapchain = true;
+                    previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
+                }
+                Err(e) => {
+                    println!("Failed to flush future: {:?}", e);
+                    previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
+                }
+            }
+        }
+        _ => (),
+    });
+}
+
+/// This method is called once during initialization, then again whenever the window is resized
+fn window_size_dependent_setup(
+    device: Arc<Device>,
+    vs: &vs::Shader,
+    fs: &fs::Shader,
+    images: &[Arc<SwapchainImage<Window>>],
+    render_pass: Arc<dyn RenderPassAbstract + Send + Sync>,
+) -> (
+    Arc<
+        GraphicsPipeline<
+            SingleBufferDefinition<Vertex>,
+            Box<dyn PipelineLayoutAbstract + Send + Sync>,
+            Arc<dyn RenderPassAbstract + Send + Sync>,
+        >,
+    >,
+    Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
+) {
+    let dimensions = images[0].dimensions();
+
+    let depth_buffer =
+        AttachmentImage::transient(device.clone(), dimensions, Format::D16Unorm).unwrap();
+
+    let framebuffers = images
+        .iter()
+        .map(|image| {
+            Arc::new(
+                Framebuffer::start(render_pass.clone())
+                    .add(image.clone())
+                    .unwrap()
+                    .add(depth_buffer.clone())
+                    .unwrap()
+                    .build()
+                    .unwrap(),
+            ) as Arc<dyn FramebufferAbstract + Send + Sync>
+        })
+        .collect::<Vec<_>>();
+
+    // In the triangle example we use a dynamic viewport, as its a simple example.
+    // However in the teapot example, we recreate the pipelines with a hardcoded viewport instead.
+    // This allows the driver to optimize things, at the cost of slower window resizes.
+    // https://computergraphics.stackexchange.com/questions/5742/vulkan-best-way-of-updating-pipeline-viewport
+    let pipeline = Arc::new(
+        GraphicsPipeline::start()
+            .vertex_input(SingleBufferDefinition::<Vertex>::new())
+            .vertex_shader(vs.main_entry_point(), ())
+            .triangle_list()
+            .viewports_dynamic_scissors_irrelevant(1)
+            .viewports(std::iter::once(Viewport {
+                origin: [0.0, 0.0],
+                dimensions: [dimensions[0] as f32, dimensions[1] as f32],
+                depth_range: 0.0..1.0,
+            }))
+            .fragment_shader(fs.main_entry_point(), ())
+            .depth_stencil_simple_depth()
+            .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
+            .build(device.clone())
+            .unwrap(),
+    );
+
+    (pipeline, framebuffers)
+}
+
+mod vs {
+    vulkano_shaders::shader! {
+        ty: "vertex",
+        src: "
                 #version 450
                 layout(set = 0, binding = 0) uniform Data {
                     mat4 model;
@@ -182,13 +407,13 @@ pub fn start_event_loop() {
                     gl_Position = mvp * vec4(position, 1.0);
                 }
             "
-        }
     }
+}
 
-    mod fs {
-        vulkano_shaders::shader! {
-            ty: "fragment",
-            src: "
+mod fs {
+    vulkano_shaders::shader! {
+        ty: "fragment",
+        src: "
                 #version 450
                 layout(location = 0) in vec3 v_color;
                 layout(location = 0) out vec4 f_color;
@@ -196,361 +421,5 @@ pub fn start_event_loop() {
                     f_color = vec4(v_color, 1.0);
                 }
             "
-        }
     }
-
-    let vs = vs::Shader::load(device.clone()).unwrap();
-    let fs = fs::Shader::load(device.clone()).unwrap();
-
-    // At this point, OpenGL initialization would be finished. However in Vulkan it is not. OpenGL
-    // implicitly does a lot of computation whenever you draw. In Vulkan, you have to do all this
-    // manually.
-
-    // The next step is to create a *render pass*, which is an object that describes where the
-    // output of the graphics pipeline will go. It describes the layout of the images
-    // where the colors, depth and/or stencil information will be written.
-    let render_pass = Arc::new(
-        vulkano::single_pass_renderpass!(
-            device.clone(),
-            attachments: {
-                // `color` is a custom name we give to the first and only attachment.
-                color: {
-                    // `load: Clear` means that we ask the GPU to clear the content of this
-                    // attachment at the start of the drawing.
-                    load: Clear,
-                    // `store: Store` means that we ask the GPU to store the output of the draw
-                    // in the actual image. We could also ask it to discard the result.
-                    store: Store,
-                    // `format: <ty>` indicates the type of the format of the image. This has to
-                    // be one of the types of the `vulkano::format` module (or alternatively one
-                    // of your structs that implements the `FormatDesc` trait). Here we use the
-                    // same format as the swapchain.
-                    format: swapchain.format(),
-                    // TODO:
-                    samples: 1,
-                },
-                depth: {
-                    load: Clear,
-                    store: DontCare,
-                    format: Format::D16Unorm,
-                    samples: 1,
-                }
-            },
-            pass: {
-                // We use the attachment named `color` as the one and only color attachment.
-                color: [color],
-                // No depth-stencil attachment is indicated with empty brackets.
-                depth_stencil: {depth}
-            }
-        )
-        .unwrap(),
-    );
-
-    // Before we draw we have to create what is called a pipeline. This is similar to an OpenGL
-    // program, but much more specific.
-    let pipeline = Arc::new(
-        GraphicsPipeline::start()
-            // We need to indicate the layout of the vertices.
-            // The type `SingleBufferDefinition` actually contains a template parameter corresponding
-            // to the type of each vertex. But in this code it is automatically inferred.
-            .vertex_input_single_buffer()
-            // A Vulkan shader can in theory contain multiple entry points, so we have to specify
-            // which one. The `main` word of `main_entry_point` actually corresponds to the name of
-            // the entry point.
-            .vertex_shader(vs.main_entry_point(), ())
-            // The content of the vertex buffer describes a list of triangles.
-            .triangle_list()
-            // Use a resizable viewport set to draw over the entire window
-            .viewports_dynamic_scissors_irrelevant(1)
-            .viewports(std::iter::once(Viewport {
-                origin: [0.0, 0.0],
-                dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-                depth_range: 0.0 .. 1.0,
-            }))
-            // See `vertex_shader`.
-            .fragment_shader(fs.main_entry_point(), ())
-            .depth_stencil_simple_depth()
-            // We have to indicate which subpass of which render pass this pipeline is going to be used
-            // in. The pipeline will only be usable from this particular subpass.
-            .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
-            // Now that our builder is filled, we call `build()` to obtain an actual pipeline.
-            .build(device.clone())
-            .unwrap(),
-    );
-
-    #[derive(Debug, Clone)]
-    struct Uniforms {
-        model: Mat4,
-        view: Mat4,
-        projection: Mat4,
-    }
-
-    let uniforms = Uniforms {
-        model: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
-        view: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
-        projection: translate(&identity(), &vec3(0.0, 0.0, 0.0)),
-    };
-
-    let uniforms_buffer =
-        CpuAccessibleBuffer::from_data(device.clone(), BufferUsage::all(), false, uniforms)
-            .unwrap();
-
-    let uniforms_descriptor_set = Arc::new({
-        let layout = pipeline.descriptor_set_layout(0).unwrap();
-        PersistentDescriptorSet::start(layout.clone())
-            .add_buffer(uniforms_buffer.clone())
-            .unwrap()
-            .build()
-            .unwrap()
-    });
-
-    // Dynamic viewports allow us to recreate just the viewport when the window is resized
-    // Otherwise we would have to recreate the whole pipeline.
-    let mut dynamic_state = DynamicState {
-        line_width: None,
-        viewports: None,
-        scissors: None,
-        compare_mask: None,
-        write_mask: None,
-        reference: None,
-    };
-
-    // The render pass we created above only describes the layout of our framebuffers. Before we
-    // can draw we also need to create the actual framebuffers.
-    //
-    // Since we need to draw to multiple images, we are going to create a different framebuffer for
-    // each image.
-    let mut framebuffers = window_size_dependent_setup(
-        device.clone(),
-        &images,
-        render_pass.clone(),
-        &mut dynamic_state,
-    );
-
-    // Initialization is finally finished!
-
-    // In some situations, the swapchain will become invalid by itself. This includes for example
-    // when the window is resized (as the images of the swapchain will no longer match the
-    // window's) or, on Android, when the application went to the background and goes back to the
-    // foreground.
-    //
-    // In this situation, acquiring a swapchain image or presenting it will return an error.
-    // Rendering to an image of that swapchain will not produce any error, but may or may not work.
-    // To continue rendering, we need to recreate the swapchain by creating a new swapchain.
-    // Here, we remember that we need to do this for the next loop iteration.
-    let mut recreate_swapchain = false;
-
-    // In the loop below we are going to submit commands to the GPU. Submitting a command produces
-    // an object that implements the `GpuFuture` trait, which holds the resources for as long as
-    // they are in use by the GPU.
-    //
-    // Destroying the `GpuFuture` blocks until the GPU is finished executing it. In order to avoid
-    // that, we store the submission of the previous frame here.
-    let mut previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<dyn GpuFuture>);
-
-    let mut rotation = 0.0;
-
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-            Event::WindowEvent {
-                event: WindowEvent::Resized(_),
-                ..
-            } => {
-                recreate_swapchain = true;
-            }
-            Event::RedrawEventsCleared => {
-                // It is important to call this function from time to time, otherwise resources will keep
-                // accumulating and you will eventually reach an out of memory error.
-                // Calling this function polls various fences in order to determine what the GPU has
-                // already processed, and frees the resources that are no longer needed.
-                previous_frame_end.as_mut().unwrap().cleanup_finished();
-
-                // Whenever the window resizes we need to recreate everything dependent on the window size.
-                // In this example that includes the swapchain, the framebuffers and the dynamic state viewport.
-                if recreate_swapchain {
-                    // Get the new dimensions of the window.
-                    let dimensions: [u32; 2] = surface.window().inner_size().into();
-                    let (new_swapchain, new_images) =
-                        match swapchain.recreate_with_dimensions(dimensions) {
-                            Ok(r) => r,
-                            // This error tends to happen when the user is manually resizing the window.
-                            // Simply restarting the loop is the easiest way to fix this issue.
-                            Err(SwapchainCreationError::UnsupportedDimensions) => return,
-                            Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
-                        };
-
-                    swapchain = new_swapchain;
-                    // Because framebuffers contains an Arc on the old swapchain, we need to
-                    // recreate framebuffers as well.
-                    framebuffers = window_size_dependent_setup(
-                        device.clone(),
-                        &new_images,
-                        render_pass.clone(),
-                        &mut dynamic_state,
-                    );
-                    recreate_swapchain = false;
-                }
-
-                // Before we can draw on the output, we have to *acquire* an image from the swapchain. If
-                // no image is available (which happens if you submit draw commands too quickly), then the
-                // function will block.
-                // This operation returns the index of the image that we are allowed to draw upon.
-                //
-                // This function can block if no image is available. The parameter is an optional timeout
-                // after which the function call will return an error.
-                let (image_num, suboptimal, acquire_future) =
-                    match swapchain::acquire_next_image(swapchain.clone(), None) {
-                        Ok(r) => r,
-                        Err(AcquireError::OutOfDate) => {
-                            println!("AcquireError: out of date");
-                            recreate_swapchain = true;
-                            return;
-                        }
-                        Err(e) => {
-                            println!("Swapchain acquireerror: {:?}", e);
-                            panic!("Failed to acquire next image: {:?}", e)
-                        }
-                    };
-
-                // acquire_next_image can be successful, but suboptimal. This means that the swapchain image
-                // will still work, but it may not display correctly. With some drivers this can be when
-                // the window resizes, but it may not cause the swapchain to become out of date.
-                if suboptimal {
-                    recreate_swapchain = true;
-                }
-
-                // Specify the color to clear the framebuffer with i.e. blue
-                let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into(), vulkano::format::ClearValue::Depth(1.0)];
-
-                let uniforms = Uniforms {
-                    model: rotate(&identity(), rotation, &vec3(1.0, 1.0, 0.0)),
-                    view: translate(
-                        &identity(),
-                        &vec3(rotation.cos() * 0.1, rotation.sin() * 0.1, -10.0),
-                    ),
-                    projection: perspective(1.6, 1.0, 0.0, 1000.0),
-                };
-
-                rotation += 0.01;
-
-                // In order to draw, we have to build a *command buffer*. The command buffer object holds
-                // the list of commands that are going to be executed.
-                //
-                // Building a command buffer is an expensive operation (usually a few hundred
-                // microseconds), but it is known to be a hot path in the driver and is expected to be
-                // optimized.
-                //
-                // Note that we have to pass a queue family when we create the command buffer. The command
-                // buffer will only be executable on that given queue family.
-                let command_buffer = AutoCommandBufferBuilder::primary_one_time_submit(
-                    device.clone(),
-                    queue.family(),
-                )
-                .unwrap()
-                .update_buffer(uniforms_buffer.clone(), uniforms)
-                .unwrap()
-                // Before we can draw, we have to *enter a render pass*. There are two methods to do
-                // this: `draw_inline` and `draw_secondary`. The latter is a bit more advanced and is
-                // not covered here.
-                //
-                // The third parameter builds the list of values to clear the attachments with. The API
-                // is similar to the list of attachments when building the framebuffers, except that
-                // only the attachments that use `load: Clear` appear in the list.
-                .begin_render_pass(framebuffers[image_num].clone(), false, clear_values)
-                .unwrap()
-                // We are now inside the first subpass of the render pass. We add a draw command.
-                //
-                // The last two parameters contain the list of resources to pass to the shaders.
-                // Since we used an `EmptyPipeline` object, the objects have to be `()`.
-                .draw(
-                    pipeline.clone(),
-                    &DynamicState::none(),
-                    //&dynamic_state,
-                    vertex_buffer.clone(),
-                    uniforms_descriptor_set.clone(),
-                    (),
-                )
-                .unwrap()
-                // We leave the render pass by calling `draw_end`. Note that if we had multiple
-                // subpasses we could have called `next_inline` (or `next_secondary`) to jump to the
-                // next subpass.
-                .end_render_pass()
-                .unwrap()
-                // Finish building the command buffer by calling `build`.
-                .build()
-                .unwrap();
-
-                let future = previous_frame_end
-                    .take()
-                    .unwrap()
-                    .join(acquire_future)
-                    .then_execute(queue.clone(), command_buffer)
-                    .unwrap()
-                    // The color output is now expected to contain our triangle. But in order to show it on
-                    // the screen, we have to *present* the image by calling `present`.
-                    //
-                    // This function does not actually present the image immediately. Instead it submits a
-                    // present command at the end of the queue. This means that it will only be presented once
-                    // the GPU has finished executing the command buffer that draws the triangle.
-                    .then_swapchain_present(queue.clone(), swapchain.clone(), image_num)
-                    .then_signal_fence_and_flush();
-
-                match future {
-                    Ok(future) => {
-                        previous_frame_end = Some(Box::new(future) as Box<_>);
-                    }
-                    Err(FlushError::OutOfDate) => {
-                        recreate_swapchain = true;
-                        previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
-                    }
-                    Err(e) => {
-                        println!("Failed to flush future: {:?}", e);
-                        previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
-                    }
-                }
-            }
-            _ => (),
-        }
-    });
-}
-
-/// This method is called once during initialization, then again whenever the window is resized
-fn window_size_dependent_setup(
-    device: Arc<Device>,
-    images: &[Arc<SwapchainImage<Window>>],
-    render_pass: Arc<dyn RenderPassAbstract + Send + Sync>,
-    dynamic_state: &mut DynamicState,
-) -> Vec<Arc<dyn FramebufferAbstract + Send + Sync>> {
-    let dimensions = images[0].dimensions();
-
-    let depth_buffer =
-        AttachmentImage::transient(device.clone(), dimensions, Format::D16Unorm).unwrap();
-
-    let viewport = Viewport {
-        origin: [0.0, 0.0],
-        dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-        depth_range: 0.0..1.0,
-    };
-    dynamic_state.viewports = Some(vec![viewport]);
-
-    images
-        .iter()
-        .map(|image| {
-            Arc::new(
-                Framebuffer::start(render_pass.clone())
-                    .add(image.clone())
-                    .unwrap()
-                    .add(depth_buffer.clone())
-                    .unwrap()
-                    .build()
-                    .unwrap(),
-            ) as Arc<dyn FramebufferAbstract + Send + Sync>
-        })
-        .collect::<Vec<_>>()
 }
